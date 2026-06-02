@@ -2804,6 +2804,7 @@
     // Score each available player
     let best = null, bestScore = -Infinity;
     for (const p of dsAvailable) {
+      if (!canAddPlayerToRoster(p, roster)) continue;
       let score = scorePlayerForRoster(p, roster, counts, round, true).score;
       score += (Math.random() * 5 - 2.5);
 
@@ -2827,6 +2828,29 @@
     if (!player.injStatus || player.injStatus === 'Active' || player.injStatus === 'NA') return 0;
     const map = { Questionable: 5, Doubtful: 12, Out: 20, IR: 26, PUP: 16 };
     return map[player.injStatus] || 7;
+  }
+
+  function findOpenRosterSlot(rosterSlots, player) {
+    return rosterSlots.find((slot) => !slot.player && slot.pos.includes(player.pos)) || null;
+  }
+
+  function draftPositionCaps() {
+    return {
+      QB: 2,
+      RB: Math.max(4, 2 + dsBenchSpots),
+      WR: Math.max(4, 2 + dsBenchSpots),
+      TE: 2,
+      K: 1,
+      DEF: 1,
+    };
+  }
+
+  function canAddPlayerToRoster(player, rosterPlayers, rosterSlots = null) {
+    const caps = draftPositionCaps();
+    const counts = countPositions(rosterPlayers);
+    if (counts[player.pos] >= (caps[player.pos] || getTotalRounds())) return false;
+    if (rosterSlots) return Boolean(findOpenRosterSlot(rosterSlots, player));
+    return rosterPlayers.length < getTotalRounds();
   }
 
   function needBonus(player, counts, round) {
@@ -3325,9 +3349,11 @@
       const rosterPlayers = isUser
         ? userRoster.filter((s) => s.player).map((s) => s.player)
         : cpuRosters[teamIdx];
+      const rosterSlots = isUser ? userRoster : null;
       const counts = countPositions(rosterPlayers);
 
       const scored = available
+        .filter((p) => canAddPlayerToRoster(p, rosterPlayers, rosterSlots))
         .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, !isUser) }))
         .sort((a, b) => b.eval.score - a.eval.score);
       if (!scored.length) break;
@@ -3337,7 +3363,7 @@
       available = available.filter((p) => p.id !== chosen.id);
 
       if (isUser) {
-        const slot = userRoster.find((s) => !s.player && s.pos.includes(chosen.pos));
+        const slot = findOpenRosterSlot(userRoster, chosen);
         if (slot) slot.player = chosen;
       } else {
         cpuRosters[teamIdx].push(chosen);
@@ -3347,25 +3373,30 @@
     dsCurrentPick = oldPick;
     const picks = userRoster.filter((s) => s.player).map((s) => s.player);
     const metrics = analyzeUserRoster(picks);
-    return { picks, metrics };
+    return { picks, metrics, slots: userRoster };
   }
 
   function formatSampleRoster(run) {
-    if (!run || !run.picks || !run.picks.length) return '';
-    const byPos = { QB: [], RB: [], WR: [], TE: [], K: [], DEF: [] };
-    run.picks.forEach((player) => {
-      if (byPos[player.pos]) byPos[player.pos].push(player.name);
-    });
+    if (!run || !run.slots || !run.slots.length) return '';
     const lines = [];
-    if (byPos.QB[0]) lines.push(`QB: ${byPos.QB[0]}`);
-    if (byPos.RB.length) lines.push(`RB: ${byPos.RB.slice(0, 2).join(' · ')}`);
-    if (byPos.WR.length) lines.push(`WR: ${byPos.WR.slice(0, 2).join(' · ')}`);
-    if (byPos.TE[0]) lines.push(`TE: ${byPos.TE[0]}`);
-    const flexPool = [...byPos.RB.slice(2), ...byPos.WR.slice(2), ...byPos.TE.slice(1)];
-    if (flexPool[0]) lines.push(`FLEX: ${flexPool[0]}`);
-    if (byPos.K[0]) lines.push(`K: ${byPos.K[0]}`);
-    if (byPos.DEF[0]) lines.push(`D/ST: ${byPos.DEF[0]}`);
-    const bench = run.picks.slice(STARTER_SLOTS.length).map((player) => player.name);
+    const slotPlayer = (key) => run.slots.find((slot) => slot.key === key)?.player?.name || null;
+    const qb = slotPlayer('QB');
+    const rb1 = slotPlayer('RB1');
+    const rb2 = slotPlayer('RB2');
+    const wr1 = slotPlayer('WR1');
+    const wr2 = slotPlayer('WR2');
+    const te = slotPlayer('TE');
+    const flex = slotPlayer('FLX');
+    const kicker = slotPlayer('K');
+    const defense = slotPlayer('DEF');
+    const bench = run.slots.filter((slot) => slot.key.startsWith('BN') && slot.player).map((slot) => slot.player.name);
+    if (qb) lines.push(`QB: ${qb}`);
+    if (rb1 || rb2) lines.push(`RB: ${[rb1, rb2].filter(Boolean).join(' · ')}`);
+    if (wr1 || wr2) lines.push(`WR: ${[wr1, wr2].filter(Boolean).join(' · ')}`);
+    if (te) lines.push(`TE: ${te}`);
+    if (flex) lines.push(`FLEX: ${flex}`);
+    if (kicker) lines.push(`K: ${kicker}`);
+    if (defense) lines.push(`D/ST: ${defense}`);
     if (bench.length) lines.push(`Bench: ${bench.join(' · ')}`);
     return lines;
   }
