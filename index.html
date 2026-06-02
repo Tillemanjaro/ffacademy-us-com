@@ -2240,6 +2240,7 @@
   let dsSleeperPlayers = []; // expanded player pool from Sleeper
   let dsStrategy = 'balanced';
   let dsLastAdpFetchAt = 0, dsLastSleeperFetchAt = 0;
+  const CURRENT_NFL_YEAR = new Date().getFullYear();
 
   const DS_PREF_KEY = 'ffacademy_draft_prefs_v2';
   const STRATEGY_WEIGHTS = {
@@ -2651,7 +2652,7 @@
   // ── Live ADP loader ──
   async function loadLiveADP() {
     const teams = dsTeamCount > 14 ? 12 : dsTeamCount; // FFC max supported is 14
-    const url = `https://fantasyfootballcalculator.com/api/v1/adp/${dsFormat}?teams=${teams}&year=2026`;
+    const url = `https://fantasyfootballcalculator.com/api/v1/adp/${dsFormat}?teams=${teams}&year=${CURRENT_NFL_YEAR}`;
     const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
     try {
       const r = await fetch(proxy, { signal: AbortSignal.timeout(6000) });
@@ -3369,8 +3370,27 @@
     return lines;
   }
 
-  function runBatchSims(count = 10) {
+  async function runBatchSims(count = 10) {
     const n = Math.max(1, Math.min(50, Number(count) || 10));
+    dsBenchSpots = 5;
+    updateSetupSubtitle();
+    document.querySelectorAll('[id^="bench-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('bench-5')?.classList.add('active');
+    saveDraftPrefs();
+
+    const summaryEl = document.getElementById('ds-sim-summary');
+    const simDetails = document.getElementById('ds-sim-details');
+    if (summaryEl) summaryEl.textContent = `Loading ${CURRENT_NFL_YEAR} ADP for ${dsTeamCount}-team, 5-bench sims...`;
+    if (simDetails) {
+      simDetails.style.display = 'none';
+      simDetails.innerHTML = '';
+    }
+
+    const [liveData, sleeperMap] = await Promise.all([loadLiveADP(), loadSleeperData()]);
+    mergeLiveADP(liveData);
+    mergeSleeperData(sleeperMap);
+    updateFreshnessText();
+
     const runs = [];
     for (let i = 0; i < n; i++) runs.push(simulateSingleDraft());
     const avgScore = runs.reduce((s, r) => s + r.metrics.overall, 0) / runs.length;
@@ -3387,8 +3407,9 @@
     const sampleRoster = formatSampleRoster(sampleRun);
 
     const summary = `Sim ${n}: Avg grade ${scoreToLetter(avgScore).g} (${avgScore.toFixed(1)}), Avg rank #${avgRank.toFixed(1)}, Best ${best}, Worst ${worst}${commonFirst ? `, Most common R1: ${commonFirst[0]} (${commonFirst[1]}/${n})` : ''}`;
-    const el = document.getElementById('ds-sim-summary');
-    if (el) el.textContent = summary;
+    if (summaryEl) {
+      summaryEl.textContent = `${summary}${dsUsingLive ? ` · Using live ${CURRENT_NFL_YEAR} ADP` : ' · Live ADP unavailable, fallback board used'}`;
+    }
 
     const detailsHtml = `
       <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
@@ -3400,7 +3421,6 @@
       </div>
     `;
 
-    const simDetails = document.getElementById('ds-sim-details');
     if (simDetails) {
       simDetails.style.display = 'block';
       simDetails.innerHTML = detailsHtml;
