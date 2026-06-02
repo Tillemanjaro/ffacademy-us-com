@@ -683,8 +683,30 @@
       }
 
       .nav-btn {
-        flex: 0 0 min(74vw, 260px);
+        flex: 0 0 auto;
+        grid-template-columns: 1fr;
+        min-height: 40px;
+        padding: 8px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 800;
         scroll-snap-align: start;
+      }
+
+      .nav-btn span:first-child {
+        display: none;
+      }
+
+      .nav-btn[aria-current="true"] {
+        border-color: var(--brand);
+        background: var(--brand);
+        color: #fff;
+      }
+
+      .nav-btn.is-complete:not([aria-current="true"]) {
+        border-color: rgba(33, 122, 69, 0.45);
+        background: #edf8f0;
       }
     }
 
@@ -739,15 +761,16 @@
 
     @media (max-width: 680px) {
       .topbar {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
         align-items: center;
-        flex-direction: row;
-        gap: 10px;
+        gap: 8px;
         padding: 10px 12px;
       }
 
       .progress-wrap {
-        width: clamp(170px, 60vw, 270px);
-        min-width: 0;
+        width: 100%;
+        min-width: 120px;
       }
 
       .progress-copy {
@@ -773,18 +796,19 @@
       }
 
       .hero-visual {
-        min-height: 250px;
+        min-height: auto;
+        padding: 12px;
       }
 
       .hero-visual::before {
+        inset: 0;
         background:
-          radial-gradient(110% 80% at 12% 12%, rgba(216, 156, 33, 0.26), rgba(216, 156, 33, 0) 52%),
-          linear-gradient(145deg, #132733, #1a3a49 58%, #0f202a);
+          radial-gradient(95% 70% at 12% 8%, rgba(216, 156, 33, 0.24), rgba(216, 156, 33, 0) 55%),
+          linear-gradient(145deg, #153141 8%, #1f4457 60%, #14303d 100%);
       }
 
       .hero-visual::after {
-        inset: auto 14px 14px 14px;
-        height: 74px;
+        display: none;
       }
 
       .hero-actions {
@@ -796,11 +820,16 @@
       }
 
       .metric-stack {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        position: static;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
       }
 
       .metric-stack .metric:last-child {
-        grid-column: 1 / -1;
+        grid-column: auto;
       }
 
       .side-nav {
@@ -809,7 +838,7 @@
       }
 
       .nav-btn {
-        flex-basis: min(78vw, 230px);
+        flex-basis: auto;
         min-height: 42px;
         gap: 8px;
       }
@@ -876,8 +905,10 @@
       }
 
       .metric {
-        min-height: 66px;
-        padding: 10px;
+        min-height: 62px;
+        padding: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        background: rgba(255, 255, 255, 0.92);
       }
 
       .metric strong {
@@ -953,15 +984,20 @@
       }
 
       .hero-visual {
-        min-height: 220px;
+        min-height: auto;
+        padding: 10px;
       }
 
       .metric-stack {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
+        left: auto;
+        right: auto;
+        bottom: auto;
         gap: 6px;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric-stack .metric:last-child {
+        grid-column: 1 / -1;
       }
 
       .metric {
@@ -991,15 +1027,9 @@
       }
 
       .nav-btn {
-        flex-basis: 82vw;
+        flex-basis: auto;
         min-height: 42px;
         font-size: 13px;
-      }
-
-      .nav-btn span:first-child {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
       }
 
       .panel-header {
