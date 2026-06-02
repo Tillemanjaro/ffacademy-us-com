@@ -1994,7 +1994,7 @@
   <!-- SETUP SCREEN -->
   <div id="ds-setup" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;overflow-y:auto;">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,3.5rem);text-align:center;margin-bottom:8px;">CONFIGURE YOUR DRAFT</div>
-    <p id="ds-setup-subtitle" style="color:rgba(255,255,255,.5);text-align:center;margin-bottom:40px;font-size:.95rem;">12-team snake draft · 10 rounds · PPR scoring</p>
+    <p id="ds-setup-subtitle" style="color:rgba(255,255,255,.5);text-align:center;margin-bottom:40px;font-size:.95rem;">12-team snake draft · 14 rounds · PPR scoring · 5 bench spots</p>
 
     <div style="max-width:760px;width:100%;">
 
@@ -2003,7 +2003,16 @@
       <div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;">
         <button class="ds-option-btn" id="tc-10" onclick="setTeamCount(10)">10 Teams</button>
         <button class="ds-option-btn active" id="tc-12" onclick="setTeamCount(12)">12 Teams</button>
+        <button class="ds-option-btn" id="tc-14" onclick="setTeamCount(14)">14 Teams</button>
         <button class="ds-option-btn" id="tc-18" onclick="setTeamCount(18)">18 Teams</button>
+      </div>
+
+      <!-- BENCH SIZE -->
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:4px;color:#a855f7;text-transform:uppercase;margin-bottom:12px;text-align:center;">Bench Spots</div>
+      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;">
+        <button class="ds-option-btn active" id="bench-5" onclick="setBenchSpots(5)">5 Bench</button>
+        <button class="ds-option-btn" id="bench-6" onclick="setBenchSpots(6)">6 Bench</button>
+        <button class="ds-option-btn" id="bench-7" onclick="setBenchSpots(7)">7 Bench</button>
       </div>
 
       <!-- SCORING FORMAT -->
@@ -2053,7 +2062,7 @@
           <button id="ds-start-btn" onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:1.1rem;padding:18px 56px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">START DRAFT</button>
           <button onclick="runBatchSims(10)" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.92);font-weight:800;font-size:.9rem;padding:16px 22px;border:1px solid rgba(255,255,255,.18);border-radius:50px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;">Sim 10 Drafts</button>
         </div>
-        <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a></div>
+        <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live 2026 ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · fallback board may lag if live data is unavailable</div>
         <div id="ds-sim-summary" style="margin-top:10px;font-size:.74rem;color:rgba(255,255,255,.55);"></div>
       </div>
     </div>
@@ -2062,7 +2071,7 @@
   <!-- LOADING SCREEN -->
   <div id="ds-loading" style="display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
     <div style="width:48px;height:48px;border:3px solid rgba(168,85,247,.2);border-top-color:#a855f7;border-radius:50%;animation:spin .8s linear infinite;"></div>
-    <div style="font-size:.95rem;color:rgba(255,255,255,.6);" id="ds-load-msg">Fetching live ADP data...</div>
+    <div style="font-size:.95rem;color:rgba(255,255,255,.6);" id="ds-load-msg">Fetching live 2026 ADP data...</div>
     <div style="font-size:.75rem;color:rgba(255,255,255,.3);">Powered by Fantasy Football Calculator</div>
   </div>
 
@@ -2208,8 +2217,19 @@
 <script>
   // ═══════════ DRAFT SIMULATOR v2 — live ADP, variable teams, demo mode ═══════════
   const POS_COLOR = { QB:'#ff6b6b', RB:'#00C853', WR:'#4FC3F7', TE:'#FFD700', K:'#CE93D8', DEF:'#80DEEA' };
-  const ROUNDS = 10;
+  const STARTER_SLOTS = [
+    {key:'QB',  label:'QB',   pos:['QB']},
+    {key:'RB1', label:'RB',   pos:['RB']},
+    {key:'RB2', label:'RB',   pos:['RB']},
+    {key:'WR1', label:'WR',   pos:['WR']},
+    {key:'WR2', label:'WR',   pos:['WR']},
+    {key:'TE',  label:'TE',   pos:['TE']},
+    {key:'FLX', label:'FLEX', pos:['RB','WR','TE']},
+    {key:'K',   label:'K',    pos:['K']},
+    {key:'DEF', label:'D/ST', pos:['DEF']},
+  ];
   let dsTeamCount = 12, dsFormat = 'ppr', dsDemoMode = false, dsUsingLive = false;
+  let dsBenchSpots = 5;
   let dsUserSlot = 1, dsCpuSpeed = 800;
   let dsAvailable = [], dsAllPicks = [], dsUserRoster = [], dsCpuRosters = [];
   let dsCurrentPick = 0, dsPosFilter = 'ALL', dsDraftRunning = false, dsCpuTimer = null;
@@ -2219,7 +2239,7 @@
   let dsStrategy = 'balanced';
   let dsLastAdpFetchAt = 0, dsLastSleeperFetchAt = 0;
 
-  const DS_PREF_KEY = 'ffacademy_draft_prefs_v1';
+  const DS_PREF_KEY = 'ffacademy_draft_prefs_v2';
   const STRATEGY_WEIGHTS = {
     balanced: { value: 1.0, need: 1.0, historical: 1.0, sos: 1.0, injury: 1.0, bye: 1.0, rb: 1.0, wr: 1.0, qb: 1.0, te: 1.0 },
     floor:    { value: 1.1, need: 0.95, historical: 1.25, sos: 1.05, injury: 1.35, bye: 1.2, rb: 1.0, wr: 1.0, qb: 1.0, te: 1.0 },
@@ -2253,18 +2273,18 @@
     return `<span${tip} style="font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:8px;background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.border};letter-spacing:.5px;flex-shrink:0;cursor:default;">${cfg.label}</span>`;
   }
 
-  const SLOTS = [
-    {key:'QB',  label:'QB',   pos:['QB']},
-    {key:'RB1', label:'RB',   pos:['RB']},
-    {key:'RB2', label:'RB',   pos:['RB']},
-    {key:'WR1', label:'WR',   pos:['WR']},
-    {key:'WR2', label:'WR',   pos:['WR']},
-    {key:'TE',  label:'TE',   pos:['TE']},
-    {key:'FLX', label:'FLEX', pos:['RB','WR','TE']},
-    {key:'K',   label:'K',    pos:['K']},
-    {key:'DEF', label:'D/ST', pos:['DEF']},
-    {key:'BN1', label:'BENCH',pos:['QB','RB','WR','TE','K','DEF']},
-  ];
+  function buildDraftSlots() {
+    const benchSlots = Array.from({ length: dsBenchSpots }, (_, idx) => ({
+      key: `BN${idx + 1}`,
+      label: 'BENCH',
+      pos: ['QB','RB','WR','TE','K','DEF'],
+    }));
+    return [...STARTER_SLOTS, ...benchSlots];
+  }
+
+  function getTotalRounds() {
+    return STARTER_SLOTS.length + dsBenchSpots;
+  }
 
   const PLAYERS = [
     // [name, pos, team, rank, espnId]
@@ -2364,6 +2384,13 @@
     renderSlotGrid();
     saveDraftPrefs();
   }
+  function setBenchSpots(n) {
+    dsBenchSpots = n;
+    document.querySelectorAll('[id^="bench-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('bench-'+n)?.classList.add('active');
+    updateSetupSubtitle();
+    saveDraftPrefs();
+  }
   function setFormat(f) {
     dsFormat = f;
     document.querySelectorAll('[id^="fmt-"]').forEach(b => b.classList.remove('active'));
@@ -2399,7 +2426,7 @@
   function updateSetupSubtitle() {
     const fmtLabel = {ppr:'PPR', 'half-ppr':'Half PPR', standard:'Standard'}[dsFormat] || 'PPR';
     document.getElementById('ds-setup-subtitle').textContent =
-      `${dsTeamCount}-team snake draft · ${ROUNDS} rounds · ${fmtLabel} scoring`;
+      `${dsTeamCount}-team snake draft · ${getTotalRounds()} rounds · ${fmtLabel} scoring · ${dsBenchSpots} bench spots`;
   }
   function renderSlotGrid() {
     const grid = document.getElementById('ds-slot-grid');
@@ -2435,7 +2462,7 @@
   function saveDraftPrefs() {
     try {
       localStorage.setItem(DS_PREF_KEY, JSON.stringify({
-        dsTeamCount, dsFormat, dsDemoMode, dsUserSlot, dsCpuSpeed, dsStrategy
+        dsTeamCount, dsBenchSpots, dsFormat, dsDemoMode, dsUserSlot, dsCpuSpeed, dsStrategy
       }));
     } catch (_) {}
   }
@@ -2445,7 +2472,8 @@
       const raw = localStorage.getItem(DS_PREF_KEY);
       if (!raw) return;
       const prefs = JSON.parse(raw);
-      if ([10, 12, 18].includes(prefs.dsTeamCount)) dsTeamCount = prefs.dsTeamCount;
+      if ([10, 12, 14, 18].includes(prefs.dsTeamCount)) dsTeamCount = prefs.dsTeamCount;
+      if ([5, 6, 7].includes(prefs.dsBenchSpots)) dsBenchSpots = prefs.dsBenchSpots;
       if (['ppr', 'half-ppr', 'standard'].includes(prefs.dsFormat)) dsFormat = prefs.dsFormat;
       if (typeof prefs.dsDemoMode === 'boolean') dsDemoMode = prefs.dsDemoMode;
       if (Number.isFinite(prefs.dsUserSlot)) dsUserSlot = Math.max(1, Math.min(dsTeamCount, prefs.dsUserSlot));
@@ -2457,7 +2485,10 @@
   function updateFreshnessText() {
     const el = document.getElementById('ds-adp-source');
     if (!el) return;
-    el.innerHTML = `Live ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · ADP ${relTimeLabel(dsLastAdpFetchAt)} · Players ${relTimeLabel(dsLastSleeperFetchAt)} · News ${relTimeLabel(lastNewsFetch)}`;
+    const modeText = dsUsingLive
+      ? 'Live 2026 ADP'
+      : 'Fallback board in use';
+    el.innerHTML = `${modeText} from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · ADP ${relTimeLabel(dsLastAdpFetchAt)} · Players ${relTimeLabel(dsLastSleeperFetchAt)} · News ${relTimeLabel(lastNewsFetch)}`;
   }
 
   function openDraftSim() {
@@ -2485,6 +2516,8 @@
     updateSetupSubtitle();
     document.querySelectorAll('[id^="tc-"]').forEach(b => b.classList.remove('active'));
     document.getElementById('tc-'+dsTeamCount)?.classList.add('active');
+    document.querySelectorAll('[id^="bench-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('bench-'+dsBenchSpots)?.classList.add('active');
     document.querySelectorAll('[id^="fmt-"]').forEach(b => b.classList.remove('active'));
     document.getElementById('fmt-'+dsFormat)?.classList.add('active');
     setStrategy(dsStrategy);
@@ -2563,6 +2596,10 @@
         if (hit.injNote)   p.injNote   = hit.injNote;
         if (hit.yearsExp !== null && hit.yearsExp !== undefined) p.yearsExp = hit.yearsExp;
         if (hit.byeWeek) p.bye = p.bye || hit.byeWeek;
+        if (hit.team) p.team = hit.team;
+        if (hit.position && ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(hit.position)) p.pos = hit.position;
+        if (hit.fullName) p.name = hit.fullName;
+        p.sleeperStatus = hit.sleeperStatus || null;
       } else {
         // fuzzy: last name + position
         const lnKey = normalizePlayerKey(p.name.split(' ').pop()) + '_' + p.pos;
@@ -2571,9 +2608,19 @@
           if (fuzzy.espnId) p.espnId = fuzzy.espnId;
           if (fuzzy.yearsExp !== null && fuzzy.yearsExp !== undefined) p.yearsExp = p.yearsExp ?? fuzzy.yearsExp;
           if (fuzzy.byeWeek) p.bye = p.bye || fuzzy.byeWeek;
+          if (fuzzy.team) p.team = fuzzy.team;
+          if (fuzzy.fullName) p.name = fuzzy.fullName;
+          p.sleeperStatus = fuzzy.sleeperStatus || null;
         }
       }
     });
+
+    for (let idx = PLAYERS.length - 1; idx >= 0; idx -= 1) {
+      const player = PLAYERS[idx];
+      if (['inactive', 'retired'].includes(String(player.sleeperStatus || '').toLowerCase())) {
+        PLAYERS.splice(idx, 1);
+      }
+    }
 
     // Add missing players from Sleeper so the board is much closer to full player coverage.
     let nextId = PLAYERS.length + 5000;
@@ -2650,7 +2697,7 @@
     // Show loading
     document.getElementById('ds-setup').style.display = 'none';
     document.getElementById('ds-loading').style.display = 'flex';
-    document.getElementById('ds-load-msg').textContent = 'Fetching live ADP + player data...';
+    document.getElementById('ds-load-msg').textContent = 'Fetching live 2026 ADP + player data...';
 
     // Run both API calls in parallel
     const [liveData, sleeperMap] = await Promise.all([loadLiveADP(), loadSleeperData()]);
@@ -2659,8 +2706,8 @@
 
     const sleeperCount = Object.keys(sleeperMap).length;
     document.getElementById('ds-load-msg').textContent = liveData.length
-      ? `Live ADP loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
-      : `Using built-in rankings${sleeperCount ? ' · ' + sleeperCount + ' player profiles' : ''}`;
+      ? `Live 2026 ADP loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
+      : `Live ADP unavailable · fallback board loaded${sleeperCount ? ' · ' + sleeperCount + ' player profiles' : ''}`;
     updateFreshnessText();
     saveDraftPrefs();
 
@@ -2668,7 +2715,7 @@
 
     dsAvailable = PLAYERS.map(p => ({...p})).sort((a,b) => a.rank - b.rank);
     dsAllPicks = [];
-    dsUserRoster = SLOTS.map(s => ({...s, player: null}));
+    dsUserRoster = buildDraftSlots().map(s => ({...s, player: null}));
     dsCpuRosters = Array.from({length: dsTeamCount}, () => []);
     dsCurrentPick = 0;
     dsDraftRunning = true;
@@ -2679,8 +2726,8 @@
 
     // Show live ADP badge in topbar
     document.getElementById('ds-pick-info').innerHTML = dsUsingLive
-      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">LIVE ADP</span>`
-      : `<span style="font-size:.75rem;color:rgba(255,255,255,.3);">Built-in Rankings</span>`;
+      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">LIVE 2026 ADP</span>`
+      : `<span style="font-size:.75rem;color:#ffd166;">Fallback Board · verify current preseason ranks</span>`;
 
     const coach = document.getElementById('ds-coach');
     if (coach) coach.style.display = dsDemoMode ? 'block' : 'none';
@@ -2706,7 +2753,7 @@
   }
 
   function updateStatus() {
-    const done = dsCurrentPick >= dsTeamCount * ROUNDS;
+    const done = dsCurrentPick >= dsTeamCount * getTotalRounds();
     if (done) return;
     const round = getRound(dsCurrentPick);
     const pick  = getPickInRound(dsCurrentPick);
@@ -2722,7 +2769,7 @@
       <div style="font-size:.82rem;${isUser?'color:#a855f7;font-weight:700;':'color:rgba(255,255,255,.5);'}">
         ${isUser ? 'YOUR PICK' : `Team ${owner} picking`}
       </div>
-      <div style="margin-left:auto;font-size:.75rem;color:rgba(255,255,255,.3);">${ROUNDS*dsTeamCount - dsCurrentPick} picks remaining</div>`;
+      <div style="margin-left:auto;font-size:.75rem;color:rgba(255,255,255,.3);">${getTotalRounds()*dsTeamCount - dsCurrentPick} picks remaining</div>`;
     const liveEl = document.getElementById('ds-pick-info');
     if (liveEl && !dsUsingLive) liveEl.innerHTML = `<span style="font-size:.78rem;color:rgba(255,255,255,.4);">Rd ${round} · Pk ${dsCurrentPick+1}</span>`;
     document.getElementById('ds-my-turn-badge').style.display = isUser ? 'block' : 'none';
@@ -2730,7 +2777,7 @@
 
   function advanceDraft() {
     if (!dsDraftRunning) return;
-    if (dsCurrentPick >= dsTeamCount * ROUNDS) { completeDraft(); return; }
+    if (dsCurrentPick >= dsTeamCount * getTotalRounds()) { completeDraft(); return; }
     if (isUserPick(dsCurrentPick)) {
       renderAvailable();
       getDemoCoach(null); // pre-pick tip
@@ -2812,7 +2859,7 @@
     const marketValue = Math.max(0, 160 - adpBase);
     const need = needBonus(player, counts, round);
     const yearsExp = Number.isFinite(player.yearsExp) ? player.yearsExp : 3;
-    const historicalProxy = Math.max(0, 8 - Math.abs(5 - yearsExp)) + Math.max(0, (120 - adpBase) / 10);
+    const stabilityScore = Math.max(0, 7 - Math.abs(4 - yearsExp));
     const sos = (TEAM_SOS_INDEX[player.team] || 0) * 2.4;
     const byePenalty = byeConflictPenalty(player, rosterPlayers);
     const injPenalty = injuryPenalty(player);
@@ -2821,7 +2868,7 @@
     let score = (
       marketValue * w.value +
       need * w.need +
-      historicalProxy * w.historical +
+      stabilityScore * w.historical +
       sos * w.sos -
       byePenalty * w.bye -
       injPenalty * w.injury
@@ -2830,7 +2877,7 @@
 
     return {
       score,
-      factors: { marketValue, need, historicalProxy, sos, byePenalty, injPenalty, adpBase, posMult }
+      factors: { marketValue, need, stabilityScore, sos, byePenalty, injPenalty, adpBase, posMult }
     };
   }
 
@@ -3011,7 +3058,7 @@
       const tier = recommendationTier(idx, scoredList.length);
       const repl = replacementScoreByPos[p.pos] || 0;
       const vor = Math.round(e.score - repl);
-      const whyTitle = `Need ${Math.round(e.factors.need)}, Value ${Math.round(e.factors.marketValue)}, Hist ${Math.round(e.factors.historicalProxy)}, SOS ${Math.round(e.factors.sos)}, Bye -${Math.round(e.factors.byePenalty)}, Inj -${Math.round(e.factors.injPenalty)}`;
+      const whyTitle = `Need ${Math.round(e.factors.need)}, Value ${Math.round(e.factors.marketValue)}, Stability ${Math.round(e.factors.stabilityScore)}, SOS ${Math.round(e.factors.sos)}, Bye -${Math.round(e.factors.byePenalty)}, Inj -${Math.round(e.factors.injPenalty)}`;
       row.innerHTML = `
         ${img}
         <span class="ds-pos-badge ${p.pos}">${p.pos}</span>
@@ -3076,8 +3123,10 @@
 
     // ── Intro ──
     if (dsCurrentPick === 0 && isUser) {
-      showCoach('tip', 'Welcome to Your 2026 Mock Draft',
-        `The NFL saw 10 new head coaches and 21 new offensive coordinators this offseason — the most coordinator turnover ever recorded. Player values have shifted dramatically. This Coach panel will explain every pick, flag reaches, and give you real 2026 scheme context as you draft.`);
+      showCoach(dsUsingLive ? 'tip' : 'warning', 'Welcome to Your 2026 Mock Draft',
+        dsUsingLive
+          ? 'This coach uses live 2026 ADP, roster construction, bye weeks, and injury tags to explain picks. It is designed to stay process-based instead of making speculative player takes.'
+          : 'Live ADP is unavailable, so the simulator is using its fallback board. Treat the recommendations as roster-construction help and verify current preseason ranks before trusting player order.');
       return;
     }
 
@@ -3100,66 +3149,26 @@
         return;
       }
 
-      // Bijan Robinson
-      if (p.name.toLowerCase().includes('robinson') && p.team === 'ATL') {
-        showCoach('success', 'Best Pick in the Draft — Bijan + Stefanski',
-          `In 2025 Bijan had 2,298 scrimmage yards — best by any RB in years. Now HC Kevin Stefanski brings his wide zone run system to Atlanta. Proof: in 2022 with Cleveland that same system turned Nick Chubb into a 1,525-yd, 12-TD RB who led the entire NFL. Bijan's ceiling is higher than it has ever been.`);
+      if (p.pos === 'K' || p.pos === 'DEF') {
+        if (round < getTotalRounds() - 1) {
+          showCoach('warning', `${p.pos === 'K' ? 'Kicker' : 'D/ST'} Pick Before the Final Round`,
+            'That position is replaceable during the season. Unless your bench is already full of players you would never drop, the better process is to spend this pick on upside depth.');
+        } else {
+          showCoach('success', 'Correct Late-Round Positioning',
+            'This is the right window for kicker and D/ST. You used earlier rounds on positions with more weekly edge and saved the replaceable spots for the end.');
+        }
         return;
       }
 
-      // Lamar Jackson
-      if (p.name.toLowerCase().includes('lamar') || (p.name.toLowerCase().includes('jackson') && p.team === 'BAL')) {
-        showCoach('success', 'The Only QB Worth Going Early',
-          `Lamar had 915 rushing yards in 2025 on top of passing — that rushing floor makes him 6–9 pts/week better than any pocket passer. New Ravens HC Jesse Minter is a first-time HC from a defensive background, but Lamar himself said the coaching change is "a breath of fresh air." The Ravens built their entire offense around him. That does not change.`);
-        return;
-      }
-
-      // Steelers QB (Aaron Rodgers)
-      if (p.pos === 'QB' && p.team === 'PIT') {
-        showCoach('warning', 'Steelers QB — High Risk, High Reward',
-          `Aaron Rodgers is 42 in 2026, starting under new HC Mike McCarthy. McCarthy called plays for Dak Prescott's back-to-back 4,500+ yard seasons in Dallas, so the scheme works — but Rodgers' age is a real liability. If he goes down, backup Drew Allar (rookie 3rd rounder) takes over. Only draft Rodgers if you have a handcuff strategy.`);
-        return;
-      }
-
-      // Titans players
-      if (p.team === 'TEN') {
-        showCoach('warning', `Titans Player — Robert Saleh System Risk`,
-          `New HC Robert Saleh ran a defense-first Jets team from 2021–24. During that stretch the Jets offense averaged just 18.3 points per game and ranked bottom-10 three of four seasons. Saleh is a great defensive mind but has never run a high-powered offense. Titans skill players carry real system risk in 2026.`);
-        return;
-      }
-
-      // Isaiah Likely / Giants TE
-      if (p.name.toLowerCase().includes('likely') || (p.pos === 'TE' && p.team === 'NYG')) {
-        showCoach('info', 'Isaiah Likely — HC John Harbaugh Breakout Bet',
-          `Likely followed HC John Harbaugh from Baltimore to New York, signing a $40M deal. Harbaugh spent 18 years developing tight ends in Baltimore — Mark Andrews became a top-2 fantasy TE under him. If Harbaugh does the same for Likely with Matt Nagy's West Coast offense, this could be the steal of the draft at current ADP.`);
-        return;
-      }
-
-      // A.J. Brown / Eagles WR
-      if (p.name.toLowerCase().includes('a.j. brown') && p.team === 'PHI') {
-        showCoach('success', 'A.J. Brown — Elite Target Floor',
-          `Brown remains one of the highest-volume alpha WRs in football. In a healthy season he offers league-winning weekly upside with a stable target floor, making him a priority WR1 build-around in most formats.`);
-        return;
-      }
-
-      // Ravens players (post Harbaugh)
-      if (p.team === 'BAL' && p.pos !== 'QB') {
-        showCoach('info', 'Ravens Under Jesse Minter — Stable But New',
-          `HC Jesse Minter is a first-time head coach who spent years as a defensive coordinator. The Ravens retained their offensive staff around Lamar Jackson, so the skill position usage should stay consistent. Derrick Henry, Zay Flowers, and Mark Andrews all project to maintain their roles from 2025.`);
-        return;
-      }
-
-      // Steelers skill positions
-      if (p.team === 'PIT' && p.pos !== 'QB') {
-        showCoach('warning', 'Steelers WR/RB — Passing Game Question Mark',
-          `George Pickens and the Steelers passing game depend entirely on 42-year-old Aaron Rodgers staying healthy. HC Mike McCarthy is pass-friendly — he averaged 36 pass attempts per game in Dallas. But Rodgers' age makes this a boom-or-bust situation. Target Steelers WRs only if Rodgers looks healthy through the preseason.`);
-        return;
-      }
-
-      // Early QB (non-Lamar/Allen)
-      if (p.pos === 'QB' && round <= 3 && p.team !== 'BAL' && p.team !== 'BUF') {
+      if (p.pos === 'QB' && round <= 3) {
         showCoach('warning', `Early QB in Round ${round} — Risky`,
-          `Only Lamar Jackson and Josh Allen justify going before Round 5 — their rushing floors set them apart. For every other QB, the gap between QB5 and QB12 is roughly 3 points per week. Meanwhile, the gap between RB5 and RB12 can be 8–12 points. You likely left more value on the board than you gained.`);
+          'Quarterback depth is usually stronger than RB/WR depth. An early QB can work, but the opportunity cost is that you pass on scarce starter volume at the positions that dry up fastest.');
+        return;
+      }
+
+      if (p.pos === 'TE' && round <= 5) {
+        showCoach('info', 'Early Tight End Build',
+          'An early TE pick is a bet on positional separation. Make the rest of the build work by staying disciplined at RB and WR over the next few rounds.');
         return;
       }
 
@@ -3167,7 +3176,7 @@
       if (isReach({...p, rank: p.rank, adp: p.adp})) {
         const adpStr = p.adp ? `Their live ADP is ${p.adp.toFixed(1)} — you took them ${Math.round(p.adp - dsCurrentPick)} picks before the market.` : '';
         showCoach('warning', 'Reach — Know What You Paid',
-          `${adpStr} A "reach" means you drafted someone before their Average Draft Position. It's not always wrong — if you know a coaching change or role change boosts their value, early is fine. But if you just liked the name, you left a higher-ranked player on the board unnecessarily.`);
+          `${adpStr} A reach is not automatically bad, but you should have a clear reason for paying above market. If the reason is only comfort or familiarity, you probably passed on better value.`);
         return;
       }
 
@@ -3175,16 +3184,19 @@
       if (isValue({...p, adp: p.adp})) {
         const diff = p.adp ? Math.round(p.adp - dsCurrentPick) : null;
         showCoach('success', `Value Pick${diff ? ' — ' + diff + ' Picks Under ADP' : ''}`,
-          `${p.name} was still on the board later than their ADP suggested. Getting players below their market value is how winning rosters are built — you just got something other managers didn't think was available yet. Do this 2–3 times and your roster will outperform all season.`);
+          `${p.name} lasted beyond market expectation. Stacking a few of these discounts is one of the cleanest ways to leave a draft with more roster value than the room paid for.`);
         return;
       }
 
-      // Kelce / elite TE
-      if (p.name.toLowerCase().includes('kelce')) {
-        showCoach('success', 'Travis Kelce — Still the Gold Standard',
-          `Kelce is in his 14th NFL season, but in 2025 he still recorded 900+ receiving yards. The gap between Kelce and the next TE is the biggest positional cliff in fantasy. With Eric Bieniemy back as Chiefs OC in 2026, Patrick Mahomes' tight end usage stays heavy. This pick separates your roster from everyone without an elite TE.`);
+      if (p.pos === 'RB' || p.pos === 'WR') {
+        const countsNow = countPositions(dsUserRoster.filter(s => s.player).map(s => s.player));
+        showCoach('success', `${p.pos} Depth Added`,
+          `You now have ${countsNow.RB} RB and ${countsNow.WR} WR on the roster. Early and middle rounds should usually keep these positions ahead of the secondary ones because they absorb the most lineup volume.`);
         return;
       }
+
+      showCoach('info', 'Process-Based Draft Note',
+        'This pick was graded using roster need, live ADP when available, bye-week overlap, injury tags, and replacement-value drop-off at the position.');
     }
 
     // ── Pre-pick round tips ──
@@ -3193,38 +3205,40 @@
       if (dsKeepCoach) { dsKeepCoach = false; return; }
       if (round === 1) {
         showCoach('tip', 'Round 1 — Build Your Foundation',
-          `Target elite RBs or WRs. Key 2026 angle: Bijan Robinson (ATL) had 2,298 scrimmage yards in 2025 and now gets Kevin Stefanski's run-first wide zone system. CeeDee Lamb, Ja'Marr Chase, and Justin Jefferson are the WRs worth top-5 picks. Do not take a QB or TE here.`);
+          'Target elite RBs or WRs first. The safest opening is still foundation volume at the positions that fill the most starting spots.' );
         return;
       }
       if (round === 2) {
         showCoach('tip', 'Snake Draft — Your Back-to-Back Window',
-          `In a snake draft your Round 2 pick comes right after Round 1 ends. Use this window to lock up both RB and WR. Your first two picks define your entire season. If you took an RB go WR. If you took a WR go RB. No exceptions.`);
+          'Use this turn pair to balance your core. Leaving the first two rounds with at least one RB and one WR is still the cleanest default build.' );
         return;
       }
       if (round === 3 && counts.QB === 0) {
-        showCoach('info', '2026 QB Landscape — Track the Tiers',
-          `Watch when Lamar Jackson and Josh Allen disappear. After them, Tier 2 (Mahomes, Burrow, Hurts) is still strong. A 2026 sleeper: Caleb Williams had a breakout in 2025 and leads a Bears offense that finally has offensive line help. His ADP may be undervaluing him.`);
+        const topQBs = dsAvailable.filter(p => p.pos === 'QB').slice(0, 4).map(p => p.name).join(', ');
+        showCoach('info', 'Track the QB Room, Do Not Chase It',
+          `Top available QBs: ${topQBs || 'board thinning'}. You usually want awareness here, not urgency. Let the room pay up first unless a clear value falls.`);
         return;
       }
       if (round >= 4 && round <= 5 && counts.TE === 0) {
         const topTEs = dsAvailable.filter(p => p.pos === 'TE').slice(0, 3).map(p => p.name).join(', ');
         showCoach('warning', 'TE Cliff — Act Now or Commit to Streaming',
-          `Available top TEs: ${topTEs || 'nearly gone'}. After the top 3, the TE position has a massive drop-off. Wild card: Isaiah Likely (NYG) followed HC John Harbaugh from Baltimore and signed a $40M deal. If Harbaugh develops him like he did Mark Andrews, Likely at his current ADP is a steal.`);
+          `Available top TEs: ${topTEs || 'nearly gone'}. If you pass again, do it intentionally and be ready to stream the position later.`);
         return;
       }
       if (round >= 6 && round <= 8 && counts.QB === 0) {
+        const topQBs = dsAvailable.filter(p => p.pos === 'QB').slice(0, 4).map(p => p.name).join(', ');
         showCoach('tip', 'Prime QB Window — Best Value in the Draft',
-          `Rounds 6–8 is the sweet spot. Mahomes, Burrow, and Hurts available here represent 22–28 pts/week floors. 2026 caution: Steelers QB Aaron Rodgers (age 42) under HC Mike McCarthy is high upside but injury risk. The safer play is Mahomes — Eric Bieniemy returned as Chiefs OC and that offense was elite in 2023.`);
+          `Available QBs: ${topQBs || 'few left'}. This is usually the right part of the draft to take a starter without sacrificing too much RB/WR depth.`);
         return;
       }
-      if (round >= 9 && (counts.K === 0 || counts.DEF === 0)) {
+      if (round >= getTotalRounds() - 1 && (counts.K === 0 || counts.DEF === 0)) {
         showCoach('tip', 'Final Rounds — Kicker and D/ST',
-          `Grab your K and D/ST now. For 2026, target the Ravens D/ST (Jesse Minter is a defensive genius) or Bills D/ST (Joe Brady promoted HC, strong defense returns). Any top-10 K works — never draft them before Round 9. Kicker performance is statistically the most random position in fantasy.`);
+          'Now is the right time to fill kicker and D/ST. You already extracted most of the upside value from the earlier rounds and can close the build without sacrificing depth.' );
         return;
       }
-      if (round === 5 || round === 6) {
-        showCoach('info', '2026 Sleeper Angle — New OCs = New Value',
-          `21 teams have new offensive coordinators in 2026. Teams to target: Chargers (Mike McDaniel as OC, pass-friendly spread), Raiders (Chip Kelly OC, fast-paced high-volume), and Bears (stable system with a developing Caleb Williams). Players on those offenses may be undervalued at current ADP.`);
+      if (!dsUsingLive && (round === 5 || round === 6)) {
+        showCoach('warning', 'Fallback Board Active',
+          'Because live ADP is unavailable, do not treat the player order as exact current-season truth. Use this mock for roster construction practice more than exact player evaluation.' );
         return;
       }
     }
@@ -3295,9 +3309,9 @@
 
   function simulateSingleDraft() {
     let available = PLAYERS.map((p) => ({ ...p })).sort((a, b) => (a.rank || 999) - (b.rank || 999));
-    const userRoster = SLOTS.map((s) => ({ ...s, player: null }));
+    const userRoster = buildDraftSlots().map((s) => ({ ...s, player: null }));
     const cpuRosters = Array.from({ length: dsTeamCount }, () => []);
-    const totalPicks = dsTeamCount * ROUNDS;
+    const totalPicks = dsTeamCount * getTotalRounds();
     const oldPick = dsCurrentPick;
 
     for (let pick = 0; pick < totalPicks; pick++) {
@@ -3414,7 +3428,7 @@
       <div style="text-align:center;margin-bottom:32px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:2px;color:${grade.c};">${grade.g}</div>
         <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;">${grade.t}</div>
-        <div style="font-size:.82rem;color:rgba(255,255,255,.4);">Avg pick rank: #${avgRank.toFixed(1)} · Draft slot: ${dsUserSlot} of ${dsTeamCount} · Mode: ${dsStrategy.toUpperCase()}</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.4);">Avg pick rank: #${avgRank.toFixed(1)} · Draft slot: ${dsUserSlot} of ${dsTeamCount} · Mode: ${dsStrategy.toUpperCase()} · ${dsBenchSpots} bench spots</div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:860px;margin:0 auto 20px auto;">
@@ -3431,9 +3445,9 @@
           <div style="display:flex;flex-direction:column;gap:6px;">${rosterHtml}</div>
         </div>
         <div>
-          <div style="font-size:.68rem;font-weight:800;letter-spacing:3px;color:#a855f7;text-transform:uppercase;margin-bottom:12px;">Draft Recap — All ${ROUNDS * dsTeamCount} Picks</div>
+          <div style="font-size:.68rem;font-weight:800;letter-spacing:3px;color:#a855f7;text-transform:uppercase;margin-bottom:12px;">Draft Recap — All ${getTotalRounds() * dsTeamCount} Picks</div>
           <div style="background:rgba(255,255,255,.02);border-radius:12px;border:1px solid rgba(255,255,255,.06);max-height:480px;overflow-y:auto;">
-            ${Array.from({length: ROUNDS}, (_,r) => `
+            ${Array.from({length: getTotalRounds()}, (_,r) => `
               <div style="padding:6px 10px;background:rgba(255,255,255,.02);font-size:.65rem;font-weight:800;letter-spacing:2px;color:rgba(255,255,255,.3);border-bottom:1px solid rgba(255,255,255,.05);">ROUND ${r+1}</div>
               ${dsAllPicks.filter(p => p.round === r+1).map(p => `
                 <div style="display:flex;gap:8px;align-items:center;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.04);${p.isUser?'background:rgba(124,58,237,.08);':''}">
