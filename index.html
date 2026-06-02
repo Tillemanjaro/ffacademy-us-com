@@ -3037,6 +3037,8 @@
       else if (counts.WR < 3) bonus += 12;
     }
     if (player.pos === 'QB') {
+      if (round <= 2) bonus -= 24;
+      else if (round <= 3) bonus -= 12;
       if (counts.QB < 1 && round >= 5) bonus += 20;
       if (counts.QB < 1 && round >= 8) bonus += 10;
       if (counts.QB >= 1) bonus -= 12;
@@ -3053,6 +3055,40 @@
     return bonus;
   }
 
+  function playerAdpValue(player) {
+    const n = Number(player.adp || player.rank || 400);
+    return Number.isFinite(n) ? n : 400;
+  }
+
+  function buildMarketCandidatePool(eligible, pickIndex, round) {
+    const pickNo = pickIndex + 1;
+    const window = round <= 3
+      ? dsTeamCount * 0.85
+      : (round <= 7 ? dsTeamCount * 1.15 : dsTeamCount * 1.55);
+    const maxAdp = pickNo + window;
+
+    let pool = eligible.filter((p) => playerAdpValue(p) <= maxAdp);
+
+    // Prevent unrealistic first/second-round QB runs in one-QB formats.
+    if (round <= 2) {
+      pool = pool.filter((p) => p.pos !== 'QB' || playerAdpValue(p) <= 6);
+    }
+
+    // Keep enough candidates so the simulation still has variance.
+    if (pool.length < Math.min(20, eligible.length)) {
+      const fallbackTop = eligible
+        .slice()
+        .sort((a, b) => playerAdpValue(a) - playerAdpValue(b))
+        .slice(0, Math.min(24, eligible.length));
+      const seen = new Set(pool.map((p) => p.id));
+      fallbackTop.forEach((p) => {
+        if (!seen.has(p.id)) pool.push(p);
+      });
+    }
+
+    return pool;
+  }
+
   function scorePlayerForRoster(player, rosterPlayers, counts, round, isCpu = false) {
     const w = STRATEGY_WEIGHTS[dsStrategy] || STRATEGY_WEIGHTS.balanced;
     const adpBase = Number(player.adp || player.rank || 300);
@@ -3065,13 +3101,15 @@
     const injPenalty = injuryPenalty(player);
 
     const posMult = w[player.pos.toLowerCase()] || 1;
+    const reachPenalty = Math.max(0, adpBase - (dsCurrentPick + 1) - (dsTeamCount * 0.35));
     let score = (
       marketValue * w.value +
       need * w.need +
       stabilityScore * w.historical +
       sos * w.sos -
       byePenalty * w.bye -
-      injPenalty * w.injury
+      injPenalty * w.injury -
+      reachPenalty * 1.8
     ) * posMult;
     if (!isCpu && player.adp && player.adp < dsCurrentPick - (dsTeamCount * 0.45)) score += 7;
 
@@ -3525,13 +3563,18 @@
       const rosterSlots = isUser ? userRoster : null;
       const counts = countPositions(rosterPlayers);
 
-      const scored = available
-        .filter((p) => canAddPlayerToRoster(p, rosterPlayers, rosterSlots))
+      const eligible = available.filter((p) => canAddPlayerToRoster(p, rosterPlayers, rosterSlots));
+      if (!eligible.length) break;
+
+      const marketPool = buildMarketCandidatePool(eligible, pick, round);
+      const scored = marketPool
         .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, !isUser) }))
         .sort((a, b) => b.eval.score - a.eval.score);
       if (!scored.length) break;
 
-      const pickIdx = isUser ? 0 : Math.min(scored.length - 1, Math.floor(Math.random() * Math.min(3, scored.length)));
+      const pickIdx = isUser
+        ? 0
+        : Math.min(scored.length - 1, Math.floor(Math.random() * Math.min(6, scored.length)));
       const chosen = scored[pickIdx].p;
       available = available.filter((p) => p.id !== chosen.id);
 
