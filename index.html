@@ -2803,6 +2803,22 @@
       return true;
     });
 
+    // In ALL view, rank by next-best recommendation score for the team on the clock.
+    if (dsPosFilter === 'ALL') {
+      const onClockIsUser = isUserPick(dsCurrentPick);
+      const rosterPlayers = onClockIsUser
+        ? dsUserRoster.filter((s) => s.player).map((s) => s.player)
+        : (dsCpuRosters[pickOwner(dsCurrentPick) - 1] || []);
+      const counts = countPositions(rosterPlayers);
+      list = list
+        .map((p) => ({
+          p,
+          score: scorePlayerForRoster(p, rosterPlayers, counts, round, !onClockIsUser).score
+        }))
+        .sort((a, b) => b.score - a.score)
+        .map((x) => x.p);
+    }
+
     el.innerHTML = '';
 
     if (isUser) {
