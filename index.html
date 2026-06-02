@@ -412,6 +412,107 @@
       margin-bottom: 4px;
     }
 
+    .news-shell {
+      display: grid;
+      gap: 14px;
+    }
+
+    .news-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .news-status {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border: 1px solid rgba(14, 124, 123, 0.22);
+      border-radius: 999px;
+      background: #eef8f7;
+      color: var(--brand-strong);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .news-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .news-card {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .news-card h3 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .news-card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .news-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .news-card a {
+      color: var(--brand-strong);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .news-card a:hover,
+    .news-card a:focus-visible {
+      text-decoration: underline;
+      outline: none;
+    }
+
+    .news-empty {
+      margin: 0;
+      padding: 14px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+    }
+
     .reveal-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -904,6 +1005,14 @@
         padding: 14px;
       }
 
+      .news-toolbar {
+        padding: 10px;
+      }
+
+      .news-card h3 {
+        font-size: 17px;
+      }
+
       .metric {
         min-height: 62px;
         padding: 9px;
@@ -1056,6 +1165,30 @@
         font-size: 13px;
       }
 
+      .news-toolbar {
+        gap: 8px;
+      }
+
+      .news-status {
+        font-size: 13px;
+      }
+
+      .news-card {
+        padding: 12px;
+      }
+
+      .news-card h3 {
+        font-size: 15px;
+      }
+
+      .news-card p {
+        font-size: 13px;
+      }
+
+      .news-meta {
+        font-size: 11px;
+      }
+
       .callout strong {
         margin-bottom: 3px;
       }
@@ -1161,7 +1294,7 @@
         </div>
         <div class="hero-visual" aria-label="Stylized preview of online learning content">
           <div class="metric-stack">
-            <div class="metric"><strong>4</strong><span>lesson moves</span></div>
+            <div class="metric"><strong>5</strong><span>lesson moves</span></div>
             <div class="metric"><strong>1</strong><span>scenario</span></div>
             <div class="metric"><strong>5</strong><span>check items</span></div>
           </div>
@@ -1233,9 +1366,18 @@
           ]
         },
         {
+          type: "news",
+          nav: "Current News",
+          kicker: "Step 3",
+          title: "Training Space Current News",
+          summary: "Pull live NFL headlines from ESPN and scan them for player/story mentions you care about.",
+          trackedTerms: ["Myles Garrett", "AJ Brown", "trade", "injury"],
+          sourceUrl: "https://site.api.espn.com/apis/site/v2/sports/football/nfl/news"
+        },
+        {
           type: "scenario",
           nav: "Scenario",
-          kicker: "Step 3",
+          kicker: "Step 4",
           title: "Try it in context",
           summary: "A learner reaches the middle of a module and starts clicking ahead without reading. Which intervention best supports learning without stopping momentum?",
           options: [
@@ -1256,7 +1398,7 @@
         {
           type: "quiz",
           nav: "Knowledge Check",
-          kicker: "Step 4",
+          kicker: "Step 5",
           title: "Knowledge check",
           summary: "Answer each question, then submit to see your score and review explanations.",
           questions: [
@@ -1329,6 +1471,15 @@
     const lessonStage = document.getElementById("lessonStage");
     const progressBar = document.getElementById("progressBar");
     const progressLabel = document.getElementById("progressLabel");
+    const fallbackNewsItems = [
+      {
+        headline: "ESPN NFL News Feed",
+        description: "Live feed unavailable right now in this browser session. Tap refresh or open ESPN directly.",
+        link: "https://www.espn.com/nfl/",
+        published: "",
+        source: "ESPN"
+      }
+    ];
 
     function init() {
       courseTitle.textContent = moduleData.courseTitle;
@@ -1381,6 +1532,12 @@
       });
 
       bindInteractions();
+
+      moduleData.sections.forEach((section, index) => {
+        if (section.type === "news") {
+          refreshNews(index);
+        }
+      });
     }
 
     function renderBody(section, index) {
@@ -1425,6 +1582,20 @@
               `).join("")}
             </div>
             <div class="scenario-feedback" aria-live="polite">Choose the response you would use, then review the coaching note.</div>
+          </div>
+        `;
+      }
+
+      if (section.type === "news") {
+        const tracked = (section.trackedTerms || []).map((term) => `<span class="chip">${term}</span>`).join("");
+        return `
+          <div class="news-shell" data-news="${index}">
+            <div class="news-toolbar">
+              <p class="news-status" data-news-status>Loading ESPN headlines...</p>
+              <button class="btn secondary" type="button" data-news-refresh="${index}">Refresh News</button>
+            </div>
+            <div class="chip-row" aria-label="Tracked topics">${tracked}</div>
+            <div class="news-list" data-news-list></div>
           </div>
         `;
       }
@@ -1480,6 +1651,134 @@
       const quiz = document.getElementById("knowledgeCheck");
       if (quiz) {
         quiz.addEventListener("submit", gradeQuiz);
+      }
+
+      lessonStage.querySelectorAll("[data-news-refresh]").forEach((button) => {
+        button.addEventListener("click", () => refreshNews(Number(button.dataset.newsRefresh), true));
+      });
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function formatRelativeTime(value) {
+      if (!value) {
+        return "";
+      }
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return "";
+      }
+      const minutes = Math.max(1, Math.round((Date.now() - date.getTime()) / 60000));
+      if (minutes < 60) {
+        return `${minutes}m ago`;
+      }
+      const hours = Math.round(minutes / 60);
+      if (hours < 48) {
+        return `${hours}h ago`;
+      }
+      const days = Math.round(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function renderNewsItems(sectionIndex, items, sourceLabel) {
+      const root = lessonStage.querySelector(`[data-news="${sectionIndex}"]`);
+      if (!root) {
+        return;
+      }
+      const section = moduleData.sections[sectionIndex];
+      const list = root.querySelector("[data-news-list]");
+      const status = root.querySelector("[data-news-status]");
+      const trackedTerms = (section.trackedTerms || []).map((term) => term.toLowerCase());
+
+      if (!items.length) {
+        list.innerHTML = '<p class="news-empty">No headlines returned right now. Tap refresh or open ESPN directly.</p>';
+        status.textContent = `No live headlines available from ${sourceLabel}.`;
+        return;
+      }
+
+      list.innerHTML = items.map((item) => {
+        const headline = escapeHtml(item.headline || "Untitled headline");
+        const description = escapeHtml(item.description || "No summary available for this article.");
+        const source = escapeHtml(item.source || sourceLabel);
+        const relative = formatRelativeTime(item.published);
+        const link = item.link || section.sourceUrl;
+        const matched = trackedTerms.some((term) => headline.toLowerCase().includes(term));
+        return `
+          <article class="news-card">
+            <div class="news-meta">
+              <span>${source}</span>
+              ${relative ? `<span>${relative}</span>` : ""}
+              ${matched ? '<span class="chip">Tracked mention</span>' : ""}
+            </div>
+            <h3>${headline}</h3>
+            <p>${description}</p>
+            <a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Read article</a>
+          </article>
+        `;
+      }).join("");
+
+      status.textContent = `Showing ${items.length} headline${items.length === 1 ? "" : "s"} from ${sourceLabel}.`;
+      markComplete(sectionIndex);
+    }
+
+    async function refreshNews(sectionIndex, force = false) {
+      const section = moduleData.sections[sectionIndex];
+      const root = lessonStage.querySelector(`[data-news="${sectionIndex}"]`);
+      if (!section || section.type !== "news" || !root) {
+        return;
+      }
+
+      const status = root.querySelector("[data-news-status]");
+      const refreshButton = root.querySelector("[data-news-refresh]");
+      const list = root.querySelector("[data-news-list]");
+      status.textContent = "Fetching ESPN headlines...";
+      if (force) {
+        list.innerHTML = '<p class="news-empty">Refreshing feed...</p>';
+      }
+      if (refreshButton) {
+        refreshButton.disabled = true;
+      }
+
+      try {
+        const endpoint = new URL(section.sourceUrl);
+        endpoint.searchParams.set("limit", "12");
+        endpoint.searchParams.set("_", String(Date.now()));
+        const response = await fetch(endpoint.toString(), { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`News request failed: ${response.status}`);
+        }
+        const payload = await response.json();
+        const rawItems = Array.isArray(payload.articles) ? payload.articles : [];
+        const parsed = rawItems.map((article) => ({
+          headline: article.headline,
+          description: article.description,
+          link: article.links?.web?.href || article.links?.mobile?.href || article.link || section.sourceUrl,
+          published: article.published || article.lastModified || "",
+          source: article.source || "ESPN"
+        })).filter((item) => item.headline);
+
+        const trackedTerms = (section.trackedTerms || []).map((term) => term.toLowerCase());
+        parsed.sort((a, b) => {
+          const aTracked = trackedTerms.some((term) => (a.headline || "").toLowerCase().includes(term)) ? 1 : 0;
+          const bTracked = trackedTerms.some((term) => (b.headline || "").toLowerCase().includes(term)) ? 1 : 0;
+          return bTracked - aTracked;
+        });
+
+        renderNewsItems(sectionIndex, parsed.slice(0, 8), "ESPN");
+      } catch (error) {
+        renderNewsItems(sectionIndex, fallbackNewsItems, "ESPN");
+        status.textContent = "Could not load live ESPN feed in this browser session. Showing fallback link.";
+      } finally {
+        if (refreshButton) {
+          refreshButton.disabled = false;
+        }
       }
     }
 
