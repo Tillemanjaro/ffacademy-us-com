@@ -2062,6 +2062,52 @@
 </style>
 
 <script>
+  // ═══════════ PLAYER DATA WITH ESPN IDS ═══════════
+  const PLAYERS = [
+    { id: 1,    name: 'Bijan Robinson', pos: 'RB', team: 'ATL', rank: 2, espnId: 4430807 },
+    { id: 2,    name: 'CeeDee Lamb', pos: 'WR', team: 'DAL', rank: 5, espnId: 4241389 },
+    { id: 3,    name: 'Ja\'Marr Chase', pos: 'WR', team: 'CIN', rank: 3, espnId: 4243167 },
+    { id: 4,    name: 'Justin Jefferson', pos: 'WR', team: 'MIN', rank: 4, espnId: 4242919 },
+    { id: 5,    name: 'Josh Allen', pos: 'QB', team: 'BUF', rank: 11, espnId: 3918298 },
+    { id: 6,    name: 'Lamar Jackson', pos: 'QB', team: 'BAL', rank: 9, espnId: 3916387 },
+    { id: 7,    name: 'Travis Kelce', pos: 'TE', team: 'KC', rank: 8, espnId: 15847 },
+    { id: 8,    name: 'Saquon Barkley', pos: 'RB', team: 'PHI', rank: 7, espnId: 4050089 },
+    { id: 9,    name: 'Puka Nacua', pos: 'WR', team: 'LAR', rank: 6, espnId: 4426515 },
+    { id: 10,   name: 'Patrick Mahomes', pos: 'QB', team: 'KC', rank: 12, espnId: 4242648 },
+    { id: 11,   name: 'Derrick Henry', pos: 'RB', team: 'BAL', rank: 15, espnId: 4242452 },
+    { id: 12,   name: 'Malik Nabers', pos: 'WR', team: 'NYG', rank: 16, espnId: 4558833 },
+    { id: 13,   name: 'Joe Burrow', pos: 'QB', team: 'CIN', rank: 13, espnId: 4240007 },
+    { id: 14,   name: 'Jalen Hurts', pos: 'QB', team: 'PHI', rank: 10, espnId: 4429666 },
+    { id: 15,   name: 'Brock Bowers', pos: 'TE', team: 'LV', rank: 28, espnId: 4700121 },
+    { id: 16,   name: 'Trey McBride', pos: 'TE', team: 'ARI', rank: 29, espnId: 4428769 },
+    { id: 17,   name: 'Trevor Lawrence', pos: 'QB', team: 'JAX', rank: 30, espnId: 4360310 },
+    { id: 18,   name: 'Jaylen Waddle', pos: 'WR', team: 'MIA', rank: 14, espnId: 4242919 },
+    { id: 19,   name: 'Stefon Diggs', pos: 'WR', team: 'HOU', rank: 20, espnId: 4033127 },
+    { id: 20,   name: 'Tyreek Hill', pos: 'WR', team: 'MIA', rank: 18, espnId: 4036139 },
+    { id: 21,   name: 'Davante Adams', pos: 'WR', team: 'LV', rank: 19, espnId: 3943606 },
+    { id: 22,   name: 'Calvin Ridley', pos: 'WR', team: 'TEN', rank: 25, espnId: 4241388 },
+    { id: 23,   name: 'Brandon Aiyuk', pos: 'WR', team: 'SF', rank: 26, espnId: 4429668 },
+    { id: 24,   name: 'Jaylen Brown', pos: 'RB', team: 'PIT', rank: 27, espnId: 4428757 },
+    { id: 25,   name: 'David Montgomery', pos: 'RB', team: 'DET', rank: 24, espnId: 4241390 },
+    { id: 26,   name: 'Christian McCaffrey', pos: 'RB', team: 'SF', rank: 1, espnId: 4240019 },
+    { id: 27,   name: 'Ashton Jeanty', pos: 'RB', team: 'BYU', rank: 22, espnId: 4749046 },
+    { id: 28,   name: 'Jaylen Waddle', pos: 'WR', team: 'MIA', rank: 17, espnId: 4427883 },
+    { id: 29,   name: 'DeAndre Washington', pos: 'RB', team: 'ARI', rank: 21, espnId: 4032800 },
+    { id: 30,   name: 'Dallas Goedert', pos: 'TE', team: 'PHI', rank: 31, espnId: 4241385 },
+    { id: 31,   name: 'Mark Andrews', pos: 'TE', team: 'BAL', rank: 32, espnId: 4426511 },
+    { id: 32,   name: 'C.H. Elliott', pos: 'TE', team: 'TB', rank: 33, espnId: 15849 },
+    { id: 33,   name: 'Sam LaPorta', pos: 'TE', team: 'DET', rank: 34, espnId: 4427882 },
+    { id: 34,   name: 'Evan Engram', pos: 'TE', team: 'JAX', rank: 35, espnId: 4241386 },
+    { id: 35,   name: 'Kyle Pitts', pos: 'TE', team: 'ATL', rank: 36, espnId: 4427886 },
+    { id: 36,   name: 'Ravens Defense', pos: 'DEF', team: 'BAL', rank: 125, espnId: null },
+    { id: 37,   name: 'Bills Defense', pos: 'DEF', team: 'BUF', rank: 126, espnId: null },
+    { id: 38,   name: '49ers Defense', pos: 'DEF', team: 'SF', rank: 127, espnId: null },
+    { id: 39,   name: 'Chiefs Defense', pos: 'DEF', team: 'KC', rank: 128, espnId: null },
+    { id: 40,   name: 'Justin Tucker', pos: 'K', team: 'TB', rank: 200, espnId: 3054220 },
+    { id: 41,   name: 'Harrison Butker', pos: 'K', team: 'KC', rank: 201, espnId: 4037396 },
+    { id: 42,   name: 'Greg Joseph', pos: 'K', team: 'MIN', rank: 202, espnId: 4428755 }
+  ];
+
   // ═══════════ DRAFT SIMULATOR v2 — live ADP, variable teams, demo mode ═══════════
   const POS_COLOR = { QB:'#ff6b6b', RB:'#00C853', WR:'#4FC3F7', TE:'#FFD700', K:'#CE93D8', DEF:'#80DEEA' };
   const ROUNDS = 10;
