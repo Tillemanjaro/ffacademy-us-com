@@ -2046,7 +2046,7 @@
 <!-- ═══════════════════════════════════════════════════════
      TRAINING LAB OVERLAY — guided modules + drills + certifications
 ═══════════════════════════════════════════════════════ -->
-<div id="training-lab" style="display:none;position:fixed;inset:0;background:#07080d;z-index:10000;overflow:hidden;flex-direction:column;font-family:'Inter',sans-serif;">
+<div id="training-lab" style="display:none;position:fixed;inset:0;background:radial-gradient(circle at 14% 12%, rgba(245,158,11,.22), rgba(7,8,13,0) 32%),radial-gradient(circle at 86% 88%, rgba(59,130,246,.14), rgba(7,8,13,0) 36%),#07080d;z-index:10000;overflow:hidden;flex-direction:column;font-family:'Inter',sans-serif;">
   <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(10,10,18,.95);">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Fantasy Training Lab</div>
     <div id="tl-progress-pill" style="margin-left:auto;font-size:.72rem;color:rgba(255,255,255,.65);">Progress: 0%</div>
@@ -2058,6 +2058,56 @@
 
   <div style="flex:1;overflow-y:auto;padding:16px;" id="tl-content"></div>
 </div>
+<style>
+  .tl-card {
+    border: 1px solid rgba(255, 255, 255, .12);
+    border-radius: 14px;
+    background: linear-gradient(145deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    box-shadow: 0 12px 28px rgba(0,0,0,.28);
+  }
+  .tl-case {
+    border: 1px solid rgba(245, 158, 11, .28);
+    border-radius: 12px;
+    background: linear-gradient(130deg, rgba(245,158,11,.12), rgba(59,130,246,.09));
+    padding: 10px 12px;
+  }
+  .tl-player-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 9px 5px 5px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(0,0,0,.22);
+    font-size: .74rem;
+    color: rgba(255,255,255,.82);
+    margin: 4px 6px 0 0;
+  }
+  .tl-player-chip img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    background: rgba(255,255,255,.06);
+  }
+  .tl-option {
+    text-align: left;
+    padding: 11px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.15);
+    background: rgba(255,255,255,.04);
+    color: #fff;
+    font-size: .82rem;
+    transition: transform .16s ease, border-color .16s ease, background .16s ease;
+  }
+  .tl-option:hover {
+    transform: translateY(-1px);
+    border-color: rgba(245,158,11,.5);
+    background: rgba(245,158,11,.08);
+  }
+</style>
 
 <!-- ═══════════════════════════════════════════════════════
      MOCK DRAFT SIMULATOR OVERLAY  v2 — live ADP, variable teams, demo mode
@@ -3870,6 +3920,46 @@
     { q: 'When trailing big in projections, choose:', options: ['Higher floor', 'Higher ceiling', 'Avoid lineup changes'], a: 1, tag: 'cert-ceiling', explain: 'Ceiling gives comeback probability when baseline is insufficient.' },
   ];
 
+  const TL_MODULE_MEDIA = {
+    scenarios: {
+      eyebrow: 'Draft Clock Live',
+      image: 'https://a.espncdn.com/i/headshots/nfl/players/full/4430807.png',
+      caption: 'Example lens: elite anchor backs like Bijan Robinson can shape room behavior in Round 1.'
+    },
+    lineup: {
+      eyebrow: 'Weekly Start/Sit Room',
+      image: 'https://a.espncdn.com/i/headshots/nfl/players/full/4426515.png',
+      caption: 'Example lens: players with consistent target volume stabilize close matchups.'
+    },
+    waiver: {
+      eyebrow: 'Waiver Intel Desk',
+      image: 'https://a.espncdn.com/i/headshots/nfl/players/full/4035538.png',
+      caption: 'Example lens: role changes, not highlights, drive winning waiver bids.'
+    },
+    trade: {
+      eyebrow: 'Trade Workshop',
+      image: 'https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png',
+      caption: 'Example lens: market timing and roster fit usually beat raw projection debates.'
+    },
+    cert: {
+      eyebrow: 'Final Evaluation',
+      image: 'https://a.espncdn.com/i/headshots/nfl/players/full/3916387.png',
+      caption: 'Example lens: certification checks process quality, not one lucky outcome.'
+    }
+  };
+
+  const TL_CASE_STUDIES = {
+    'early-qb': { title: 'Case Study: Positional Opportunity Cost', body: 'In one-QB formats, managers who spent premium picks on QB often needed perfect injury luck at RB/WR to keep pace. Teams that secured foundation volume first had more margin each week.' },
+    'bye-cluster': { title: 'Case Study: Bye Week Compression', body: 'Stacking three starters with the same bye can force you to start two replacement-level players in one week. Over a full season, those forced lineups can be the difference between playoff seed lines.' },
+    'late-te': { title: 'Case Study: Tier Cliff at Tight End', body: 'When the last member of a clear TE tier is still on the board, paying a small premium often outperforms waiting two rounds and entering weekly streaming volatility.' },
+    'lineup-floor': { title: 'Case Study: Floor Protection', body: 'In projection-favored matchups, volume profiles are often higher EV than splash-only players. The goal is to avoid a 3-point outcome, not chase a 30-point miracle.' },
+    'lineup-ceiling': { title: 'Case Study: Comeback Math', body: 'When projected far behind, volatility is your ally. Ceiling outcomes are less likely, but they are the only path to close large projection gaps.' },
+    'faab-underbid': { title: 'Case Study: Role Change Waiver', body: 'When a backup inherits high-value touches, underbidding to save budget can be a season-losing mistake. FAAB should follow expected rest-of-season role, not name value.' },
+    'trade-needs': { title: 'Case Study: Trading From Depth', body: 'Fair-value trades that fix your thinnest starting spot improve lineup quality more than hoarding surplus bench points.' },
+    'sell-high': { title: 'Case Study: Efficiency Spike Window', body: 'When production jumps faster than underlying usage, that is often the right market window to explore value-reset trades.' },
+    'cert-core': { title: 'Case Study: Foundation Build', body: 'Most winning builds in standard one-QB leagues start by locking predictable RB/WR volume before allocating draft capital to replaceable positions.' }
+  };
+
   let tlState = {
     activeTab: 'tracks',
     teachMode: true,
@@ -3975,34 +4065,42 @@
   function renderTracksTab() {
     const topMistakes = Object.entries(tlState.mistakes || {}).sort((a, b) => b[1] - a[1]).slice(0, 4);
     return `
-      <div style="max-width:1060px;margin:0 auto;display:grid;gap:14px;">
+      <div style="max-width:1100px;margin:0 auto;display:grid;gap:16px;">
+        <div style="padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:linear-gradient(135deg, rgba(245,158,11,.12), rgba(79,195,247,.08));">
+          <div style="font-size:.7rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Fantasy Training Platform</div>
+          <div style="font-size:1.05rem;font-weight:800;margin-bottom:6px;">Choose your learning path and train like a real manager.</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.72);line-height:1.6;">Each track blends curriculum, drills, and feedback. You are not just reading content - you are practicing draft decisions with coaching context.</div>
+        </div>
+
         <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
-          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Guided Paths</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:10px;">Guided Paths</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;">
             ${TL_TRACKS.map((t) => `
-              <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;background:rgba(0,0,0,.2);">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                  <div style="font-weight:800;font-size:.9rem;">${t.label} Track</div>
-                  ${tlState.checkpoints[t.id] ? '<span style="font-size:.65rem;color:#4dff8a;">Checkpoint Complete</span>' : '<span style="font-size:.65rem;color:rgba(255,255,255,.45);">Checkpoint Pending</span>'}
+              <div style="border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px;background:rgba(0,0,0,.25);box-shadow:0 10px 28px rgba(0,0,0,.25);">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;">
+                  <div style="font-weight:800;font-size:.95rem;">${t.label} Track</div>
+                  ${tlState.checkpoints[t.id] ? '<span style="font-size:.64rem;color:#4dff8a;letter-spacing:.5px;">Checkpoint Complete</span>' : '<span style="font-size:.64rem;color:rgba(255,255,255,.45);letter-spacing:.5px;">Checkpoint Pending</span>'}
                 </div>
-                <div style="font-size:.78rem;color:rgba(255,255,255,.68);margin:8px 0 10px 0;line-height:1.5;">${t.focus}</div>
+                <div style="font-size:.8rem;color:rgba(255,255,255,.72);margin:8px 0 12px 0;line-height:1.55;">${t.focus}</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                  <button onclick="goTo(${t.targetStep});closeTrainingLab();" style="background:rgba(79,195,247,.15);color:#9be3ff;border:1px solid rgba(79,195,247,.35);padding:6px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;">Open Curriculum</button>
-                  <button onclick="markTrackCheckpoint('${t.id}')" style="background:rgba(0,200,83,.15);color:#4dff8a;border:1px solid rgba(0,200,83,.35);padding:6px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;">Mark Checkpoint</button>
+                  <button onclick="goTo(${t.targetStep});closeTrainingLab();" style="background:rgba(79,195,247,.15);color:#9be3ff;border:1px solid rgba(79,195,247,.35);padding:7px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;font-weight:700;">Open Curriculum</button>
+                  <button onclick="markTrackCheckpoint('${t.id}')" style="background:rgba(0,200,83,.15);color:#4dff8a;border:1px solid rgba(0,200,83,.35);padding:7px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;font-weight:700;">Mark Checkpoint</button>
                 </div>
               </div>
             `).join('')}
           </div>
         </div>
 
-        <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
-          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Mistake Tracker</div>
-          ${topMistakes.length ? topMistakes.map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.8rem;"><span>${k.replace(/-/g,' ')}</span><span>${v}x</span></div>`).join('') : '<div style="font-size:.8rem;color:rgba(255,255,255,.62);">No mistakes logged yet. Complete drills to build personalized coaching data.</div>'}
-        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
+          <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+            <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Mistake Tracker</div>
+            ${topMistakes.length ? topMistakes.map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.82rem;"><span>${k.replace(/-/g,' ')}</span><span>${v}x</span></div>`).join('') : '<div style="font-size:.82rem;color:rgba(255,255,255,.62);line-height:1.55;">No mistakes logged yet. Complete drills to build personalized coaching data.</div>'}
+          </div>
 
-        <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
-          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Teaching Workflow</div>
-          <div style="font-size:.8rem;color:rgba(255,255,255,.72);line-height:1.6;">Use this order for new players: Beginner Track → Draft Drills → Lineup Lab → Waiver Lab → Trade Lab → Certification. This creates concept learning, then decision practice, then evaluation.</div>
+          <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+            <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Coach Workflow</div>
+            <div style="font-size:.82rem;color:rgba(255,255,255,.72);line-height:1.6;">Recommended order: Beginner Track → Draft Drills → Lineup Lab → Waiver Lab → Trade Lab → Certification. This mirrors real fantasy progression: concepts first, then game-speed decisions, then evaluation.</div>
+          </div>
         </div>
       </div>`;
   }
@@ -4010,11 +4108,14 @@
   function renderQuestionTab(moduleId, title, subtitle, questions) {
     const state = ensureModuleState(moduleId);
     const q = questions[state.idx];
+    const media = TL_MODULE_MEDIA[moduleId] || TL_MODULE_MEDIA.scenarios;
+    const caseStudy = TL_CASE_STUDIES[q?.tag] || { title: 'Case Study: Process Over Hype', body: 'Winning managers focus on role, volume, and leverage points - then execute that process consistently.' };
+
     if (!q) {
       tlState.completed[moduleId] = true;
       saveTrainingLabState();
       return `
-        <div style="max-width:860px;margin:0 auto;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);padding:18px;">
+        <div style="max-width:980px;margin:0 auto;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);padding:18px;">
           <div style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">${title} Complete</div>
           <div style="font-size:.82rem;color:rgba(255,255,255,.65);margin-bottom:14px;">Score: ${state.score} / ${questions.length}</div>
           <button onclick="restartModule('${moduleId}')" style="background:rgba(79,195,247,.15);color:#9be3ff;border:1px solid rgba(79,195,247,.35);padding:8px 12px;border-radius:8px;cursor:pointer;">Retry Module</button>
@@ -4022,22 +4123,42 @@
     }
 
     return `
-      <div style="max-width:860px;margin:0 auto;display:grid;gap:12px;">
-        <div style="border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);padding:14px;">
-          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">${title}</div>
-          <div style="font-size:.8rem;color:rgba(255,255,255,.68);margin-bottom:10px;">${subtitle}</div>
-          <div style="font-size:.76rem;color:rgba(255,255,255,.5);margin-bottom:8px;">Question ${state.idx + 1} of ${questions.length}</div>
+      <div style="max-width:980px;margin:0 auto;display:grid;gap:12px;">
+        <div style="border:1px solid rgba(255,255,255,.14);border-radius:14px;background:linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.02));padding:14px;box-shadow:0 14px 36px rgba(0,0,0,.3);">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;align-items:center;margin-bottom:10px;">
+            <div>
+              <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:6px;">${media.eyebrow}</div>
+              <div style="font-size:1.08rem;font-weight:800;line-height:1.25;margin-bottom:4px;">${title}</div>
+              <div style="font-size:.8rem;color:rgba(255,255,255,.68);line-height:1.55;">${subtitle}</div>
+              <div style="font-size:.74rem;color:rgba(255,255,255,.55);margin-top:6px;">Question ${state.idx + 1} of ${questions.length}</div>
+            </div>
+            <div style="justify-self:end;">
+              <img src="${media.image}" alt="Training visual" style="width:92px;height:92px;border-radius:14px;object-fit:cover;object-position:top center;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);" onerror="this.style.display='none'">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:12px;">
+            <div style="border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;background:rgba(0,0,0,.22);">
+              <div style="font-size:.64rem;color:#ffd166;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:5px;">Real Example Lens</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.74);line-height:1.55;">${media.caption}</div>
+            </div>
+            <div style="border:1px solid rgba(79,195,247,.26);border-radius:10px;padding:10px;background:rgba(79,195,247,.08);">
+              <div style="font-size:.64rem;color:#9be3ff;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:5px;">Case Study</div>
+              <div style="font-size:.78rem;color:rgba(255,255,255,.8);line-height:1.55;"><strong>${caseStudy.title}:</strong> ${caseStudy.body}</div>
+            </div>
+          </div>
+
           <div style="font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:10px;">${q.q}</div>
-          ${tlState.teachMode && q.hint ? `<div style="font-size:.76rem;color:#9be3ff;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);padding:7px 9px;border-radius:8px;margin-bottom:10px;">Teach hint: ${q.hint}</div>` : ''}
+          ${tlState.teachMode && q.hint ? `<div style="font-size:.76rem;color:#9be3ff;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);padding:8px 10px;border-radius:8px;margin-bottom:10px;">Teach hint: ${q.hint}</div>` : ''}
           <div style="display:grid;gap:8px;">
             ${q.options.map((opt, idx) => `
               <button onclick="answerTrainingQuestion('${moduleId}', ${idx})" ${state.answered ? 'disabled' : ''}
-                style="text-align:left;padding:10px;border-radius:8px;cursor:${state.answered ? 'default' : 'pointer'};border:1px solid ${state.answered ? (idx === q.a ? 'rgba(0,200,83,.4)' : (idx === state.selected ? 'rgba(255,61,61,.4)' : 'rgba(255,255,255,.12)')) : 'rgba(255,255,255,.15)'};background:${state.answered ? (idx === q.a ? 'rgba(0,200,83,.12)' : (idx === state.selected ? 'rgba(255,61,61,.09)' : 'rgba(255,255,255,.03)')) : 'rgba(255,255,255,.04)'};color:#fff;font-size:.82rem;">
+                style="text-align:left;padding:11px;border-radius:10px;cursor:${state.answered ? 'default' : 'pointer'};border:1px solid ${state.answered ? (idx === q.a ? 'rgba(0,200,83,.4)' : (idx === state.selected ? 'rgba(255,61,61,.4)' : 'rgba(255,255,255,.12)')) : 'rgba(255,255,255,.18)'};background:${state.answered ? (idx === q.a ? 'rgba(0,200,83,.12)' : (idx === state.selected ? 'rgba(255,61,61,.09)' : 'rgba(255,255,255,.03)')) : 'rgba(255,255,255,.05)'};color:#fff;font-size:.84rem;line-height:1.45;">
                 ${String.fromCharCode(65 + idx)}. ${opt}
               </button>
             `).join('')}
           </div>
-          ${state.answered ? `<div style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.78);line-height:1.55;">${q.explain}</div>
+          ${state.answered ? `<div style="margin-top:10px;font-size:.82rem;color:rgba(255,255,255,.82);line-height:1.6;">${q.explain}</div>
             <button onclick="nextTrainingQuestion('${moduleId}')" style="margin-top:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;">Next</button>` : ''}
         </div>
       </div>`;
