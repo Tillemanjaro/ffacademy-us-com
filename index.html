@@ -2062,6 +2062,7 @@
           <button id="ds-start-btn" onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:1.1rem;padding:18px 56px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">START DRAFT</button>
           <button onclick="runBatchSims(10)" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.92);font-weight:800;font-size:.9rem;padding:16px 22px;border:1px solid rgba(255,255,255,.18);border-radius:50px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;">Sim 10 Drafts</button>
         </div>
+        <div style="margin-top:10px;font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.55;max-width:640px;margin-left:auto;margin-right:auto;">Runs 10 fast auto-drafts with your current league settings and strategy, then shows the average outcome plus one sample team so you can see what that build usually looks like.</div>
         <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live 2026 ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · fallback board may lag if live data is unavailable</div>
         <div id="ds-sim-summary" style="margin-top:10px;font-size:.74rem;color:rgba(255,255,255,.55);"></div>
       </div>
@@ -3347,6 +3348,26 @@
     return { picks, metrics };
   }
 
+  function formatSampleRoster(run) {
+    if (!run || !run.picks || !run.picks.length) return '';
+    const byPos = { QB: [], RB: [], WR: [], TE: [], K: [], DEF: [] };
+    run.picks.forEach((player) => {
+      if (byPos[player.pos]) byPos[player.pos].push(player.name);
+    });
+    const lines = [];
+    if (byPos.QB[0]) lines.push(`QB: ${byPos.QB[0]}`);
+    if (byPos.RB.length) lines.push(`RB: ${byPos.RB.slice(0, 2).join(' · ')}`);
+    if (byPos.WR.length) lines.push(`WR: ${byPos.WR.slice(0, 2).join(' · ')}`);
+    if (byPos.TE[0]) lines.push(`TE: ${byPos.TE[0]}`);
+    const flexPool = [...byPos.RB.slice(2), ...byPos.WR.slice(2), ...byPos.TE.slice(1)];
+    if (flexPool[0]) lines.push(`FLEX: ${flexPool[0]}`);
+    if (byPos.K[0]) lines.push(`K: ${byPos.K[0]}`);
+    if (byPos.DEF[0]) lines.push(`D/ST: ${byPos.DEF[0]}`);
+    const bench = run.picks.slice(STARTER_SLOTS.length).map((player) => player.name);
+    if (bench.length) lines.push(`Bench: ${bench.join(' · ')}`);
+    return lines;
+  }
+
   function runBatchSims(count = 10) {
     const n = Math.max(1, Math.min(50, Number(count) || 10));
     const runs = [];
@@ -3361,6 +3382,8 @@
       firstPickCounts[fp] = (firstPickCounts[fp] || 0) + 1;
     });
     const commonFirst = Object.entries(firstPickCounts).sort((a, b) => b[1] - a[1])[0];
+    const sampleRun = runs.slice().sort((a, b) => Math.abs(a.metrics.overall - avgScore) - Math.abs(b.metrics.overall - avgScore))[0] || runs[0];
+    const sampleRoster = formatSampleRoster(sampleRun);
 
     const summary = `Sim ${n}: Avg grade ${scoreToLetter(avgScore).g} (${avgScore.toFixed(1)}), Avg rank #${avgRank.toFixed(1)}, Best ${best}, Worst ${worst}${commonFirst ? `, Most common R1: ${commonFirst[0]} (${commonFirst[1]}/${n})` : ''}`;
     const el = document.getElementById('ds-sim-summary');
@@ -3368,7 +3391,15 @@
 
     const post = document.getElementById('ds-post-actions');
     if (post) {
-      post.innerHTML = `<div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.5;">${summary}</div>`;
+      post.innerHTML = `
+        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.55;">${summary}</div>
+        <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times. The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
+          <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team</div>
+          ${sampleRoster.map((line) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.55;padding:4px 0;">${line}</div>`).join('')}
+        </div>
+      `;
     }
   }
 
