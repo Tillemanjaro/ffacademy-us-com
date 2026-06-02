@@ -2180,6 +2180,15 @@
   let dsCurrentPick = 0, dsPosFilter = 'ALL', dsDraftRunning = false, dsCpuTimer = null;
   let dsLastComment = null, dsKeepCoach = false;
   let dsSleeperMap = {}; // name (lowercase) → { espnId, injuryStatus, injuryPart, injuryNote }
+  let dsSleeperPlayers = []; // expanded player pool from Sleeper
+
+  // Projected schedule difficulty index by team (positive = friendlier fantasy schedule).
+  const TEAM_SOS_INDEX = {
+    ARI: 1, ATL: 2, BAL: 1, BUF: 0, CAR: -1, CHI: 1, CIN: 0, CLE: -1,
+    DAL: 1, DEN: -1, DET: 2, GB: 1, HOU: 0, IND: 1, JAX: -1, KC: -1,
+    LAC: 2, LAR: 1, LV: 0, MIA: -1, MIN: 0, NE: 1, NO: 1, NYG: 0,
+    NYJ: -1, PHI: 1, PIT: -2, SEA: 0, SF: -1, TB: 1, TEN: -1, WAS: 1,
+  };
 
   // ── Injury helpers ──
   const INJ_CONFIG = {
@@ -2277,6 +2286,14 @@
     id: i,
     name: p[0], pos: p[1], team: p[2], rank: p[3], espnId: p[4],
   }));
+
+  function normalizePlayerKey(name) {
+    return String(name || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   function pickOwner(pickIndex) {
     const round = Math.floor(pickIndex / dsTeamCount);
@@ -2376,22 +2393,46 @@
       if (!r.ok) throw new Error('bad');
       const raw = await r.json();
       const map = {};
+      dsSleeperPlayers = [];
       Object.values(raw).forEach(p => {
         if (!p.first_name || !p.last_name) return;
-        const key = (p.first_name + ' ' + p.last_name).toLowerCase().trim();
+        const key = normalizePlayerKey(p.first_name + ' ' + p.last_name);
+        const pos = (p.position || '').toUpperCase();
+        const status = (p.status || '').toLowerCase();
         map[key] = {
           espnId:      p.espn_id ? String(p.espn_id) : null,
           injStatus:   p.injury_status || null,
           injPart:     p.injury_body_part || null,
           injNote:     p.injury_notes || null,
+          yearsExp:    Number.isFinite(p.years_exp) ? p.years_exp : null,
+          byeWeek:     p.bye_week || null,
+          position:    pos,
+          team:        p.team || null,
+          fullName:    `${p.first_name} ${p.last_name}`,
           sleeperStatus: p.status || null,
         };
         // also key by last name for fuzzy fallback
-        const lnKey = p.last_name.toLowerCase() + '_' + (p.position || '');
+        const lnKey = normalizePlayerKey(p.last_name) + '_' + (p.position || '');
         if (!map[lnKey]) map[lnKey] = map[key];
+
+        // Keep a broad fantasy-eligible pool to fill in ADP list gaps.
+        if (['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(pos) && !['inactive', 'retired'].includes(status)) {
+          dsSleeperPlayers.push({
+            name: `${p.first_name} ${p.last_name}`,
+            pos,
+            team: p.team || 'FA',
+            espnId: p.espn_id ? String(p.espn_id) : null,
+            injStatus: p.injury_status || null,
+            injPart: p.injury_body_part || null,
+            injNote: p.injury_notes || null,
+            yearsExp: Number.isFinite(p.years_exp) ? p.years_exp : null,
+            bye: p.bye_week || null,
+          });
+        }
       });
       return map;
     } catch(e) {
+      dsSleeperPlayers = [];
       return {};
     }
   }
@@ -2400,19 +2441,48 @@
     if (!Object.keys(sleeperMap).length) return;
     dsSleeperMap = sleeperMap;
     PLAYERS.forEach(p => {
-      const key  = p.name.toLowerCase().trim();
+      const key  = normalizePlayerKey(p.name);
       const hit  = sleeperMap[key];
       if (hit) {
         if (hit.espnId)    p.espnId    = hit.espnId;
         if (hit.injStatus) p.injStatus = hit.injStatus;
         if (hit.injPart)   p.injPart   = hit.injPart;
         if (hit.injNote)   p.injNote   = hit.injNote;
+        if (hit.yearsExp !== null && hit.yearsExp !== undefined) p.yearsExp = hit.yearsExp;
+        if (hit.byeWeek) p.bye = p.bye || hit.byeWeek;
       } else {
         // fuzzy: last name + position
-        const lnKey = p.name.split(' ').pop().toLowerCase() + '_' + p.pos;
+        const lnKey = normalizePlayerKey(p.name.split(' ').pop()) + '_' + p.pos;
         const fuzzy = sleeperMap[lnKey];
-        if (fuzzy && fuzzy.espnId) p.espnId = fuzzy.espnId;
+        if (fuzzy) {
+          if (fuzzy.espnId) p.espnId = fuzzy.espnId;
+          if (fuzzy.yearsExp !== null && fuzzy.yearsExp !== undefined) p.yearsExp = p.yearsExp ?? fuzzy.yearsExp;
+          if (fuzzy.byeWeek) p.bye = p.bye || fuzzy.byeWeek;
+        }
       }
+    });
+
+    // Add missing players from Sleeper so the board is much closer to full player coverage.
+    let nextId = PLAYERS.length + 5000;
+    const maxRank = Math.max(...PLAYERS.map((p) => Number(p.rank) || 0), 300);
+    dsSleeperPlayers.forEach((sp, idx) => {
+      if (!sp.name || !sp.pos) return;
+      const key = normalizePlayerKey(sp.name);
+      if (PLAYERS.find((p) => normalizePlayerKey(p.name) === key)) return;
+      PLAYERS.push({
+        id: nextId++,
+        name: sp.name,
+        pos: sp.pos,
+        team: sp.team || 'FA',
+        rank: maxRank + idx + 1,
+        adp: maxRank + idx + 1,
+        espnId: sp.espnId || null,
+        injStatus: sp.injStatus || null,
+        injPart: sp.injPart || null,
+        injNote: sp.injNote || null,
+        yearsExp: sp.yearsExp,
+        bye: sp.bye || null,
+      });
     });
   }
 
@@ -2436,10 +2506,10 @@
     dsUsingLive = true;
     // Build name→adp map from live data
     const adpMap = {};
-    liveData.forEach(p => { adpMap[p.name.toLowerCase()] = { adp: p.adp, bye: p.bye }; });
+    liveData.forEach(p => { adpMap[normalizePlayerKey(p.name)] = { adp: p.adp, bye: p.bye }; });
     // Update our PLAYERS array with live ADP
     PLAYERS.forEach(p => {
-      const key = p.name.toLowerCase();
+      const key = normalizePlayerKey(p.name);
       const live = adpMap[key];
       if (live) {
         p.adp = live.adp;
@@ -2449,8 +2519,8 @@
     });
     // Add live players not in our list
     liveData.forEach(lp => {
-      const key = lp.name.toLowerCase();
-      if (!PLAYERS.find(p => p.name.toLowerCase() === key)) {
+      const key = normalizePlayerKey(lp.name);
+      if (!PLAYERS.find(p => normalizePlayerKey(p.name) === key)) {
         PLAYERS.push({
           id: PLAYERS.length + 1000,
           name: lp.name, pos: lp.position, team: lp.team,
@@ -2568,28 +2638,87 @@
     // Score each available player
     let best = null, bestScore = -Infinity;
     for (const p of dsAvailable) {
-      let score = 120 - p.rank;
-
-      // Positional need urgency
-      if (p.pos === 'QB'  && counts.QB  < 1 && round >= 5) score += 25;
-      if (p.pos === 'QB'  && counts.QB  < 1 && round >= 8) score += 20;
-      if (p.pos === 'RB'  && counts.RB  < 2) score += 18;
-      if (p.pos === 'RB'  && counts.RB  < 3) score += 8;
-      if (p.pos === 'WR'  && counts.WR  < 2) score += 18;
-      if (p.pos === 'WR'  && counts.WR  < 3) score += 8;
-      if (p.pos === 'TE'  && counts.TE  < 1 && round >= 3) score += 14;
-      if (p.pos === 'K'   && counts.K   < 1 && round >= 8) score += 30;
-      if (p.pos === 'DEF' && counts.DEF < 1 && round >= 8) score += 28;
-
-      // Penalize K/DEF in early rounds
-      if ((p.pos === 'K' || p.pos === 'DEF') && round < 8) score -= 80;
-
-      // Small random variance
-      score += (Math.random() * 6 - 3);
+      let score = scorePlayerForRoster(p, roster, counts, round, true).score;
+      score += (Math.random() * 5 - 2.5);
 
       if (score > bestScore) { bestScore = score; best = p; }
     }
     return best;
+  }
+
+  function byeConflictPenalty(player, rosterPlayers) {
+    if (!player.bye) return 0;
+    const samePos = rosterPlayers.filter((p) => p.bye && p.pos === player.pos && String(p.bye) === String(player.bye)).length;
+    const flexCore = rosterPlayers.filter((p) => p.bye && ['RB', 'WR', 'TE'].includes(p.pos) && String(p.bye) === String(player.bye)).length;
+    let penalty = 0;
+    if (samePos > 0) penalty += 6 * samePos;
+    if (player.pos === 'QB' && samePos > 0) penalty += 8;
+    if (['RB', 'WR', 'TE'].includes(player.pos) && flexCore > 1) penalty += 3;
+    return penalty;
+  }
+
+  function injuryPenalty(player) {
+    if (!player.injStatus || player.injStatus === 'Active' || player.injStatus === 'NA') return 0;
+    const map = { Questionable: 5, Doubtful: 12, Out: 20, IR: 26, PUP: 16 };
+    return map[player.injStatus] || 7;
+  }
+
+  function needBonus(player, counts, round) {
+    let bonus = 0;
+    if (player.pos === 'RB') {
+      if (counts.RB < 2) bonus += 28;
+      else if (counts.RB < 3) bonus += 12;
+    }
+    if (player.pos === 'WR') {
+      if (counts.WR < 2) bonus += 28;
+      else if (counts.WR < 3) bonus += 12;
+    }
+    if (player.pos === 'QB') {
+      if (counts.QB < 1 && round >= 5) bonus += 20;
+      if (counts.QB < 1 && round >= 8) bonus += 10;
+      if (counts.QB >= 1) bonus -= 12;
+    }
+    if (player.pos === 'TE') {
+      if (counts.TE < 1 && round >= 4) bonus += 15;
+      if (counts.TE >= 1) bonus -= 8;
+    }
+    if (player.pos === 'K' || player.pos === 'DEF') {
+      if (round < 8) bonus -= 75;
+      else if (counts[player.pos] < 1) bonus += 22;
+      else bonus -= 10;
+    }
+    return bonus;
+  }
+
+  function scorePlayerForRoster(player, rosterPlayers, counts, round, isCpu = false) {
+    const adpBase = Number(player.adp || player.rank || 300);
+    const marketValue = Math.max(0, 160 - adpBase);
+    const need = needBonus(player, counts, round);
+    const yearsExp = Number.isFinite(player.yearsExp) ? player.yearsExp : 3;
+    const historicalProxy = Math.max(0, 8 - Math.abs(5 - yearsExp)) + Math.max(0, (120 - adpBase) / 10);
+    const sos = (TEAM_SOS_INDEX[player.team] || 0) * 2.4;
+    const byePenalty = byeConflictPenalty(player, rosterPlayers);
+    const injPenalty = injuryPenalty(player);
+
+    let score = marketValue + need + historicalProxy + sos - byePenalty - injPenalty;
+    if (!isCpu && player.adp && player.adp < dsCurrentPick - (dsTeamCount * 0.45)) score += 7;
+
+    return {
+      score,
+      factors: { need, historicalProxy, sos, byePenalty, injPenalty, adpBase }
+    };
+  }
+
+  function topUserRecommendations(limit = 5) {
+    const rosterPlayers = dsUserRoster.filter((s) => s.player).map((s) => s.player);
+    const counts = countPositions(rosterPlayers);
+    const round = getRound(dsCurrentPick);
+    const pool = dsAvailable
+      .filter((p) => (p.pos === dsPosFilter || dsPosFilter === 'ALL'))
+      .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, false) }))
+      .sort((a, b) => b.eval.score - a.eval.score)
+      .slice(0, limit);
+    return pool;
   }
 
   function countPositions(roster) {
@@ -2672,9 +2801,37 @@
       if (dsPosFilter !== 'ALL' && p.pos !== dsPosFilter) return false;
       if (query && !p.name.toLowerCase().includes(query)) return false;
       return true;
-    }).slice(0, 60);
+    });
 
     el.innerHTML = '';
+
+    if (isUser) {
+      const recs = topUserRecommendations(5);
+      const recWrap = document.createElement('div');
+      recWrap.style.cssText = 'margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,.28);background:rgba(124,58,237,.08);';
+      recWrap.innerHTML = `
+        <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Smart Recommendations</div>
+        ${recs.map(({ p, eval: e }) => `
+          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);">
+            <div style="display:flex;gap:6px;align-items:center;min-width:0;">
+              <span class="ds-pos-badge ${p.pos}" style="font-size:.62rem;">${p.pos}</span>
+              <span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
+            </div>
+            <div style="font-size:.66rem;color:rgba(255,255,255,.6);text-align:right;white-space:nowrap;">
+              <span>Need ${e.factors.need >= 0 ? '+' : ''}${Math.round(e.factors.need)}</span>
+              <span style="margin-left:6px;">SOS ${e.factors.sos >= 0 ? '+' : ''}${Math.round(e.factors.sos)}</span>
+              <span style="margin-left:6px;">Bye -${Math.round(e.factors.byePenalty)}</span>
+              <span style="margin-left:6px;">Inj -${Math.round(e.factors.injPenalty)}</span>
+            </div>
+          </div>
+        `).join('')}
+      `;
+      el.appendChild(recWrap);
+    }
+
+    const maxRows = query ? 500 : 350;
+    if (list.length > maxRows) list = list.slice(0, maxRows);
+
     list.forEach(p => {
       const row = document.createElement('div');
       row.className = 'ds-player-row' + (isUser ? ' user-turn' : '');
@@ -2684,6 +2841,7 @@
         : `<div style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;color:rgba(255,255,255,.3);flex-shrink:0;">${p.pos}</div>`;
       const injBadge = injBadgeHtml(p.injStatus, p.injPart ? (p.injPart + (p.injNote ? ' · ' + p.injNote : '')) : null);
       const adpNote = isReach(p) ? `<span class="ds-adp-warn">reach</span>` : (isValue(p) ? `<span style="font-size:.66rem;color:#4dff8a;margin-left:4px;font-weight:700;">value</span>` : '');
+      const byeMeta = p.bye ? ` · BYE ${p.bye}` : '';
       row.innerHTML = `
         ${img}
         <span class="ds-pos-badge ${p.pos}">${p.pos}</span>
@@ -2693,7 +2851,7 @@
             ${injBadge}
             ${adpNote}
           </div>
-          ${p.injPart ? `<span style="font-size:.65rem;color:rgba(255,255,255,.3);">${p.injPart}${p.injNote ? ' · ' + p.injNote : ''}</span>` : `<span style="font-size:.65rem;color:rgba(255,255,255,.25);">${p.team}</span>`}
+          ${p.injPart ? `<span style="font-size:.65rem;color:rgba(255,255,255,.3);">${p.injPart}${p.injNote ? ' · ' + p.injNote : ''}${byeMeta}</span>` : `<span style="font-size:.65rem;color:rgba(255,255,255,.25);">${p.team}${byeMeta}</span>`}
         </div>
         <span class="ds-rank">#${Math.round(p.rank * 10) / 10}</span>
         ${isUser ? `<button class="ds-draft-btn" onclick="makePick(PLAYERS.find(x=>x.id===${p.id}),true)">DRAFT</button>` : ''}
