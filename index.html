@@ -2006,6 +2006,17 @@
         <button class="ds-speed-btn" onclick="setSpeed(this,50)">Instant</button>
       </div>
 
+      <!-- STRATEGY MODE -->
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:4px;color:#a855f7;text-transform:uppercase;margin-bottom:12px;text-align:center;">Recommendation Mode</div>
+      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:30px;flex-wrap:wrap;">
+        <button class="ds-option-btn active" id="strat-balanced" onclick="setStrategy('balanced')">Best Value</button>
+        <button class="ds-option-btn" id="strat-floor" onclick="setStrategy('floor')">Safe Floor</button>
+        <button class="ds-option-btn" id="strat-upside" onclick="setStrategy('upside')">High Upside</button>
+        <button class="ds-option-btn" id="strat-zero-rb" onclick="setStrategy('zero-rb')">Zero RB</button>
+        <button class="ds-option-btn" id="strat-hero-rb" onclick="setStrategy('hero-rb')">Hero RB</button>
+        <button class="ds-option-btn" id="strat-late-qb" onclick="setStrategy('late-qb')">Late QB</button>
+      </div>
+
       <!-- DEMO MODE -->
       <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:34px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.2);border-radius:14px;padding:16px 24px;">
         <div>
@@ -2018,8 +2029,12 @@
       </div>
 
       <div style="text-align:center;">
-        <button id="ds-start-btn" onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:1.1rem;padding:18px 56px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">START DRAFT</button>
+        <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+          <button id="ds-start-btn" onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:1.1rem;padding:18px 56px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">START DRAFT</button>
+          <button onclick="runBatchSims(10)" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.92);font-weight:800;font-size:.9rem;padding:16px 22px;border:1px solid rgba(255,255,255,.18);border-radius:50px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;">Sim 10 Drafts</button>
+        </div>
         <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a></div>
+        <div id="ds-sim-summary" style="margin-top:10px;font-size:.74rem;color:rgba(255,255,255,.55);"></div>
       </div>
     </div>
   </div>
@@ -2181,6 +2196,18 @@
   let dsLastComment = null, dsKeepCoach = false;
   let dsSleeperMap = {}; // name (lowercase) → { espnId, injuryStatus, injuryPart, injuryNote }
   let dsSleeperPlayers = []; // expanded player pool from Sleeper
+  let dsStrategy = 'balanced';
+  let dsLastAdpFetchAt = 0, dsLastSleeperFetchAt = 0;
+
+  const DS_PREF_KEY = 'ffacademy_draft_prefs_v1';
+  const STRATEGY_WEIGHTS = {
+    balanced: { value: 1.0, need: 1.0, historical: 1.0, sos: 1.0, injury: 1.0, bye: 1.0, rb: 1.0, wr: 1.0, qb: 1.0, te: 1.0 },
+    floor:    { value: 1.1, need: 0.95, historical: 1.25, sos: 1.05, injury: 1.35, bye: 1.2, rb: 1.0, wr: 1.0, qb: 1.0, te: 1.0 },
+    upside:   { value: 0.95, need: 1.0, historical: 0.9, sos: 1.0, injury: 0.75, bye: 0.9, rb: 1.0, wr: 1.08, qb: 1.02, te: 1.0 },
+    'zero-rb':{ value: 1.0, need: 1.05, historical: 1.0, sos: 1.0, injury: 1.0, bye: 1.0, rb: 0.72, wr: 1.22, qb: 1.05, te: 1.08 },
+    'hero-rb':{ value: 1.0, need: 1.05, historical: 1.0, sos: 1.0, injury: 1.0, bye: 1.0, rb: 1.22, wr: 0.95, qb: 1.0, te: 1.0 },
+    'late-qb':{ value: 1.02, need: 1.0, historical: 1.0, sos: 1.0, injury: 1.0, bye: 1.0, rb: 1.07, wr: 1.07, qb: 0.7, te: 1.02 },
+  };
 
   // Projected schedule difficulty index by team (positive = friendlier fantasy schedule).
   const TEAM_SOS_INDEX = {
@@ -2315,17 +2342,32 @@
     document.getElementById('tc-'+n)?.classList.add('active');
     updateSetupSubtitle();
     renderSlotGrid();
+    saveDraftPrefs();
   }
   function setFormat(f) {
     dsFormat = f;
     document.querySelectorAll('[id^="fmt-"]').forEach(b => b.classList.remove('active'));
     document.getElementById('fmt-'+f)?.classList.add('active');
     updateSetupSubtitle();
+    saveDraftPrefs();
+  }
+  function setStrategy(mode) {
+    if (!STRATEGY_WEIGHTS[mode]) return;
+    dsStrategy = mode;
+    document.querySelectorAll('[id^="strat-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('strat-' + mode)?.classList.add('active');
+    saveDraftPrefs();
   }
   function toggleDemo() {
     dsDemoMode = !dsDemoMode;
+    applyDemoToggleUI();
+    saveDraftPrefs();
+  }
+
+  function applyDemoToggleUI() {
     const tog = document.getElementById('ds-demo-toggle');
     const knob = document.getElementById('ds-demo-knob');
+    if (!tog || !knob) return;
     if (dsDemoMode) {
       tog.style.background = '#7c3aed'; tog.style.borderColor = '#a855f7';
       knob.style.left = '28px'; knob.style.background = '#fff';
@@ -2349,7 +2391,7 @@
       const btn = document.createElement('div');
       btn.className = 'ds-slot-btn' + (i === dsUserSlot ? ' selected' : '');
       btn.innerHTML = `<div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;line-height:1;">${i}</div><div style="font-size:.6rem;color:rgba(255,255,255,.4);margin-top:2px;">${pickLabel(i,dsTeamCount)}</div>`;
-      btn.onclick = () => { dsUserSlot = i; renderSlotGrid(); };
+      btn.onclick = () => { dsUserSlot = i; renderSlotGrid(); saveDraftPrefs(); };
       grid.appendChild(btn);
     }
   }
@@ -2361,8 +2403,46 @@
     return 'Late';
   }
 
+  function relTimeLabel(ts) {
+    if (!ts) return 'n/a';
+    const mins = Math.max(1, Math.round((Date.now() - ts) / 60000));
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 48) return `${hrs}h ago`;
+    return `${Math.round(hrs / 24)}d ago`;
+  }
+
+  function saveDraftPrefs() {
+    try {
+      localStorage.setItem(DS_PREF_KEY, JSON.stringify({
+        dsTeamCount, dsFormat, dsDemoMode, dsUserSlot, dsCpuSpeed, dsStrategy
+      }));
+    } catch (_) {}
+  }
+
+  function loadDraftPrefs() {
+    try {
+      const raw = localStorage.getItem(DS_PREF_KEY);
+      if (!raw) return;
+      const prefs = JSON.parse(raw);
+      if ([10, 12, 18].includes(prefs.dsTeamCount)) dsTeamCount = prefs.dsTeamCount;
+      if (['ppr', 'half-ppr', 'standard'].includes(prefs.dsFormat)) dsFormat = prefs.dsFormat;
+      if (typeof prefs.dsDemoMode === 'boolean') dsDemoMode = prefs.dsDemoMode;
+      if (Number.isFinite(prefs.dsUserSlot)) dsUserSlot = Math.max(1, Math.min(dsTeamCount, prefs.dsUserSlot));
+      if (Number.isFinite(prefs.dsCpuSpeed)) dsCpuSpeed = prefs.dsCpuSpeed;
+      if (typeof prefs.dsStrategy === 'string' && STRATEGY_WEIGHTS[prefs.dsStrategy]) dsStrategy = prefs.dsStrategy;
+    } catch (_) {}
+  }
+
+  function updateFreshnessText() {
+    const el = document.getElementById('ds-adp-source');
+    if (!el) return;
+    el.innerHTML = `Live ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · ADP ${relTimeLabel(dsLastAdpFetchAt)} · Players ${relTimeLabel(dsLastSleeperFetchAt)} · News ${relTimeLabel(lastNewsFetch)}`;
+  }
+
   function openDraftSim() {
     document.getElementById('draft-sim').style.display = 'flex';
+    loadDraftPrefs();
     renderSetup();
   }
   function closeDraftSim() {
@@ -2374,6 +2454,7 @@
     dsCpuSpeed = speed;
     document.querySelectorAll('.ds-speed-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    saveDraftPrefs();
   }
   function renderSetup() {
     document.getElementById('ds-setup').style.display = 'flex';
@@ -2382,6 +2463,17 @@
     document.getElementById('ds-complete').style.display = 'none';
     renderSlotGrid();
     updateSetupSubtitle();
+    document.querySelectorAll('[id^="tc-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('tc-'+dsTeamCount)?.classList.add('active');
+    document.querySelectorAll('[id^="fmt-"]').forEach(b => b.classList.remove('active'));
+    document.getElementById('fmt-'+dsFormat)?.classList.add('active');
+    setStrategy(dsStrategy);
+    applyDemoToggleUI();
+    document.querySelectorAll('.ds-speed-btn').forEach(b => b.classList.remove('active'));
+    const speedLabel = dsCpuSpeed <= 50 ? 'Instant' : (dsCpuSpeed <= 300 ? 'Fast' : 'Normal');
+    const speedBtn = Array.from(document.querySelectorAll('.ds-speed-btn')).find((b) => b.textContent.trim() === speedLabel);
+    if (speedBtn) speedBtn.classList.add('active');
+    updateFreshnessText();
     document.getElementById('ds-pick-info').innerHTML =
       `<span style="font-size:.8rem;color:rgba(255,255,255,.4);">Pick slot ${dsUserSlot} of ${dsTeamCount}</span>`;
   }
@@ -2392,6 +2484,7 @@
       const r = await fetch('https://api.sleeper.app/v1/players/nfl', { signal: AbortSignal.timeout(8000) });
       if (!r.ok) throw new Error('bad');
       const raw = await r.json();
+      dsLastSleeperFetchAt = Date.now();
       const map = {};
       dsSleeperPlayers = [];
       Object.values(raw).forEach(p => {
@@ -2495,6 +2588,7 @@
       const r = await fetch(proxy, { signal: AbortSignal.timeout(6000) });
       if (!r.ok) throw new Error('bad status');
       const d = await r.json();
+      dsLastAdpFetchAt = Date.now();
       return d.players || [];
     } catch(e) {
       return [];
@@ -2547,6 +2641,8 @@
     document.getElementById('ds-load-msg').textContent = liveData.length
       ? `Live ADP loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
       : `Using built-in rankings${sleeperCount ? ' · ' + sleeperCount + ' player profiles' : ''}`;
+    updateFreshnessText();
+    saveDraftPrefs();
 
     await new Promise(r => setTimeout(r, 400));
 
@@ -2691,6 +2787,7 @@
   }
 
   function scorePlayerForRoster(player, rosterPlayers, counts, round, isCpu = false) {
+    const w = STRATEGY_WEIGHTS[dsStrategy] || STRATEGY_WEIGHTS.balanced;
     const adpBase = Number(player.adp || player.rank || 300);
     const marketValue = Math.max(0, 160 - adpBase);
     const need = needBonus(player, counts, round);
@@ -2700,12 +2797,20 @@
     const byePenalty = byeConflictPenalty(player, rosterPlayers);
     const injPenalty = injuryPenalty(player);
 
-    let score = marketValue + need + historicalProxy + sos - byePenalty - injPenalty;
+    const posMult = w[player.pos.toLowerCase()] || 1;
+    let score = (
+      marketValue * w.value +
+      need * w.need +
+      historicalProxy * w.historical +
+      sos * w.sos -
+      byePenalty * w.bye -
+      injPenalty * w.injury
+    ) * posMult;
     if (!isCpu && player.adp && player.adp < dsCurrentPick - (dsTeamCount * 0.45)) score += 7;
 
     return {
       score,
-      factors: { need, historicalProxy, sos, byePenalty, injPenalty, adpBase }
+      factors: { marketValue, need, historicalProxy, sos, byePenalty, injPenalty, adpBase, posMult }
     };
   }
 
@@ -2786,6 +2891,23 @@
 
   function renderLog() { document.getElementById('ds-log').innerHTML = ''; }
 
+  function recommendationTier(rankIndex, total) {
+    if (total <= 0) return 'T3';
+    const pct = (rankIndex + 1) / total;
+    if (pct <= 0.12) return 'T1';
+    if (pct <= 0.3) return 'T2';
+    return 'T3';
+  }
+
+  function rosterWarnings(counts, round) {
+    const warnings = [];
+    if (round >= 5 && counts.RB === 0) warnings.push('No RB through Round 5. Priority target needed now.');
+    if (round >= 5 && counts.WR === 0) warnings.push('No WR through Round 5. Prioritize receiver depth.');
+    if (round >= 8 && counts.QB === 0) warnings.push('No QB by Round 8. Consider locking in a stable starter.');
+    if (round >= 7 && counts.TE === 0) warnings.push('No TE by Round 7. You may need to stream the position.');
+    return warnings.slice(0, 2);
+  }
+
   function renderAvailable() {
     const el = document.getElementById('ds-available');
     const query = (document.getElementById('ds-search')?.value || '').toLowerCase();
@@ -2809,30 +2931,40 @@
       ? dsUserRoster.filter((s) => s.player).map((s) => s.player)
       : (dsCpuRosters[pickOwner(dsCurrentPick) - 1] || []);
     const counts = countPositions(rosterPlayers);
-    list = list
-      .map((p) => ({
-        p,
-        score: scorePlayerForRoster(p, rosterPlayers, counts, round, !onClockIsUser).score
-      }))
-      .sort((a, b) => b.score - a.score)
-      .map((x) => x.p);
+    let scoredList = list
+      .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, !onClockIsUser) }))
+      .sort((a, b) => b.eval.score - a.eval.score);
+
+    const replacementScoreByPos = {};
+    ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].forEach((pos) => {
+      const posList = scoredList.filter((x) => x.p.pos === pos);
+      const idx = Math.min(7, Math.max(0, posList.length - 1));
+      replacementScoreByPos[pos] = posList.length ? posList[idx].eval.score : 0;
+    });
 
     el.innerHTML = '';
 
     if (isUser) {
-      const recs = topUserRecommendations(5);
+      const recs = scoredList.slice(0, 5);
+      const warns = rosterWarnings(counts, round);
       const recWrap = document.createElement('div');
-      recWrap.style.cssText = 'margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,.28);background:rgba(124,58,237,.08);';
+      recWrap.style.cssText = 'position:sticky;top:0;z-index:5;margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,.28);background:rgba(19,14,33,.96);backdrop-filter:blur(5px);';
       recWrap.innerHTML = `
-        <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Smart Recommendations</div>
-        ${recs.map(({ p, eval: e }) => `
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+          <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;">Smart Recommendations</div>
+          <div style="font-size:.65rem;color:rgba(255,255,255,.6);">Mode: ${dsStrategy.toUpperCase()}</div>
+        </div>
+        ${warns.map((w) => `<div style="font-size:.7rem;color:#ffd166;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);padding:5px 8px;border-radius:8px;margin-bottom:6px;">${w}</div>`).join('')}
+        ${recs.map(({ p, eval: e }, idx) => `
           <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);">
             <div style="display:flex;gap:6px;align-items:center;min-width:0;">
               <span class="ds-pos-badge ${p.pos}" style="font-size:.62rem;">${p.pos}</span>
+              <span style="font-size:.62rem;color:#ffd166;min-width:18px;">${recommendationTier(idx, Math.max(1, scoredList.length))}</span>
               <span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
             </div>
             <div style="font-size:.66rem;color:rgba(255,255,255,.6);text-align:right;white-space:nowrap;">
-              <span>Need ${e.factors.need >= 0 ? '+' : ''}${Math.round(e.factors.need)}</span>
+              <span>Total ${Math.round(e.score)}</span>
+              <span style="margin-left:6px;">Need ${e.factors.need >= 0 ? '+' : ''}${Math.round(e.factors.need)}</span>
               <span style="margin-left:6px;">SOS ${e.factors.sos >= 0 ? '+' : ''}${Math.round(e.factors.sos)}</span>
               <span style="margin-left:6px;">Bye -${Math.round(e.factors.byePenalty)}</span>
               <span style="margin-left:6px;">Inj -${Math.round(e.factors.injPenalty)}</span>
@@ -2844,9 +2976,9 @@
     }
 
     const maxRows = query ? 500 : 350;
-    if (list.length > maxRows) list = list.slice(0, maxRows);
+    if (scoredList.length > maxRows) scoredList = scoredList.slice(0, maxRows);
 
-    list.forEach(p => {
+    scoredList.forEach(({ p, eval: e }, idx) => {
       const row = document.createElement('div');
       row.className = 'ds-player-row' + (isUser ? ' user-turn' : '');
       const _eid = p.espnId || null;
@@ -2856,24 +2988,29 @@
       const injBadge = injBadgeHtml(p.injStatus, p.injPart ? (p.injPart + (p.injNote ? ' · ' + p.injNote : '')) : null);
       const adpNote = isReach(p) ? `<span class="ds-adp-warn">reach</span>` : (isValue(p) ? `<span style="font-size:.66rem;color:#4dff8a;margin-left:4px;font-weight:700;">value</span>` : '');
       const byeMeta = p.bye ? ` · BYE ${p.bye}` : '';
+      const tier = recommendationTier(idx, scoredList.length);
+      const repl = replacementScoreByPos[p.pos] || 0;
+      const vor = Math.round(e.score - repl);
+      const whyTitle = `Need ${Math.round(e.factors.need)}, Value ${Math.round(e.factors.marketValue)}, Hist ${Math.round(e.factors.historicalProxy)}, SOS ${Math.round(e.factors.sos)}, Bye -${Math.round(e.factors.byePenalty)}, Inj -${Math.round(e.factors.injPenalty)}`;
       row.innerHTML = `
         ${img}
         <span class="ds-pos-badge ${p.pos}">${p.pos}</span>
         <div style="display:flex;flex-direction:column;min-width:0;flex:1;">
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
             <span style="font-size:.82rem;font-weight:600;">${p.name}</span>
+            <span style="font-size:.58rem;color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:8px;padding:1px 5px;">${tier}</span>
             ${injBadge}
             ${adpNote}
           </div>
-          ${p.injPart ? `<span style="font-size:.65rem;color:rgba(255,255,255,.3);">${p.injPart}${p.injNote ? ' · ' + p.injNote : ''}${byeMeta}</span>` : `<span style="font-size:.65rem;color:rgba(255,255,255,.25);">${p.team}${byeMeta}</span>`}
+          ${p.injPart ? `<span style="font-size:.65rem;color:rgba(255,255,255,.3);">${p.injPart}${p.injNote ? ' · ' + p.injNote : ''}${byeMeta} · VOR +${vor}</span>` : `<span style="font-size:.65rem;color:rgba(255,255,255,.25);">${p.team}${byeMeta} · VOR +${vor}</span>`}
         </div>
-        <span class="ds-rank">#${Math.round(p.rank * 10) / 10}</span>
-        ${isUser ? `<button class="ds-draft-btn" onclick="makePick(PLAYERS.find(x=>x.id===${p.id}),true)">DRAFT</button>` : ''}
+        <span class="ds-rank" title="${whyTitle}">#${Math.round(p.rank * 10) / 10}</span>
+        ${isUser ? `<button class="ds-draft-btn" title="${whyTitle}" onclick="makePick(PLAYERS.find(x=>x.id===${p.id}),true)">DRAFT</button>` : ''}
       `;
       el.appendChild(row);
     });
 
-    if (list.length === 0) {
+    if (scoredList.length === 0) {
       el.innerHTML = '<div style="color:rgba(255,255,255,.3);padding:20px;text-align:center;font-size:.85rem;">No players match filter</div>';
     }
   }
@@ -3073,6 +3210,155 @@
     }
   }
 
+  function analyzeUserRoster(picks) {
+    const counts = countPositions(picks);
+    const avgRank = picks.length ? picks.reduce((s, p) => s + Number(p.rank || 120), 0) / picks.length : 120;
+    const avgInjury = picks.length ? picks.reduce((s, p) => s + injuryPenalty(p), 0) / picks.length : 0;
+    const byeMap = {};
+    picks.forEach((p) => {
+      if (!p.bye) return;
+      byeMap[p.bye] = (byeMap[p.bye] || 0) + 1;
+    });
+    const maxByeCluster = Math.max(0, ...Object.values(byeMap));
+    const starterCore = picks.filter((p) => ['RB', 'WR', 'QB', 'TE'].includes(p.pos));
+    const upside = starterCore.length ? starterCore.reduce((s, p) => s + (TEAM_SOS_INDEX[p.team] || 0), 0) / starterCore.length : 0;
+
+    const balanceScore = Math.max(0, 100 - (Math.abs(2 - counts.RB) * 15 + Math.abs(2 - counts.WR) * 15 + Math.abs(1 - counts.QB) * 18 + Math.abs(1 - counts.TE) * 14));
+    const valueScore = Math.max(0, Math.min(100, 120 - avgRank));
+    const riskScore = Math.max(0, 100 - (avgInjury * 3 + Math.max(0, maxByeCluster - 2) * 10));
+    const upsideScore = Math.max(0, Math.min(100, 55 + upside * 16 + (counts.WR >= 3 ? 5 : 0)));
+    const starterScore = Math.max(0, Math.min(100, 130 - (avgRank * 1.05)));
+
+    return {
+      counts,
+      avgRank,
+      maxByeCluster,
+      valueScore,
+      balanceScore,
+      riskScore,
+      upsideScore,
+      starterScore,
+      overall: Math.round((valueScore + balanceScore + riskScore + upsideScore + starterScore) / 5),
+    };
+  }
+
+  function scoreToLetter(score) {
+    if (score >= 93) return { g: 'A+', c: '#00C853', t: 'Elite Draft' };
+    if (score >= 88) return { g: 'A', c: '#4FC3F7', t: 'Strong Draft' };
+    if (score >= 80) return { g: 'B+', c: '#FFD700', t: 'Solid Draft' };
+    if (score >= 72) return { g: 'B', c: '#ff8c00', t: 'Average Draft' };
+    return { g: 'C', c: '#ff6b6b', t: 'Needs Work' };
+  }
+
+  function buildImprovementTips(metrics) {
+    const tips = [];
+    if (metrics.counts.RB < 2) tips.push('Add at least one reliable RB target earlier to avoid weekly floor issues.');
+    if (metrics.counts.WR < 2) tips.push('Prioritize WR depth by Round 6 to stabilize weekly target volume.');
+    if (metrics.maxByeCluster > 2) tips.push(`You have ${metrics.maxByeCluster} players sharing a bye week. Spread bye weeks in middle rounds.`);
+    if (metrics.riskScore < 70) tips.push('Reduce injury-risk concentration by mixing in safer profile players over boom-only picks.');
+    if (metrics.counts.QB === 0) tips.push('Secure a starting QB before Round 9 to avoid streaming volatility.');
+    if (tips.length < 3) tips.push('Keep using replacement-value deltas to avoid overpaying for shallow position runs.');
+    return tips.slice(0, 3);
+  }
+
+  function showImprovementTips() {
+    const picks = dsUserRoster.filter((s) => s.player).map((s) => s.player);
+    const metrics = analyzeUserRoster(picks);
+    const tips = buildImprovementTips(metrics);
+    const wrap = document.getElementById('ds-post-actions');
+    if (!wrap) return;
+    wrap.innerHTML = `
+      <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">3 Personalized Improvement Tips</div>
+      ${tips.map((t) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.5;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);">${t}</div>`).join('')}
+    `;
+  }
+
+  function simulateSingleDraft() {
+    let available = PLAYERS.map((p) => ({ ...p })).sort((a, b) => (a.rank || 999) - (b.rank || 999));
+    const userRoster = SLOTS.map((s) => ({ ...s, player: null }));
+    const cpuRosters = Array.from({ length: dsTeamCount }, () => []);
+    const totalPicks = dsTeamCount * ROUNDS;
+    const oldPick = dsCurrentPick;
+
+    for (let pick = 0; pick < totalPicks; pick++) {
+      dsCurrentPick = pick;
+      const round = getRound(pick);
+      const isUser = isUserPick(pick);
+      const teamIdx = pickOwner(pick) - 1;
+      const rosterPlayers = isUser
+        ? userRoster.filter((s) => s.player).map((s) => s.player)
+        : cpuRosters[teamIdx];
+      const counts = countPositions(rosterPlayers);
+
+      const scored = available
+        .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, !isUser) }))
+        .sort((a, b) => b.eval.score - a.eval.score);
+      if (!scored.length) break;
+
+      const pickIdx = isUser ? 0 : Math.min(scored.length - 1, Math.floor(Math.random() * Math.min(3, scored.length)));
+      const chosen = scored[pickIdx].p;
+      available = available.filter((p) => p.id !== chosen.id);
+
+      if (isUser) {
+        const slot = userRoster.find((s) => !s.player && s.pos.includes(chosen.pos));
+        if (slot) slot.player = chosen;
+      } else {
+        cpuRosters[teamIdx].push(chosen);
+      }
+    }
+
+    dsCurrentPick = oldPick;
+    const picks = userRoster.filter((s) => s.player).map((s) => s.player);
+    const metrics = analyzeUserRoster(picks);
+    return { picks, metrics };
+  }
+
+  function runBatchSims(count = 10) {
+    const n = Math.max(1, Math.min(50, Number(count) || 10));
+    const runs = [];
+    for (let i = 0; i < n; i++) runs.push(simulateSingleDraft());
+    const avgScore = runs.reduce((s, r) => s + r.metrics.overall, 0) / runs.length;
+    const avgRank = runs.reduce((s, r) => s + r.metrics.avgRank, 0) / runs.length;
+    const best = Math.max(...runs.map((r) => r.metrics.overall));
+    const worst = Math.min(...runs.map((r) => r.metrics.overall));
+    const firstPickCounts = {};
+    runs.forEach((r) => {
+      const fp = r.picks[0]?.name || 'N/A';
+      firstPickCounts[fp] = (firstPickCounts[fp] || 0) + 1;
+    });
+    const commonFirst = Object.entries(firstPickCounts).sort((a, b) => b[1] - a[1])[0];
+
+    const summary = `Sim ${n}: Avg grade ${scoreToLetter(avgScore).g} (${avgScore.toFixed(1)}), Avg rank #${avgRank.toFixed(1)}, Best ${best}, Worst ${worst}${commonFirst ? `, Most common R1: ${commonFirst[0]} (${commonFirst[1]}/${n})` : ''}`;
+    const el = document.getElementById('ds-sim-summary');
+    if (el) el.textContent = summary;
+
+    const post = document.getElementById('ds-post-actions');
+    if (post) {
+      post.innerHTML = `<div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.5;">${summary}</div>`;
+    }
+  }
+
+  function compareStrategies() {
+    const original = dsStrategy;
+    const modes = ['balanced', 'floor', 'upside', 'zero-rb', 'hero-rb', 'late-qb'];
+    const rows = [];
+    modes.forEach((mode) => {
+      dsStrategy = mode;
+      const sims = Array.from({ length: 5 }, () => simulateSingleDraft());
+      const avg = sims.reduce((s, r) => s + r.metrics.overall, 0) / sims.length;
+      rows.push({ mode, avg });
+    });
+    dsStrategy = original;
+    const sorted = rows.sort((a, b) => b.avg - a.avg);
+    const post = document.getElementById('ds-post-actions');
+    if (post) {
+      post.innerHTML = `
+        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">Strategy Compare (5 sims each)</div>
+        ${sorted.map((r) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.8rem;"><span>${r.mode.toUpperCase()}</span><span>${scoreToLetter(r.avg).g} (${r.avg.toFixed(1)})</span></div>`).join('')}
+      `;
+    }
+  }
+
   function completeDraft() {
     dsDraftRunning = false;
     document.getElementById('ds-draft').style.display = 'none';
@@ -3080,14 +3366,9 @@
     document.getElementById('ds-pick-info').innerHTML = '<span style="font-size:.78rem;color:var(--green);font-weight:700;">DRAFT COMPLETE</span>';
 
     const picks = dsUserRoster.filter(s => s.player).map(s => s.player);
-    const avgRank = picks.length ? picks.reduce((s,p) => s + p.rank, 0) / picks.length : 50;
-    const scale = 12 / dsTeamCount; // calibrate grade to team size
-    const adj = avgRank * scale;
-    const grade = adj < 20 ? {g:'A+',c:'#00C853',t:'Elite Draft'} :
-                  adj < 30 ? {g:'A', c:'#4FC3F7',t:'Strong Draft'} :
-                  adj < 40 ? {g:'B+',c:'#FFD700',t:'Solid Draft'} :
-                  adj < 55 ? {g:'B', c:'#ff8c00',t:'Average Draft'} :
-                             {g:'C', c:'#ff6b6b',t:'Needs Work'};
+    const metrics = analyzeUserRoster(picks);
+    const avgRank = metrics.avgRank;
+    const grade = scoreToLetter(metrics.overall);
 
     const rosterHtml = dsUserRoster.map(slot => {
       const p = slot.player;
@@ -3113,7 +3394,15 @@
       <div style="text-align:center;margin-bottom:32px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:2px;color:${grade.c};">${grade.g}</div>
         <div style="font-size:1.1rem;font-weight:700;margin-bottom:4px;">${grade.t}</div>
-        <div style="font-size:.82rem;color:rgba(255,255,255,.4);">Avg pick rank: #${avgRank.toFixed(1)} · Draft slot: ${dsUserSlot} of ${dsTeamCount}</div>
+        <div style="font-size:.82rem;color:rgba(255,255,255,.4);">Avg pick rank: #${avgRank.toFixed(1)} · Draft slot: ${dsUserSlot} of ${dsTeamCount} · Mode: ${dsStrategy.toUpperCase()}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;max-width:860px;margin:0 auto 20px auto;">
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Value</div><div style="font-weight:800;">${Math.round(metrics.valueScore)}</div></div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Balance</div><div style="font-weight:800;">${Math.round(metrics.balanceScore)}</div></div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Risk</div><div style="font-weight:800;">${Math.round(metrics.riskScore)}</div></div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Upside</div><div style="font-weight:800;">${Math.round(metrics.upsideScore)}</div></div>
+        <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Starter Strength</div><div style="font-weight:800;">${Math.round(metrics.starterScore)}</div></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:860px;margin:0 auto;">
@@ -3138,12 +3427,18 @@
         </div>
       </div>
 
+      <div id="ds-post-actions" style="max-width:860px;margin:16px auto 0 auto;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;"></div>
+
       <div style="text-align:center;margin-top:32px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
         <button onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:.95rem;padding:14px 36px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">DRAFT AGAIN</button>
+        <button onclick="showImprovementTips()" style="background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:.9rem;padding:14px 22px;border:1px solid rgba(255,255,255,.16);border-radius:50px;cursor:pointer;">Get 3 Tips</button>
+        <button onclick="compareStrategies()" style="background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:.9rem;padding:14px 22px;border:1px solid rgba(255,255,255,.16);border-radius:50px;cursor:pointer;">Run Strategy Compare</button>
         <button onclick="renderSetup();document.getElementById('ds-setup').style.display='flex';document.getElementById('ds-complete').style.display='none';" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);font-weight:700;font-size:.9rem;padding:14px 32px;border:1px solid rgba(255,255,255,.15);border-radius:50px;cursor:pointer;">CHANGE SLOT</button>
         <button onclick="closeDraftSim()" style="background:transparent;color:rgba(255,255,255,.4);font-weight:600;font-size:.9rem;padding:14px 24px;border:1px solid rgba(255,255,255,.1);border-radius:50px;cursor:pointer;">BACK TO TRAINING</button>
       </div>
     `;
+
+    showImprovementTips();
   }
 
   // ═══════════ TRAINING SPACE CURRENT NEWS ═══════════
@@ -3197,6 +3492,23 @@
     return `${Math.round(hrs / 24)}d ago`;
   }
 
+  function newsImpactScore(item) {
+    const text = `${item.headline || ''} ${item.description || ''}`.toLowerCase();
+    let score = 0;
+    const mentionCount = mentionedPlayersFromText(text).length;
+    if (mentionCount) score += mentionCount * 3;
+    if (/out|ir|pup|doubtful|questionable|injury|hamstring|knee|ankle/.test(text)) score += 8;
+    if (/trade|released|suspended|depth chart|bench|starter/.test(text)) score += 6;
+    if (NEWS_TERMS.some((term) => text.includes(term))) score += 4;
+    return score;
+  }
+
+  function newsImpactLabel(score) {
+    if (score >= 12) return { label: 'High Impact', color: '#ff8a8a', border: 'rgba(255,138,138,.45)' };
+    if (score >= 7) return { label: 'Medium Impact', color: '#ffd166', border: 'rgba(255,209,102,.45)' };
+    return { label: 'Low Impact', color: '#9be3ff', border: 'rgba(155,227,255,.45)' };
+  }
+
   function renderNewsCards(items, sourceLabel = 'ESPN') {
     const list = document.getElementById('news-list');
     const status = document.getElementById('news-status');
@@ -3211,6 +3523,7 @@
     list.innerHTML = items.map((item) => {
       const text = `${item.headline || ''} ${item.description || ''}`.toLowerCase();
       const tracked = NEWS_TERMS.some((term) => text.includes(term));
+      const impact = newsImpactLabel(newsImpactScore(item));
       const rel = timeAgo(item.published);
       const mentionedPlayers = mentionedPlayersFromText(`${item.headline || ''} ${item.description || ''}`);
       const playerPhotoStrip = mentionedPlayers.length ? `
@@ -3227,6 +3540,7 @@
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.64rem;color:rgba(255,255,255,.5);text-transform:uppercase;font-weight:700;letter-spacing:.8px;">
             <span>${sourceLabel}</span>
             ${rel ? `<span>${rel}</span>` : ''}
+            <span style="padding:2px 7px;border-radius:999px;border:1px solid ${impact.border};color:${impact.color};">${impact.label}</span>
             ${tracked ? '<span style="padding:2px 7px;border-radius:999px;border:1px solid rgba(79,195,247,.5);color:#9be3ff;">Tracked</span>' : ''}
           </div>
           <div style="font-size:.92rem;font-weight:700;line-height:1.35;">${item.headline || 'Untitled headline'}</div>
@@ -3270,13 +3584,16 @@
       })).filter((a) => a.headline);
 
       const scored = parsed.sort((a, b) => {
-        const ta = NEWS_TERMS.some((term) => `${a.headline} ${a.description || ''}`.toLowerCase().includes(term)) ? 1 : 0;
-        const tb = NEWS_TERMS.some((term) => `${b.headline} ${b.description || ''}`.toLowerCase().includes(term)) ? 1 : 0;
-        return tb - ta;
+        const impDiff = newsImpactScore(b) - newsImpactScore(a);
+        if (impDiff !== 0) return impDiff;
+        const at = new Date(a.published || 0).getTime() || 0;
+        const bt = new Date(b.published || 0).getTime() || 0;
+        return bt - at;
       });
 
       renderNewsCards(scored.slice(0, 6), 'ESPN');
       lastNewsFetch = Date.now();
+      updateFreshnessText();
     } catch (err) {
       renderNewsCards([
         {
