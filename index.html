@@ -3984,6 +3984,7 @@
     { q: 'Need stable points. Choose FLEX starter:', options: ['WR A: 9+ targets weekly, low TD rate', 'WR B: 3-5 targets, deep-ball volatility', 'RB C: questionable tag with snap cap'], a: 0, tag: 'lineup-floor', explain: 'Volume provides safer floor in close matchups.', hint: 'Target certainty over splash plays when variance hurts you.' },
     { q: 'Projected to lose by 20. Choose WR3:', options: ['Slot WR with 8-point projection range', 'Boom WR with 3-touchdown upside', 'Backup WR with uncertain role'], a: 1, tag: 'lineup-ceiling', explain: 'When behind, you need volatility and spike-week potential.', hint: 'Chasing upside is correct when baseline is insufficient.' },
     { q: 'Sunday morning: RB questionable, game starts late. Best process?', options: ['Start and hope', 'Swap to early-game healthy RB close in projection', 'Bench with no replacement'], a: 1, tag: 'late-swap', explain: 'Avoid locked zeroes from late inactive surprises.', hint: 'Prioritize lineup certainty over tiny projection deltas.' },
+    { q: 'Watch: Bijan Robinson 93 rushing yards + 1 TD. In PPR scoring, how many points?', options: ['9 points', '12 points', '15 points', '18 points'], a: 2, tag: 'ppr-scoring', explain: 'PPR awards 1 pt/10 rushing yards (9 pts) + 6 pts/rushing TD = 15 total.', hint: 'PPR = Points Per Reception. Rushing: 1pt/10 yds. Rushing TD: 6pts.', video: 'PXvh38Jnz4k', videoCredit: 'NFL' },
   ];
 
   const TL_WAIVER = [
@@ -4233,6 +4234,15 @@
               <div style="font-size:.78rem;color:rgba(255,255,255,.8);line-height:1.55;"><strong>${caseStudy.title}:</strong> ${caseStudy.body}</div>
             </div>
           </div>
+
+          ${q.video && q.videoCredit ? `
+            <div style="margin-top:12px;margin-bottom:12px;">
+              <div style="position:relative;width:100%;padding-bottom:56.25%;background:#000;border-radius:10px;overflow:hidden;">
+                <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/${q.video}?modestbranding=1" title="${title}" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowFullScreen></iframe>
+              </div>
+              <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:6px;text-align:right;">Video: <span style="color:rgba(255,255,255,.7);font-weight:700;">${q.videoCredit}</span></div>
+            </div>
+          ` : ''}
 
           <div style="font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:10px;">${q.q}</div>
           ${tlState.teachMode && q.hint ? `<div style="font-size:.76rem;color:#9be3ff;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);padding:8px 10px;border-radius:8px;margin-bottom:10px;">Teach hint: ${q.hint}</div>` : ''}
