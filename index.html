@@ -671,6 +671,7 @@
 <nav>
   <div class="nav-logo">FF Academy</div>
   <div class="nav-steps" id="nav-dots"></div>
+  <button onclick="openTrainingLab()" style="background:rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:.72rem;padding:7px 14px;border:1px solid rgba(255,255,255,.18);border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Training Lab</button>
   <button onclick="openDraftSim()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:.72rem;padding:7px 16px;border:none;border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 12px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Mock Draft</button>
 </nav>
 
@@ -1948,6 +1949,9 @@
       <button class="btn-primary" onclick="goTo(1)" style="background:linear-gradient(135deg,var(--green),#00e676);">
         RESTART TRAINING ↺
       </button>
+      <button class="btn-secondary" onclick="openTrainingLab()" style="border-color:#ffd166;color:#ffd166;">
+        OPEN TRAINING LAB
+      </button>
       <button class="btn-secondary" onclick="goTo(14)" style="border-color:var(--gold);color:var(--gold);">
         ← Resources &amp; Apps
       </button>
@@ -1958,6 +1962,22 @@
     </div>
   </div>
 </section>
+
+<!-- ═══════════════════════════════════════════════════════
+     TRAINING LAB OVERLAY — guided modules + drills + certifications
+═══════════════════════════════════════════════════════ -->
+<div id="training-lab" style="display:none;position:fixed;inset:0;background:#07080d;z-index:10000;overflow:hidden;flex-direction:column;font-family:'Inter',sans-serif;">
+  <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:rgba(10,10,18,.95);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Fantasy Training Lab</div>
+    <div id="tl-progress-pill" style="margin-left:auto;font-size:.72rem;color:rgba(255,255,255,.65);">Progress: 0%</div>
+    <button onclick="toggleTeachMode()" id="tl-teach-btn" style="background:rgba(245,158,11,.14);color:#ffd166;border:1px solid rgba(245,158,11,.35);padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:800;letter-spacing:.7px;cursor:pointer;">Teach Mode: ON</button>
+    <button onclick="closeTrainingLab()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:.8rem;">Exit</button>
+  </div>
+
+  <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:8px;flex-wrap:wrap;background:rgba(255,255,255,.02);" id="tl-tabs"></div>
+
+  <div style="flex:1;overflow-y:auto;padding:16px;" id="tl-content"></div>
+</div>
 
 <!-- ═══════════════════════════════════════════════════════
      MOCK DRAFT SIMULATOR OVERLAY  v2 — live ADP, variable teams, demo mode
@@ -3606,6 +3626,325 @@
     }
   }
 
+  // ═══════════ TRAINING LAB ═══════════
+  const TL_STORAGE_KEY = 'ffacademy_training_lab_v1';
+  const TL_TABS = ['tracks', 'scenarios', 'lineup', 'waiver', 'trade', 'glossary', 'cert'];
+  const TL_TRACKS = [
+    { id: 'beginner', label: 'Beginner', targetStep: 2, focus: 'Rules, positions, scoring, weekly basics' },
+    { id: 'intermediate', label: 'Intermediate', targetStep: 6, focus: 'ADP, tiers, roster construction, bye planning' },
+    { id: 'advanced', label: 'Advanced', targetStep: 11, focus: 'Range of outcomes, trade leverage, playoff prep' },
+  ];
+
+  const TL_GLOSSARY = [
+    { term: 'ADP', def: 'Average Draft Position across many drafts.', ex: 'If a WR has ADP 18, he is typically gone by late Round 2 in 12-team leagues.' },
+    { term: 'Tier', def: 'Players with similar projection/risk grouped together.', ex: 'If Tier 2 RB has one player left, draft him before the cliff.' },
+    { term: 'Ceiling', def: 'Best-case scoring outcome.', ex: 'Boom WRs are ideal when you need to overcome a projected deficit.' },
+    { term: 'Floor', def: 'Most likely low-end outcome.', ex: 'In close matchups, use high-floor volume players.' },
+    { term: 'Handcuff', def: 'Backup RB tied to your starter.', ex: 'If your RB1 gets hurt, his handcuff protects your lineup.' },
+    { term: 'FAAB', def: 'Free Agent Acquisition Budget for waivers.', ex: 'Use 25-40% for true season-changing waiver breakouts.' },
+    { term: 'Target Share', def: 'Percent of team pass attempts to a player.', ex: 'A WR with 26% target share has a stable weekly role.' },
+    { term: 'SOS', def: 'Strength of schedule difficulty.', ex: 'Prefer neutral tie-breakers with easier playoff SOS in Weeks 15-17.' },
+  ];
+
+  const TL_SCENARIOS = [
+    { q: 'Round 2, pick 11: You drafted RB in Round 1. Best default move?', options: ['Draft QB now', 'Draft WR with strong volume', 'Draft Kicker'], a: 1, tag: 'early-qb', explain: 'Round 2 is usually best used for RB/WR foundation. QB opportunity cost is high.', hint: 'Build RB+WR base before premium QB unless elite outlier drops.' },
+    { q: 'You have two RBs with the same bye week already. Next RB has that same bye. Choose:', options: ['Take RB anyway', 'Take similarly graded WR with different bye', 'Draft DEF instead'], a: 1, tag: 'bye-cluster', explain: 'Avoid stacking too many same-bye starters when values are close.', hint: 'Bye week clustering creates forced weak lineups.' },
+    { q: 'Round 7 and still no TE. Board shows final Tier-2 TE available. Best action?', options: ['Take TE now', 'Wait until Round 12', 'Take K'], a: 0, tag: 'late-te', explain: 'Secure position before tier cliff if value is strong.', hint: 'Tier cliffs matter more than absolute rank.' },
+    { q: 'You are favored by 25 points this week. Start type?', options: ['Boom-only deep threat', 'High-floor volume receiver', 'Injured player with low snap chance'], a: 1, tag: 'ceiling-floor', explain: 'When protecting a lead, prioritize floor and role certainty.', hint: 'Game theory: upside when trailing, stability when leading.' },
+    { q: 'Waiver target emerges after starter injury. Typical aggressive FAAB range?', options: ['1-3%', '8-12%', '25-40%'], a: 2, tag: 'waiver-passive', explain: 'League-winning breakouts deserve real budget aggression.', hint: 'FAAB unspent in Week 17 has no value.' },
+    { q: 'Trade offer: give bench WR5 for opponent RB2 starter. Response?', options: ['Instant accept', 'Decline always', 'Counter with fair value context'], a: 2, tag: 'trade-process', explain: 'Sustainable trading uses fair framing and roster-fit logic.', hint: 'Good process beats one-off wins.' },
+    { q: 'Round 1 tie-breaker between equal WRs. Better tie-breaker?', options: ['Nicer name value', 'Likely target share and role stability', 'Team logo preference'], a: 1, tag: 'brand-bias', explain: 'Usage and role predict fantasy points better than hype.', hint: 'Prioritize opportunity over highlight clips.' },
+    { q: 'You drafted Hero RB in Round 1. Rounds 2-6 emphasis?', options: ['Stack WR depth and one elite QB/TE value', 'Take 3 more RBs only', 'Draft DEF early'], a: 0, tag: 'hero-rb-exec', explain: 'Hero RB works best with WR depth and selective elite value.', hint: 'Avoid over-correcting into one position.' },
+    { q: 'Player listed Questionable Friday with limited practice. Best move?', options: ['Ignore and lock lineup now', 'Track final report + backup plan', 'Drop immediately'], a: 1, tag: 'injury-management', explain: 'Stay flexible until inactive reports are confirmed.', hint: 'Late-news readiness wins close weeks.' },
+    { q: 'Final rounds decision point:', options: ['Take K/DEF before bench upside is filled', 'Take upside bench, then K/DEF late', 'Draft second TE before WR upside'], a: 1, tag: 'late-round-priority', explain: 'Late rounds should prioritize upside before replaceable positions.', hint: 'K/DEF are easiest weekly stream positions.' },
+  ];
+
+  const TL_LINEUP = [
+    { q: 'Need stable points. Choose FLEX starter:', options: ['WR A: 9+ targets weekly, low TD rate', 'WR B: 3-5 targets, deep-ball volatility', 'RB C: questionable tag with snap cap'], a: 0, tag: 'lineup-floor', explain: 'Volume provides safer floor in close matchups.', hint: 'Target certainty over splash plays when variance hurts you.' },
+    { q: 'Projected to lose by 20. Choose WR3:', options: ['Slot WR with 8-point projection range', 'Boom WR with 3-touchdown upside', 'Backup WR with uncertain role'], a: 1, tag: 'lineup-ceiling', explain: 'When behind, you need volatility and spike-week potential.', hint: 'Chasing upside is correct when baseline is insufficient.' },
+    { q: 'Sunday morning: RB questionable, game starts late. Best process?', options: ['Start and hope', 'Swap to early-game healthy RB close in projection', 'Bench with no replacement'], a: 1, tag: 'late-swap', explain: 'Avoid locked zeroes from late inactive surprises.', hint: 'Prioritize lineup certainty over tiny projection deltas.' },
+  ];
+
+  const TL_WAIVER = [
+    { q: 'Starter RB tears ACL. Backup now projected 16+ touches. FAAB bid?', options: ['5%', '18%', '35%'], a: 2, tag: 'faab-underbid', explain: 'Potential season-changing role deserves aggressive spend.', hint: 'Workhorse opportunities are rare and worth budget.' },
+    { q: 'One-week spot starter due to minor injury. FAAB bid?', options: ['2-4%', '15-20%', '40%'], a: 0, tag: 'faab-overbid', explain: 'Short-term fills should not consume core budget.', hint: 'Match bid size to expected role duration.' },
+    { q: 'Two similar waiver WRs. Tie-breaker?', options: ['Higher snap share + routes', 'Best highlights clip', 'Player with cooler name'], a: 0, tag: 'waiver-process', explain: 'Usage indicators are strongest predictor of sustainable value.', hint: 'Targets, routes, and role beat narrative.' },
+  ];
+
+  const TL_TRADE = [
+    { q: 'You are deep at WR, weak at RB. Offer arrives: WR2 for RB2. Best default?', options: ['Accept if values are close and needs improve', 'Decline because WR projects higher weekly', 'Counter for an unrealistic overpay'], a: 0, tag: 'trade-needs', explain: 'Lineup optimization by position need is valid when value is fair.', hint: 'Trade from depth, upgrade weakness.' },
+    { q: 'Manager sends lowball offer for your RB1. Best response?', options: ['Insult them back', 'Counter with fair framework and reasons', 'Instant block forever'], a: 1, tag: 'trade-communication', explain: 'Constructive counters keep market open and increase future deals.', hint: 'Professional trade process creates more opportunities.' },
+    { q: 'Sell-high candidate scores 2 TDs on 4 touches. Correct framing?', options: ['Assume this is new normal', 'Explore market while narrative peaks', 'Bench immediately'], a: 1, tag: 'sell-high', explain: 'Unsustainable efficiency spikes are ideal trade windows.', hint: 'Separate production from underlying usage.' },
+  ];
+
+  const TL_CERT = [
+    { q: 'Best first 2 rounds in most formats?', options: ['QB + TE', 'RB/WR foundation', 'K + DEF'], a: 1, tag: 'cert-core', explain: 'Foundation positions first is standard +EV process.' },
+    { q: 'When should K/DEF usually be drafted?', options: ['Rounds 1-4', 'Middle rounds', 'Late rounds after upside bench'], a: 2, tag: 'cert-late-kdef', explain: 'Late-round K/DEF preserves earlier upside capital.' },
+    { q: 'Best tie-breaker between similarly ranked players?', options: ['Role and volume', 'Brand popularity', 'Last season highlights only'], a: 0, tag: 'cert-volume', explain: 'Opportunity drives fantasy scoring more reliably than hype.' },
+    { q: 'Ideal use of FAAB?', options: ['Save all year', 'Spend based on role-changing opportunities', 'Spend equally every week'], a: 1, tag: 'cert-faab', explain: 'Budget should follow expected rest-of-season value.' },
+    { q: 'When trailing big in projections, choose:', options: ['Higher floor', 'Higher ceiling', 'Avoid lineup changes'], a: 1, tag: 'cert-ceiling', explain: 'Ceiling gives comeback probability when baseline is insufficient.' },
+  ];
+
+  let tlState = {
+    activeTab: 'tracks',
+    teachMode: true,
+    points: 0,
+    completed: {},
+    mistakes: {},
+    modules: {},
+    checkpoints: {},
+  };
+
+  function loadTrainingLabState() {
+    try {
+      const raw = localStorage.getItem(TL_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw);
+      if (saved && typeof saved === 'object') tlState = { ...tlState, ...saved };
+      if (!TL_TABS.includes(tlState.activeTab)) tlState.activeTab = 'tracks';
+    } catch (_) {}
+  }
+
+  function saveTrainingLabState() {
+    try { localStorage.setItem(TL_STORAGE_KEY, JSON.stringify(tlState)); } catch (_) {}
+  }
+
+  function trainingCompletionPct() {
+    const moduleIds = ['scenarios', 'lineup', 'waiver', 'trade', 'cert'];
+    let done = moduleIds.filter((m) => tlState.completed[m]).length;
+    done += Object.values(tlState.checkpoints || {}).filter(Boolean).length;
+    const total = moduleIds.length + TL_TRACKS.length;
+    return Math.round((done / total) * 100);
+  }
+
+  function renderTrainingTabs() {
+    const wrap = document.getElementById('tl-tabs');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const labels = {
+      tracks: 'Guided Tracks', scenarios: 'Draft Drills', lineup: 'Lineup Lab', waiver: 'Waiver Lab',
+      trade: 'Trade Lab', glossary: 'Glossary', cert: 'Certification'
+    };
+    TL_TABS.forEach((tab) => {
+      const b = document.createElement('button');
+      b.textContent = labels[tab];
+      b.style.cssText = `padding:7px 11px;border-radius:999px;cursor:pointer;font-size:.74rem;font-weight:800;letter-spacing:.5px;border:1px solid ${tlState.activeTab === tab ? 'rgba(245,158,11,.5)' : 'rgba(255,255,255,.14)'};background:${tlState.activeTab === tab ? 'rgba(245,158,11,.18)' : 'rgba(255,255,255,.05)'};color:${tlState.activeTab === tab ? '#ffd166' : 'rgba(255,255,255,.8)'};`;
+      b.onclick = () => {
+        tlState.activeTab = tab;
+        saveTrainingLabState();
+        renderTrainingLab();
+      };
+      wrap.appendChild(b);
+    });
+  }
+
+  function updateTrainingHeader() {
+    const pill = document.getElementById('tl-progress-pill');
+    if (pill) pill.textContent = `Progress: ${trainingCompletionPct()}% · Points: ${tlState.points}`;
+    const teachBtn = document.getElementById('tl-teach-btn');
+    if (teachBtn) {
+      teachBtn.textContent = `Teach Mode: ${tlState.teachMode ? 'ON' : 'OFF'}`;
+      teachBtn.style.background = tlState.teachMode ? 'rgba(245,158,11,.14)' : 'rgba(255,255,255,.08)';
+      teachBtn.style.color = tlState.teachMode ? '#ffd166' : 'rgba(255,255,255,.75)';
+    }
+  }
+
+  function openTrainingLab() {
+    loadTrainingLabState();
+    const lab = document.getElementById('training-lab');
+    if (!lab) return;
+    lab.style.display = 'flex';
+    renderTrainingLab();
+  }
+
+  function closeTrainingLab() {
+    const lab = document.getElementById('training-lab');
+    if (!lab) return;
+    lab.style.display = 'none';
+    saveTrainingLabState();
+  }
+
+  function toggleTeachMode() {
+    tlState.teachMode = !tlState.teachMode;
+    saveTrainingLabState();
+    renderTrainingLab();
+  }
+
+  function ensureModuleState(moduleId) {
+    if (!tlState.modules[moduleId]) tlState.modules[moduleId] = { idx: 0, score: 0, answered: false, selected: null };
+    return tlState.modules[moduleId];
+  }
+
+  function registerMistake(tag) {
+    if (!tag) return;
+    tlState.mistakes[tag] = (tlState.mistakes[tag] || 0) + 1;
+  }
+
+  function markTrackCheckpoint(trackId) {
+    tlState.checkpoints[trackId] = true;
+    tlState.points += 5;
+    saveTrainingLabState();
+    renderTrainingLab();
+  }
+
+  function renderTracksTab() {
+    const topMistakes = Object.entries(tlState.mistakes || {}).sort((a, b) => b[1] - a[1]).slice(0, 4);
+    return `
+      <div style="max-width:1060px;margin:0 auto;display:grid;gap:14px;">
+        <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Guided Paths</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+            ${TL_TRACKS.map((t) => `
+              <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px;background:rgba(0,0,0,.2);">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                  <div style="font-weight:800;font-size:.9rem;">${t.label} Track</div>
+                  ${tlState.checkpoints[t.id] ? '<span style="font-size:.65rem;color:#4dff8a;">Checkpoint Complete</span>' : '<span style="font-size:.65rem;color:rgba(255,255,255,.45);">Checkpoint Pending</span>'}
+                </div>
+                <div style="font-size:.78rem;color:rgba(255,255,255,.68);margin:8px 0 10px 0;line-height:1.5;">${t.focus}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button onclick="goTo(${t.targetStep});closeTrainingLab();" style="background:rgba(79,195,247,.15);color:#9be3ff;border:1px solid rgba(79,195,247,.35);padding:6px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;">Open Curriculum</button>
+                  <button onclick="markTrackCheckpoint('${t.id}')" style="background:rgba(0,200,83,.15);color:#4dff8a;border:1px solid rgba(0,200,83,.35);padding:6px 10px;border-radius:8px;font-size:.72rem;cursor:pointer;">Mark Checkpoint</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Mistake Tracker</div>
+          ${topMistakes.length ? topMistakes.map(([k, v]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);font-size:.8rem;"><span>${k.replace(/-/g,' ')}</span><span>${v}x</span></div>`).join('') : '<div style="font-size:.8rem;color:rgba(255,255,255,.62);">No mistakes logged yet. Complete drills to build personalized coaching data.</div>'}
+        </div>
+
+        <div style="padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">Teaching Workflow</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.72);line-height:1.6;">Use this order for new players: Beginner Track → Draft Drills → Lineup Lab → Waiver Lab → Trade Lab → Certification. This creates concept learning, then decision practice, then evaluation.</div>
+        </div>
+      </div>`;
+  }
+
+  function renderQuestionTab(moduleId, title, subtitle, questions) {
+    const state = ensureModuleState(moduleId);
+    const q = questions[state.idx];
+    if (!q) {
+      tlState.completed[moduleId] = true;
+      saveTrainingLabState();
+      return `
+        <div style="max-width:860px;margin:0 auto;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);padding:18px;">
+          <div style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">${title} Complete</div>
+          <div style="font-size:.82rem;color:rgba(255,255,255,.65);margin-bottom:14px;">Score: ${state.score} / ${questions.length}</div>
+          <button onclick="restartModule('${moduleId}')" style="background:rgba(79,195,247,.15);color:#9be3ff;border:1px solid rgba(79,195,247,.35);padding:8px 12px;border-radius:8px;cursor:pointer;">Retry Module</button>
+        </div>`;
+    }
+
+    return `
+      <div style="max-width:860px;margin:0 auto;display:grid;gap:12px;">
+        <div style="border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);padding:14px;">
+          <div style="font-size:.68rem;color:#ffd166;letter-spacing:2px;font-weight:800;text-transform:uppercase;margin-bottom:8px;">${title}</div>
+          <div style="font-size:.8rem;color:rgba(255,255,255,.68);margin-bottom:10px;">${subtitle}</div>
+          <div style="font-size:.76rem;color:rgba(255,255,255,.5);margin-bottom:8px;">Question ${state.idx + 1} of ${questions.length}</div>
+          <div style="font-size:1rem;font-weight:700;line-height:1.5;margin-bottom:10px;">${q.q}</div>
+          ${tlState.teachMode && q.hint ? `<div style="font-size:.76rem;color:#9be3ff;background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.25);padding:7px 9px;border-radius:8px;margin-bottom:10px;">Teach hint: ${q.hint}</div>` : ''}
+          <div style="display:grid;gap:8px;">
+            ${q.options.map((opt, idx) => `
+              <button onclick="answerTrainingQuestion('${moduleId}', ${idx})" ${state.answered ? 'disabled' : ''}
+                style="text-align:left;padding:10px;border-radius:8px;cursor:${state.answered ? 'default' : 'pointer'};border:1px solid ${state.answered ? (idx === q.a ? 'rgba(0,200,83,.4)' : (idx === state.selected ? 'rgba(255,61,61,.4)' : 'rgba(255,255,255,.12)')) : 'rgba(255,255,255,.15)'};background:${state.answered ? (idx === q.a ? 'rgba(0,200,83,.12)' : (idx === state.selected ? 'rgba(255,61,61,.09)' : 'rgba(255,255,255,.03)')) : 'rgba(255,255,255,.04)'};color:#fff;font-size:.82rem;">
+                ${String.fromCharCode(65 + idx)}. ${opt}
+              </button>
+            `).join('')}
+          </div>
+          ${state.answered ? `<div style="margin-top:10px;font-size:.8rem;color:rgba(255,255,255,.78);line-height:1.55;">${q.explain}</div>
+            <button onclick="nextTrainingQuestion('${moduleId}')" style="margin-top:10px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;">Next</button>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function answerTrainingQuestion(moduleId, answerIndex) {
+    const bank = { scenarios: TL_SCENARIOS, lineup: TL_LINEUP, waiver: TL_WAIVER, trade: TL_TRADE, cert: TL_CERT }[moduleId];
+    if (!bank) return;
+    const state = ensureModuleState(moduleId);
+    if (state.answered) return;
+    const q = bank[state.idx];
+    state.selected = answerIndex;
+    state.answered = true;
+    if (answerIndex === q.a) {
+      state.score += 1;
+      tlState.points += moduleId === 'cert' ? 4 : 2;
+    } else {
+      registerMistake(q.tag);
+    }
+    saveTrainingLabState();
+    renderTrainingLab();
+  }
+
+  function nextTrainingQuestion(moduleId) {
+    const bank = { scenarios: TL_SCENARIOS, lineup: TL_LINEUP, waiver: TL_WAIVER, trade: TL_TRADE, cert: TL_CERT }[moduleId];
+    if (!bank) return;
+    const state = ensureModuleState(moduleId);
+    if (!state.answered) return;
+    state.idx += 1;
+    state.answered = false;
+    state.selected = null;
+    if (state.idx >= bank.length) tlState.completed[moduleId] = true;
+    saveTrainingLabState();
+    renderTrainingLab();
+  }
+
+  function restartModule(moduleId) {
+    tlState.modules[moduleId] = { idx: 0, score: 0, answered: false, selected: null };
+    tlState.completed[moduleId] = false;
+    saveTrainingLabState();
+    renderTrainingLab();
+  }
+
+  function renderGlossaryTab() {
+    return `
+      <div style="max-width:1060px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+        ${TL_GLOSSARY.map((g) => `
+          <div style="border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:12px;background:rgba(255,255,255,.03);">
+            <div style="font-size:.66rem;color:#ffd166;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;margin-bottom:6px;">${g.term}</div>
+            <div style="font-size:.82rem;color:rgba(255,255,255,.78);line-height:1.5;margin-bottom:8px;">${g.def}</div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.58);line-height:1.5;">Example: ${g.ex}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
+  function renderTrainingLab() {
+    renderTrainingTabs();
+    updateTrainingHeader();
+    const host = document.getElementById('tl-content');
+    if (!host) return;
+
+    if (tlState.activeTab === 'tracks') {
+      host.innerHTML = renderTracksTab();
+      return;
+    }
+    if (tlState.activeTab === 'scenarios') {
+      host.innerHTML = renderQuestionTab('scenarios', 'Draft Decision Drills', '10 on-the-clock scenarios to build process and confidence.', TL_SCENARIOS);
+      return;
+    }
+    if (tlState.activeTab === 'lineup') {
+      host.innerHTML = renderQuestionTab('lineup', 'Weekly Lineup Lab', 'Practice start/sit decisions with floor vs ceiling context.', TL_LINEUP);
+      return;
+    }
+    if (tlState.activeTab === 'waiver') {
+      host.innerHTML = renderQuestionTab('waiver', 'Waiver Wire Trainer', 'Build FAAB discipline and pickup prioritization.', TL_WAIVER);
+      return;
+    }
+    if (tlState.activeTab === 'trade') {
+      host.innerHTML = renderQuestionTab('trade', 'Trade Evaluator Workshop', 'Learn fair value framing and roster-fit execution.', TL_TRADE);
+      return;
+    }
+    if (tlState.activeTab === 'glossary') {
+      host.innerHTML = renderGlossaryTab();
+      return;
+    }
+    if (tlState.activeTab === 'cert') {
+      host.innerHTML = renderQuestionTab('cert', 'Mini Certification', 'Pass this quiz to validate fantasy fundamentals.', TL_CERT);
+      return;
+    }
+  }
+
   // ═══════════ TRAINING NAVIGATION ═══════════
   const TOTAL = 15;
   let current = 1;
@@ -3635,11 +3974,20 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  loadTrainingLabState();
   buildDots();
   refreshCurrentNews(true);
 
   // Keyboard navigation
   document.addEventListener('keydown', e => {
+    const inDraft = document.getElementById('draft-sim')?.style.display === 'flex';
+    const inLab = document.getElementById('training-lab')?.style.display === 'flex';
+    if (e.key === 'Escape') {
+      if (inLab) closeTrainingLab();
+      if (inDraft) closeDraftSim();
+      return;
+    }
+    if (inDraft || inLab) return;
     if (e.key === 'ArrowRight' && current < TOTAL) goTo(current + 1);
     if (e.key === 'ArrowLeft'  && current > 1)     goTo(current - 1);
   });
