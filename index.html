@@ -2207,7 +2207,7 @@
           <button onclick="runBatchSims(10)" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.92);font-weight:800;font-size:.9rem;padding:16px 22px;border:1px solid rgba(255,255,255,.18);border-radius:50px;cursor:pointer;letter-spacing:.5px;text-transform:uppercase;">Sim 10 Drafts</button>
         </div>
         <div style="margin-top:10px;font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.55;max-width:640px;margin-left:auto;margin-right:auto;">Runs 10 fast auto-drafts with your current league settings and strategy, then shows the average outcome plus one sample team so you can see what that build usually looks like.</div>
-        <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live 2026 ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · fallback board may lag if live data is unavailable</div>
+        <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · fallback board may lag if live data is unavailable</div>
         <div id="ds-sim-summary" style="margin-top:10px;font-size:.74rem;color:rgba(255,255,255,.55);"></div>
         <div id="ds-sim-details" style="display:none;max-width:860px;margin:12px auto 0 auto;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:left;"></div>
       </div>
@@ -2384,6 +2384,7 @@
   let dsSleeperPlayers = []; // expanded player pool from Sleeper
   let dsStrategy = 'balanced';
   let dsLastAdpFetchAt = 0, dsLastSleeperFetchAt = 0;
+  let dsLiveAdpYear = null, dsLiveAdpTeams = null;
   const CURRENT_NFL_YEAR = new Date().getFullYear();
 
   const DS_PREF_KEY = 'ffacademy_draft_prefs_v2';
@@ -2635,9 +2636,12 @@
     const el = document.getElementById('ds-adp-source');
     if (!el) return;
     const modeText = dsUsingLive
-      ? 'Live 2026 ADP'
+      ? `Live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP`
       : 'Fallback board in use';
-    el.innerHTML = `${modeText} from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · ADP ${relTimeLabel(dsLastAdpFetchAt)} · Players ${relTimeLabel(dsLastSleeperFetchAt)} · News ${relTimeLabel(lastNewsFetch)}`;
+    const teamsNote = dsUsingLive && dsLiveAdpTeams && dsLiveAdpTeams !== dsTeamCount
+      ? ` · normalized to ${dsLiveAdpTeams}-team ADP`
+      : '';
+    el.innerHTML = `${modeText} from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a>${teamsNote} · ADP ${relTimeLabel(dsLastAdpFetchAt)} · Players ${relTimeLabel(dsLastSleeperFetchAt)} · News ${relTimeLabel(lastNewsFetch)}`;
   }
 
   function openDraftSim() {
@@ -2798,17 +2802,40 @@
   // ── Live ADP loader ──
   async function loadLiveADP() {
     const teams = dsTeamCount > 14 ? 12 : dsTeamCount; // FFC max supported is 14
-    const url = `https://fantasyfootballcalculator.com/api/v1/adp/${dsFormat}?teams=${teams}&year=${CURRENT_NFL_YEAR}`;
-    const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    try {
-      const r = await fetch(proxy, { signal: AbortSignal.timeout(6000) });
-      if (!r.ok) throw new Error('bad status');
-      const d = await r.json();
-      dsLastAdpFetchAt = Date.now();
-      return d.players || [];
-    } catch(e) {
+    const years = [CURRENT_NFL_YEAR, CURRENT_NFL_YEAR + 1, CURRENT_NFL_YEAR - 1]
+      .filter((y, i, arr) => arr.indexOf(y) === i);
+
+    const fetchThroughProxies = async (targetUrl) => {
+      const proxies = [
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+      ];
+      for (const proxy of proxies) {
+        try {
+          const r = await fetch(proxy, { signal: AbortSignal.timeout(7000) });
+          if (!r.ok) continue;
+          const d = await r.json();
+          const players = Array.isArray(d?.players) ? d.players.filter((p) => Number.isFinite(Number(p.adp))) : [];
+          if (players.length >= 40) return players;
+        } catch (_) {}
+      }
       return [];
+    };
+
+    for (const year of years) {
+      const url = `https://fantasyfootballcalculator.com/api/v1/adp/${dsFormat}?teams=${teams}&year=${year}`;
+      const players = await fetchThroughProxies(url);
+      if (players.length) {
+        dsLastAdpFetchAt = Date.now();
+        dsLiveAdpYear = year;
+        dsLiveAdpTeams = teams;
+        return players;
+      }
     }
+
+    dsLiveAdpYear = null;
+    dsLiveAdpTeams = null;
+    return [];
   }
 
   function mergeLiveADP(liveData) {
@@ -2846,7 +2873,7 @@
     // Show loading
     document.getElementById('ds-setup').style.display = 'none';
     document.getElementById('ds-loading').style.display = 'flex';
-    document.getElementById('ds-load-msg').textContent = 'Fetching live 2026 ADP + player data...';
+    document.getElementById('ds-load-msg').textContent = 'Fetching live ADP + player data...';
 
     // Run both API calls in parallel
     const [liveData, sleeperMap] = await Promise.all([loadLiveADP(), loadSleeperData()]);
@@ -2855,7 +2882,7 @@
 
     const sleeperCount = Object.keys(sleeperMap).length;
     document.getElementById('ds-load-msg').textContent = liveData.length
-      ? `Live 2026 ADP loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
+      ? `Live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP loaded${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''} · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
       : `Live ADP unavailable · fallback board loaded${sleeperCount ? ' · ' + sleeperCount + ' player profiles' : ''}`;
     updateFreshnessText();
     saveDraftPrefs();
@@ -2875,7 +2902,7 @@
 
     // Show live ADP badge in topbar
     document.getElementById('ds-pick-info').innerHTML = dsUsingLive
-      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">LIVE 2026 ADP</span>`
+      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">LIVE ADP ${dsLiveAdpYear || CURRENT_NFL_YEAR}${dsLiveAdpTeams ? ` · ${dsLiveAdpTeams}T` : ''}</span>`
       : `<span style="font-size:.75rem;color:#ffd166;">Fallback Board · verify current preseason ranks</span>`;
 
     const coach = document.getElementById('ds-coach');
@@ -3557,7 +3584,7 @@
 
     const summaryEl = document.getElementById('ds-sim-summary');
     const simDetails = document.getElementById('ds-sim-details');
-    if (summaryEl) summaryEl.textContent = `Loading ${CURRENT_NFL_YEAR} ADP for ${dsTeamCount}-team, 5-bench sims...`;
+    if (summaryEl) summaryEl.textContent = `Loading live ADP for ${dsTeamCount}-team, 5-bench sims...`;
     if (simDetails) {
       simDetails.style.display = 'none';
       simDetails.innerHTML = '';
@@ -3585,7 +3612,7 @@
 
     const summary = `Sim ${n}: Avg grade ${scoreToLetter(avgScore).g} (${avgScore.toFixed(1)}), Avg rank #${avgRank.toFixed(1)}, Best ${best}, Worst ${worst}${commonFirst ? `, Most common R1: ${commonFirst[0]} (${commonFirst[1]}/${n})` : ''}`;
     if (summaryEl) {
-      summaryEl.textContent = `${summary}${dsUsingLive ? ` · Using live ${CURRENT_NFL_YEAR} ADP` : ' · Live ADP unavailable, fallback board used'}`;
+      summaryEl.textContent = `${summary}${dsUsingLive ? ` · Using live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''}` : ' · Live ADP unavailable, fallback board used'}`;
     }
 
     const detailsHtml = `
