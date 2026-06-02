@@ -1284,6 +1284,26 @@
       </div>
     </div>
 
+    <!-- TRAINING SPACE CURRENT NEWS -->
+    <div style="background:linear-gradient(135deg,rgba(79,195,247,.08),rgba(0,200,83,.05));border:1px solid rgba(79,195,247,.25);border-radius:18px;padding:24px;margin:0 0 26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <div>
+          <div style="font-size:.65rem;font-weight:800;letter-spacing:3px;color:var(--blue);text-transform:uppercase;margin-bottom:6px;">Training Space Current News</div>
+          <div id="news-status" style="font-size:.78rem;color:rgba(255,255,255,.55);">Loading latest ESPN NFL headlines...</div>
+        </div>
+        <button type="button" onclick="refreshCurrentNews(true)" style="background:rgba(255,255,255,.08);color:#fff;font-weight:700;font-size:.75rem;padding:9px 14px;border:1px solid rgba(255,255,255,.18);border-radius:999px;cursor:pointer;">Refresh News</button>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span style="font-size:.65rem;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);">Myles Garrett</span>
+        <span style="font-size:.65rem;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);">A.J. Brown</span>
+        <span style="font-size:.65rem;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);">Trade</span>
+        <span style="font-size:.65rem;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.75);">Injury</span>
+      </div>
+
+      <div id="news-list" style="display:grid;gap:10px;"></div>
+    </div>
+
     <!-- STEFANSKI / BIJAN SPOTLIGHT -->
     <div style="background:linear-gradient(135deg,rgba(255,215,0,.07),rgba(0,200,83,.05));border:1px solid rgba(255,215,0,.25);border-radius:18px;padding:28px 28px 24px;">
       <div style="font-size:.65rem;font-weight:800;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:14px;">Real-World Example — Coaching Change Impact</div>
@@ -2954,6 +2974,103 @@
     `;
   }
 
+  // ═══════════ TRAINING SPACE CURRENT NEWS ═══════════
+  let lastNewsFetch = 0;
+  const NEWS_REFRESH_MS = 5 * 60 * 1000;
+  const NEWS_TERMS = ['myles garrett', 'a.j. brown', 'aj brown', 'trade', 'injury'];
+
+  function timeAgo(isoString) {
+    if (!isoString) return '';
+    const t = new Date(isoString).getTime();
+    if (Number.isNaN(t)) return '';
+    const mins = Math.max(1, Math.round((Date.now() - t) / 60000));
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 48) return `${hrs}h ago`;
+    return `${Math.round(hrs / 24)}d ago`;
+  }
+
+  function renderNewsCards(items, sourceLabel = 'ESPN') {
+    const list = document.getElementById('news-list');
+    const status = document.getElementById('news-status');
+    if (!list || !status) return;
+
+    if (!items.length) {
+      list.innerHTML = `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);font-size:.8rem;color:rgba(255,255,255,.55);">No headlines available right now. Tap Refresh News.</div>`;
+      status.textContent = `No live headlines returned from ${sourceLabel}.`;
+      return;
+    }
+
+    list.innerHTML = items.map((item) => {
+      const text = `${item.headline || ''} ${item.description || ''}`.toLowerCase();
+      const tracked = NEWS_TERMS.some((term) => text.includes(term));
+      const rel = timeAgo(item.published);
+      return `
+        <article style="padding:12px;border-radius:10px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.1);display:grid;gap:6px;">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.64rem;color:rgba(255,255,255,.5);text-transform:uppercase;font-weight:700;letter-spacing:.8px;">
+            <span>${sourceLabel}</span>
+            ${rel ? `<span>${rel}</span>` : ''}
+            ${tracked ? '<span style="padding:2px 7px;border-radius:999px;border:1px solid rgba(79,195,247,.5);color:#9be3ff;">Tracked</span>' : ''}
+          </div>
+          <div style="font-size:.92rem;font-weight:700;line-height:1.35;">${item.headline || 'Untitled headline'}</div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.62);line-height:1.55;">${item.description || 'Open article for full context.'}</div>
+          <a href="${item.link || 'https://www.espn.com/nfl/'}" target="_blank" rel="noopener noreferrer" style="font-size:.76rem;color:#9be3ff;font-weight:700;text-decoration:none;">Read on ESPN</a>
+        </article>`;
+    }).join('');
+
+    status.textContent = `Showing ${items.length} live headline${items.length === 1 ? '' : 's'} from ${sourceLabel}.`;
+  }
+
+  async function refreshCurrentNews(force = false) {
+    const list = document.getElementById('news-list');
+    const status = document.getElementById('news-status');
+    if (!list || !status) return;
+
+    if (!force && Date.now() - lastNewsFetch < NEWS_REFRESH_MS) {
+      return;
+    }
+
+    status.textContent = 'Fetching ESPN NFL headlines...';
+    if (force) {
+      list.innerHTML = `<div style="padding:12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.15);font-size:.8rem;color:rgba(255,255,255,.55);">Refreshing news feed...</div>`;
+    }
+
+    try {
+      const url = new URL('https://site.api.espn.com/apis/site/v2/sports/football/nfl/news');
+      url.searchParams.set('limit', '10');
+      url.searchParams.set('_', String(Date.now()));
+      const response = await fetch(url.toString(), { cache: 'no-store' });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json();
+      const articles = Array.isArray(data.articles) ? data.articles : [];
+
+      const parsed = articles.map((a) => ({
+        headline: a.headline,
+        description: a.description,
+        link: a.links?.web?.href || a.links?.mobile?.href || a.link || 'https://www.espn.com/nfl/',
+        published: a.published || a.lastModified || ''
+      })).filter((a) => a.headline);
+
+      const scored = parsed.sort((a, b) => {
+        const ta = NEWS_TERMS.some((term) => `${a.headline} ${a.description || ''}`.toLowerCase().includes(term)) ? 1 : 0;
+        const tb = NEWS_TERMS.some((term) => `${b.headline} ${b.description || ''}`.toLowerCase().includes(term)) ? 1 : 0;
+        return tb - ta;
+      });
+
+      renderNewsCards(scored.slice(0, 6), 'ESPN');
+      lastNewsFetch = Date.now();
+    } catch (err) {
+      renderNewsCards([
+        {
+          headline: 'Live ESPN feed unavailable in this session',
+          description: 'Tap Refresh News again or open the direct ESPN NFL news page.',
+          link: 'https://www.espn.com/nfl/'
+        }
+      ], 'ESPN');
+      status.textContent = 'Live feed unavailable right now. Showing fallback link.';
+    }
+  }
+
   // ═══════════ TRAINING NAVIGATION ═══════════
   const TOTAL = 15;
   let current = 1;
@@ -2977,10 +3094,14 @@
     const pct = (current / TOTAL * 100).toFixed(1);
     document.getElementById('progress-bar').style.width = pct + '%';
     buildDots();
+    if (current === 8) {
+      refreshCurrentNews();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   buildDots();
+  refreshCurrentNews(true);
 
   // Keyboard navigation
   document.addEventListener('keydown', e => {
