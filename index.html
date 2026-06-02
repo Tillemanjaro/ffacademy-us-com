@@ -2065,6 +2065,7 @@
         <div style="margin-top:10px;font-size:.76rem;color:rgba(255,255,255,.5);line-height:1.55;max-width:640px;margin-left:auto;margin-right:auto;">Runs 10 fast auto-drafts with your current league settings and strategy, then shows the average outcome plus one sample team so you can see what that build usually looks like.</div>
         <div id="ds-adp-source" style="margin-top:12px;font-size:.72rem;color:rgba(255,255,255,.3);">Live 2026 ADP from <a href="https://fantasyfootballcalculator.com" target="_blank" style="color:rgba(168,85,247,.7);">fantasyfootballcalculator.com</a> · fallback board may lag if live data is unavailable</div>
         <div id="ds-sim-summary" style="margin-top:10px;font-size:.74rem;color:rgba(255,255,255,.55);"></div>
+        <div id="ds-sim-details" style="display:none;max-width:860px;margin:12px auto 0 auto;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;text-align:left;"></div>
       </div>
     </div>
   </div>
@@ -3389,17 +3390,25 @@
     const el = document.getElementById('ds-sim-summary');
     if (el) el.textContent = summary;
 
+    const detailsHtml = `
+      <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
+      <div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.55;">${summary}</div>
+      <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times. The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
+        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team</div>
+        ${sampleRoster.map((line) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.55;padding:4px 0;">${line}</div>`).join('')}
+      </div>
+    `;
+
+    const simDetails = document.getElementById('ds-sim-details');
+    if (simDetails) {
+      simDetails.style.display = 'block';
+      simDetails.innerHTML = detailsHtml;
+    }
+
     const post = document.getElementById('ds-post-actions');
     if (post) {
-      post.innerHTML = `
-        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
-        <div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.55;">${summary}</div>
-        <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times. The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
-          <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team</div>
-          ${sampleRoster.map((line) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.55;padding:4px 0;">${line}</div>`).join('')}
-        </div>
-      `;
+      post.innerHTML = detailsHtml;
     }
   }
 
