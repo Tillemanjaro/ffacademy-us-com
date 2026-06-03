@@ -2239,10 +2239,10 @@
       </div>
     </div>
 
-    <div style="flex:1;display:flex;min-height:0;overflow:hidden;">
+    <div id="ds-board-layout" style="flex:1;display:flex;min-height:0;overflow:hidden;">
 
       <!-- LEFT: YOUR ROSTER + PICK LOG -->
-      <div style="width:280px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);overflow:hidden;">
+      <div id="ds-left-panel" style="width:280px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);overflow:hidden;">
         <div style="padding:14px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06);font-size:.68rem;font-weight:800;letter-spacing:3px;color:#a855f7;text-transform:uppercase;">Your Roster</div>
         <div id="ds-roster" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;"></div>
         <div style="padding:10px 16px;background:rgba(255,255,255,.02);border-top:1px solid rgba(255,255,255,.06);font-size:.68rem;font-weight:800;letter-spacing:3px;color:rgba(255,255,255,.3);text-transform:uppercase;">Recent Picks</div>
@@ -2250,7 +2250,7 @@
       </div>
 
       <!-- RIGHT: AVAILABLE PLAYERS -->
-      <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
+      <div id="ds-right-panel" style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
         <!-- FILTERS -->
         <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;gap:8px;flex-wrap:wrap;align-items:center;flex-shrink:0;">
           <input id="ds-search" type="text" placeholder="Search player..." oninput="renderAvailable()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#fff;padding:7px 12px;border-radius:8px;font-size:.82rem;width:160px;outline:none;">
@@ -2338,6 +2338,39 @@
       font-size: 0.8rem;
       min-height: 40px;
     }
+    /* Stack roster above player list on mobile */
+    #ds-board-layout {
+      flex-direction: column !important;
+    }
+    #ds-left-panel {
+      width: 100% !important;
+      flex-shrink: 0 !important;
+      max-height: 160px;
+      border-right: none !important;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      flex-direction: row !important;
+      overflow: hidden;
+    }
+    #ds-left-panel #ds-roster {
+      flex: 1;
+      border-right: 1px solid rgba(255,255,255,.07);
+    }
+    #ds-left-panel #ds-log {
+      width: 140px;
+      flex-shrink: 0;
+      height: auto !important;
+    }
+    /* Hide the "Recent Picks" and "Your Roster" label divs to save space */
+    #ds-left-panel > div:not(#ds-roster):not(#ds-log) {
+      display: none !important;
+    }
+    #ds-right-panel {
+      flex: 1;
+      min-height: 0;
+    }
+    #ds-search {
+      width: 130px !important;
+    }
   }
   
   @media (max-width: 480px) {
@@ -2345,6 +2378,15 @@
       padding: 10px 18px;
       font-size: 0.9rem;
       min-height: 44px;
+    }
+    #ds-left-panel {
+      max-height: 120px;
+    }
+    #ds-left-panel #ds-log {
+      width: 120px;
+    }
+    #ds-search {
+      width: 110px !important;
     }
   }
   .ds-roster-row {
