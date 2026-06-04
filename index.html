@@ -3681,8 +3681,17 @@
     document.getElementById('ds-coach-badge').textContent = 'EDGE';
     document.getElementById('ds-coach-title').style.color = '#81d4fa';
     document.getElementById('ds-coach-title').textContent = `${player.name} · Gridiron Edge ${Math.round(evalData.score)}`;
-    document.getElementById('ds-coach-text').textContent =
-      `Market rank #${rank}. Roster need ${signedFactor(f.need)}. Strength of schedule ${signedFactor(f.sos)}. Historical stability ${signedFactor(f.stabilityScore)}. Bye overlap -${Math.round(f.byePenalty)}. Injury risk -${Math.round(f.injPenalty)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%. ${recommendationLens(player, evalData, 0)}.${note}`;
+    document.getElementById('ds-coach-text').innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:6px;margin-bottom:8px;">
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">Rank <strong style="color:#fff;">#${rank}</strong></span>
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">Need <strong style="color:#fff;">${signedFactor(f.need)}</strong></span>
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">SOS <strong style="color:#fff;">${signedFactor(f.sos)}</strong></span>
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">Stability <strong style="color:#fff;">${signedFactor(f.stabilityScore)}</strong></span>
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">Bye <strong style="color:#fff;">-${Math.round(f.byePenalty)}</strong></span>
+        <span style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:6px;">Injury <strong style="color:#fff;">-${Math.round(f.injPenalty)}</strong></span>
+      </div>
+      <div style="line-height:1.55;">${recommendationLens(player, evalData, 0)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%.${note}</div>
+    `;
   }
 
   function getDemoCoach(afterPick) {
@@ -3863,6 +3872,92 @@
     if (metrics.counts.QB === 0) tips.push('Secure a starting QB before Round 9 to avoid streaming volatility.');
     if (tips.length < 3) tips.push('Keep using replacement-value deltas to avoid overpaying for shallow position runs.');
     return tips.slice(0, 3);
+  }
+
+  function userPickRecords() {
+    return dsAllPicks
+      .filter((pick) => pick.isUser && pick.player)
+      .map((pick) => ({
+        ...pick,
+        adp: playerAdpValue(pick.player),
+        delta: playerAdpValue(pick.player) - pick.pick,
+      }));
+  }
+
+  function rosterWeakness(metrics) {
+    if (metrics.counts.RB < 2) return 'RB depth is thin. Your next mock should push a reliable RB into the first five rounds.';
+    if (metrics.counts.WR < 2) return 'WR depth is thin. Prioritize target volume before chasing secondary positions.';
+    if (metrics.counts.TE === 0) return 'TE is unresolved. Either buy a tier before the cliff or commit to streaming.';
+    if (metrics.counts.QB === 0) return 'QB is unresolved. Wait is fine, but have a round window instead of drifting.';
+    if (metrics.maxByeCluster > 2) return `Bye-week compression: ${metrics.maxByeCluster} players share a bye. Spread your bench next time.`;
+    if (metrics.riskScore < 70) return 'Risk profile is heavy. Mix safer workload players with the upside swings.';
+    return 'No major structural hole. Your next edge is turning one neutral pick into a clear value pick.';
+  }
+
+  function draftArchetype(metrics) {
+    if (metrics.valueScore >= 82 && metrics.riskScore >= 82) return 'Value-Control Build';
+    if (metrics.upsideScore >= 80 && metrics.riskScore < 75) return 'High-Variance Upside Build';
+    if (metrics.balanceScore >= 85) return 'Balanced Foundation Build';
+    if (metrics.counts.WR >= 4) return 'Receiver-Volume Build';
+    if (metrics.counts.RB >= 4) return 'Running-Back Anchor Build';
+    return 'Mixed Value Build';
+  }
+
+  function nextMockPlan(metrics, bestValue, biggestReach) {
+    const plan = [];
+    if (biggestReach && biggestReach.delta < -8) plan.push(`Do not pay ${Math.abs(Math.round(biggestReach.delta))}+ picks over market unless the tier is about to disappear.`);
+    if (!bestValue || bestValue.delta < 6) plan.push('Hunt for at least one clear ADP discount in Rounds 4-8.');
+    if (metrics.counts.RB < 3) plan.push('Add one more RB before the bench gets speculative.');
+    if (metrics.counts.WR < 3) plan.push('Add one more WR with stable target volume.');
+    if (metrics.maxByeCluster > 2) plan.push('Break up same-bye clusters in the middle rounds.');
+    if (!plan.length) plan.push('Repeat the same structure, but test a different draft slot or strategy mode.');
+    return plan.slice(0, 3);
+  }
+
+  function reportCardHtml(metrics) {
+    const records = userPickRecords();
+    const values = records.filter((r) => Number.isFinite(r.delta));
+    const bestValue = values.slice().sort((a, b) => b.delta - a.delta)[0] || null;
+    const biggestReach = values.slice().sort((a, b) => a.delta - b.delta)[0] || null;
+    const plan = nextMockPlan(metrics, bestValue, biggestReach);
+    const source = recommendationDataSourceLabel();
+
+    const valueText = bestValue && bestValue.delta > 0
+      ? `${bestValue.player.name} at pick ${bestValue.pick}, ${Math.round(bestValue.delta)} picks after market.`
+      : 'No obvious ADP discount. You drafted close to market most of the way.';
+    const reachText = biggestReach && biggestReach.delta < 0
+      ? `${biggestReach.player.name} at pick ${biggestReach.pick}, ${Math.abs(Math.round(biggestReach.delta))} picks before market.`
+      : 'No major reach flagged against current market rank.';
+
+    return `
+      <div style="max-width:860px;margin:0 auto 22px auto;border:1px solid rgba(124,58,237,.24);border-radius:14px;background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(79,195,247,.06));padding:14px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+          <div>
+            <div style="font-size:.68rem;color:#d8b4fe;font-weight:900;letter-spacing:2px;text-transform:uppercase;">FF Academy Draft Report</div>
+            <div style="font-size:.92rem;font-weight:800;margin-top:3px;">${draftArchetype(metrics)}</div>
+          </div>
+          <div style="font-size:.64rem;color:#9be3ff;border:1px solid rgba(79,195,247,.28);background:rgba(79,195,247,.09);border-radius:999px;padding:4px 9px;">Data: ${source}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
+          <div style="background:rgba(0,200,83,.08);border:1px solid rgba(0,200,83,.2);border-radius:10px;padding:10px;">
+            <div style="font-size:.63rem;color:#4dff8a;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Best Value</div>
+            <div style="font-size:.8rem;color:rgba(255,255,255,.8);line-height:1.45;">${valueText}</div>
+          </div>
+          <div style="background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.22);border-radius:10px;padding:10px;">
+            <div style="font-size:.63rem;color:#ffd166;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Biggest Reach</div>
+            <div style="font-size:.8rem;color:rgba(255,255,255,.8);line-height:1.45;">${reachText}</div>
+          </div>
+          <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px;">
+            <div style="font-size:.63rem;color:#d8b4fe;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:5px;">Roster Weakness</div>
+            <div style="font-size:.8rem;color:rgba(255,255,255,.8);line-height:1.45;">${rosterWeakness(metrics)}</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px;">
+          <div style="font-size:.63rem;color:#9be3ff;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Next Mock Plan</div>
+          ${plan.map((item) => `<div style="font-size:.8rem;color:rgba(255,255,255,.78);line-height:1.45;padding:4px 0;border-top:1px solid rgba(255,255,255,.06);">${item}</div>`).join('')}
+        </div>
+      </div>
+    `;
   }
 
   function showImprovementTips() {
@@ -4092,6 +4187,8 @@
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Upside</div><div style="font-weight:800;">${Math.round(metrics.upsideScore)}</div></div>
         <div style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:10px;"><div style="font-size:.64rem;color:rgba(255,255,255,.45);">Starter Strength</div><div style="font-weight:800;">${Math.round(metrics.starterScore)}</div></div>
       </div>
+
+      ${reportCardHtml(metrics)}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:860px;margin:0 auto;">
         <div>
