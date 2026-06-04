@@ -3134,11 +3134,6 @@
 
     let pool = eligible.filter((p) => playerAdpValue(p) <= maxAdp);
 
-    // Prevent unrealistic first/second-round QB runs in one-QB formats.
-    if (round <= 2) {
-      pool = pool.filter((p) => p.pos !== 'QB' || playerAdpValue(p) <= 6);
-    }
-
     // Keep enough candidates so the simulation still has variance.
     if (pool.length < Math.min(20, eligible.length)) {
       const fallbackTop = eligible
@@ -3149,6 +3144,15 @@
       fallbackTop.forEach((p) => {
         if (!seen.has(p.id)) pool.push(p);
       });
+    }
+
+    // Apply QB suppression AFTER fallback so QBs can't sneak back in.
+    // Round 1: no QBs at all — in 1-QB formats RBs/WRs always win R1.
+    // Round 2: allow QBs but only those with a true early ADP (≤12).
+    if (round === 1) {
+      pool = pool.filter((p) => p.pos !== 'QB');
+    } else if (round === 2) {
+      pool = pool.filter((p) => p.pos !== 'QB' || playerAdpValue(p) <= 12);
     }
 
     return pool;
