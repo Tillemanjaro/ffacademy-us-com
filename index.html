@@ -118,6 +118,28 @@
     }
   }
 
+  /* ── BREAKING NEWS BUTTON ── */
+  @keyframes blink-dot { 0%,100%{opacity:1} 50%{opacity:.25} }
+  .breaking-news-btn {
+    display:flex;align-items:center;gap:6px;
+    background:rgba(255,70,70,.1);color:#ff9a9a;
+    border:1px solid rgba(255,70,70,.35);
+    font-weight:800;font-size:.72rem;padding:7px 14px;
+    border-radius:20px;cursor:pointer;letter-spacing:1px;
+    text-transform:uppercase;white-space:nowrap;
+    transition:transform .2s,box-shadow .2s;flex-shrink:0;
+  }
+  .breaking-news-btn:hover { transform:scale(1.06);box-shadow:0 0 12px rgba(255,70,70,.3); }
+  .breaking-news-dot {
+    width:7px;height:7px;border-radius:50%;
+    background:#ff5555;flex-shrink:0;
+    animation:blink-dot 1.4s ease-in-out infinite;
+  }
+  @media (max-width:600px) {
+    .breaking-news-label { display:none; }
+    .breaking-news-btn { padding:7px 10px; }
+  }
+
   /* ── SECTIONS ── */
   .section {
     min-height: 100vh;
@@ -671,6 +693,7 @@
 <nav>
   <div class="nav-logo">FF Academy</div>
   <div class="nav-steps" id="nav-dots"></div>
+  <button onclick="openNewsOverlay()" class="breaking-news-btn" id="breaking-news-btn"><span class="breaking-news-dot"></span><span class="breaking-news-label">Breaking News</span></button>
   <button onclick="openTrainingLab()" style="background:rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:.72rem;padding:7px 14px;border:1px solid rgba(255,255,255,.18);border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Training Lab</button>
   <button onclick="openDraftSim()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:.72rem;padding:7px 16px;border:none;border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 12px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Mock Draft</button>
 </nav>
@@ -2267,6 +2290,35 @@
   <!-- COMPLETE SCREEN -->
   <div id="ds-complete" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:flex-start;padding:30px 24px;overflow-y:auto;">
     <div id="ds-complete-inner" style="max-width:900px;width:100%;"></div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     BREAKING NEWS OVERLAY — ESPN news + Sleeper injury tracker
+═══════════════════════════════════════════════════════ -->
+<div id="news-overlay" style="display:none;position:fixed;inset:0;background:#0a0a0f;z-index:9998;flex-direction:column;font-family:'Inter',sans-serif;">
+
+  <!-- HEADER BAR -->
+  <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(255,70,70,.15);background:rgba(10,10,15,.98);flex-shrink:0;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="width:8px;height:8px;border-radius:50%;background:#ff5555;flex-shrink:0;animation:blink-dot 1.4s ease-in-out infinite;"></span>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;color:#ff9a9a;">BREAKING NEWS</span>
+    </div>
+    <div id="news-overlay-status" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Loading...</div>
+    <button onclick="refreshNewsOverlay(true)" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.15);padding:6px 14px;border-radius:20px;cursor:pointer;font-size:.72rem;font-weight:700;letter-spacing:.5px;flex-shrink:0;">↻ Refresh</button>
+    <button onclick="closeNewsOverlay()" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.12);padding:6px 12px;border-radius:20px;cursor:pointer;font-size:.88rem;font-weight:700;flex-shrink:0;">✕</button>
+  </div>
+
+  <!-- INJURY TRACKER STRIP -->
+  <div style="padding:10px 20px;border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,50,50,.03);flex-shrink:0;">
+    <div style="font-size:.6rem;font-weight:800;letter-spacing:3px;color:rgba(255,138,138,.7);text-transform:uppercase;margin-bottom:7px;">Injury Report</div>
+    <div id="news-injury-track" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+  </div>
+
+  <!-- NEWS FEED -->
+  <div style="flex:1;overflow-y:auto;padding:16px 20px;">
+    <div id="news-overlay-list" style="display:grid;gap:10px;max-width:860px;margin:0 auto;"></div>
   </div>
 
 </div>
@@ -4026,6 +4078,128 @@
         }
       ], 'ESPN');
       status.textContent = 'Live feed unavailable right now. Showing fallback link.';
+    }
+  }
+
+  // ═══════════ BREAKING NEWS OVERLAY ═══════════
+
+  let lastNewsOverlayFetch = 0;
+
+  function openNewsOverlay() {
+    const el = document.getElementById('news-overlay');
+    if (!el) return;
+    el.style.display = 'flex';
+    refreshNewsOverlay();
+  }
+
+  function closeNewsOverlay() {
+    const el = document.getElementById('news-overlay');
+    if (el) el.style.display = 'none';
+  }
+
+  function renderInjuryTracker() {
+    const el = document.getElementById('news-injury-track');
+    if (!el) return;
+    const SEV = { 'Out': 0, 'IR': 1, 'PUP': 2, 'Doubtful': 3, 'Questionable': 4 };
+    const injured = dsSleeperPlayers
+      .filter(p => p.injStatus && p.injStatus !== 'Active')
+      .sort((a, b) => (SEV[a.injStatus] ?? 9) - (SEV[b.injStatus] ?? 9))
+      .slice(0, 35);
+    if (!injured.length) {
+      el.innerHTML = `<div style="font-size:.74rem;color:rgba(255,255,255,.3);padding:4px 0;">No active injury reports available — open Mock Draft first to load player data.</div>`;
+      return;
+    }
+    el.innerHTML = injured.map(p => {
+      const cfg = INJ_CONFIG[p.injStatus] || { label: p.injStatus, bg: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.5)', border: 'rgba(255,255,255,.12)' };
+      const photo = p.espnId
+        ? `<img src="https://a.espncdn.com/i/headshots/nfl/players/full/${p.espnId}.png" style="width:26px;height:26px;border-radius:50%;object-fit:cover;object-position:top center;background:rgba(255,255,255,.05);" onerror="this.style.display='none'">`
+        : '';
+      return `<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;background:${cfg.bg};border:1px solid ${cfg.border};border-radius:10px;padding:5px 9px;">
+        ${photo}
+        <div>
+          <div style="font-size:.7rem;font-weight:800;color:#fff;white-space:nowrap;">${p.name}</div>
+          <div style="font-size:.6rem;color:${cfg.color};white-space:nowrap;">${p.pos} · ${p.team || 'FA'} · <strong>${cfg.label}</strong>${p.injPart ? ' · ' + p.injPart : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderNewsOverlay(items) {
+    const list = document.getElementById('news-overlay-list');
+    const status = document.getElementById('news-overlay-status');
+    if (!list) return;
+    if (!items.length) {
+      list.innerHTML = `<div style="padding:24px;text-align:center;color:rgba(255,255,255,.35);font-size:.85rem;">No headlines right now — tap Refresh.</div>`;
+      if (status) status.textContent = 'No articles returned.';
+      return;
+    }
+    list.innerHTML = items.map(item => {
+      const impact = newsImpactLabel(newsImpactScore(item));
+      const rel = timeAgo(item.published);
+      const mentioned = mentionedPlayersFromText(`${item.headline || ''} ${item.description || ''}`);
+      const playerStrip = mentioned.length ? `<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:4px;">${
+        mentioned.map(pl => `<div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);padding:3px 8px;border-radius:999px;"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/${pl.espnId}.png" loading="lazy" style="width:22px;height:22px;border-radius:50%;object-fit:cover;object-position:top center;" onerror="this.style.display='none'"><span style="font-size:.68rem;color:rgba(255,255,255,.8);font-weight:700;">${pl.name}</span></div>`).join('')
+      }</div>` : '';
+      return `<article style="padding:14px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);display:grid;gap:6px;">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.62rem;color:rgba(255,255,255,.4);text-transform:uppercase;font-weight:700;letter-spacing:.8px;">
+          <span style="color:rgba(255,138,138,.85);">ESPN NFL</span>
+          ${rel ? `<span>${rel}</span>` : ''}
+          <span style="padding:2px 8px;border-radius:999px;border:1px solid ${impact.border};color:${impact.color};">${impact.label}</span>
+        </div>
+        <div style="font-size:.92rem;font-weight:700;line-height:1.35;color:#fff;">${item.headline || 'Untitled'}</div>
+        ${playerStrip}
+        <div style="font-size:.78rem;color:rgba(255,255,255,.58);line-height:1.55;">${item.description || ''}</div>
+        <a href="${item.link || 'https://www.espn.com/nfl/'}" target="_blank" rel="noopener noreferrer" style="font-size:.74rem;color:#9be3ff;font-weight:700;text-decoration:none;">Read full story →</a>
+      </article>`;
+    }).join('');
+    if (status) status.textContent = `${items.length} stories · ESPN · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  async function refreshNewsOverlay(force = false) {
+    const status = document.getElementById('news-overlay-status');
+    const list = document.getElementById('news-overlay-list');
+    if (!list) return;
+
+    if (!force && Date.now() - lastNewsOverlayFetch < NEWS_REFRESH_MS) {
+      renderInjuryTracker();
+      return;
+    }
+
+    if (status) status.textContent = 'Fetching latest NFL news...';
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:rgba(255,255,255,.3);font-size:.82rem;">Loading...</div>`;
+
+    // Fetch Sleeper injury data if not already loaded
+    if (!dsSleeperPlayers.length) {
+      const sleeperMap = await loadSleeperData();
+      mergeSleeperData(sleeperMap);
+    }
+    renderInjuryTracker();
+
+    try {
+      const url = new URL('https://site.api.espn.com/apis/site/v2/sports/football/nfl/news');
+      url.searchParams.set('limit', '20');
+      url.searchParams.set('_', String(Date.now()));
+      const r = await fetch(url.toString(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      const articles = Array.isArray(data.articles) ? data.articles : [];
+      const parsed = articles.map(a => ({
+        headline: a.headline,
+        description: a.description,
+        link: a.links?.web?.href || a.links?.mobile?.href || 'https://www.espn.com/nfl/',
+        published: a.published || a.lastModified || ''
+      })).filter(a => a.headline);
+      const scored = parsed.sort((a, b) => {
+        const d = newsImpactScore(b) - newsImpactScore(a);
+        return d !== 0 ? d : new Date(b.published || 0) - new Date(a.published || 0);
+      });
+      renderNewsOverlay(scored);
+      lastNewsOverlayFetch = Date.now();
+      lastNewsFetch = Date.now();
+      updateFreshnessText();
+    } catch (_) {
+      renderNewsOverlay([{ headline: 'ESPN feed temporarily unavailable', description: 'Tap Refresh to try again or visit ESPN directly.', link: 'https://www.espn.com/nfl/' }]);
+      if (status) status.textContent = 'Feed unavailable — tap Refresh to retry.';
     }
   }
 
