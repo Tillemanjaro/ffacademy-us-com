@@ -2861,10 +2861,6 @@
           fullName:    `${p.first_name} ${p.last_name}`,
           sleeperStatus: p.status || null,
         };
-        // also key by last name for fuzzy fallback
-        const lnKey = normalizePlayerKey(p.last_name) + '_' + (p.position || '');
-        if (!map[lnKey]) map[lnKey] = map[key];
-
         // Keep a broad fantasy-eligible pool to fill in ADP list gaps.
         if (['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(pos) && !['inactive', 'retired'].includes(status)) {
           dsSleeperPlayers.push({
@@ -2922,18 +2918,6 @@
         if (hit.position && ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(hit.position)) p.pos = hit.position;
         if (hit.fullName) p.name = hit.fullName;
         p.sleeperStatus = hit.sleeperStatus || null;
-      } else {
-        // fuzzy: last name + position
-        const lnKey = normalizePlayerKey(p.name.split(' ').pop()) + '_' + p.pos;
-        const fuzzy = sleeperMap[lnKey];
-        if (fuzzy) {
-          if (fuzzy.espnId) p.espnId = fuzzy.espnId;
-          if (fuzzy.yearsExp !== null && fuzzy.yearsExp !== undefined) p.yearsExp = p.yearsExp ?? fuzzy.yearsExp;
-          if (fuzzy.byeWeek) p.bye = p.bye || fuzzy.byeWeek;
-          if (fuzzy.team) p.team = fuzzy.team;
-          if (fuzzy.fullName) p.name = fuzzy.fullName;
-          p.sleeperStatus = fuzzy.sleeperStatus || null;
-        }
       }
     });
 
