@@ -2833,15 +2833,17 @@
       `<span style="font-size:.8rem;color:rgba(255,255,255,.4);">Pick slot ${dsUserSlot} of ${dsTeamCount}</span>`;
   }
 
-  // ── Sleeper player data (ESPN IDs + injuries) ──
+  // ── Sleeper player data (ESPN IDs + injuries + ADP via search_rank) ──
   async function loadSleeperData() {
     try {
-      const r = await fetch('https://api.sleeper.app/v1/players/nfl', { signal: AbortSignal.timeout(8000) });
+      const r = await fetch('https://api.sleeper.app/v1/players/nfl', { signal: AbortSignal.timeout(10000) });
       if (!r.ok) throw new Error('bad');
       const raw = await r.json();
       dsLastSleeperFetchAt = Date.now();
       const map = {};
       dsSleeperPlayers = [];
+      const adpRaw = []; // collect search_rank entries for ADP
+
       Object.values(raw).forEach(p => {
         if (!p.first_name || !p.last_name) return;
         const key = normalizePlayerKey(p.first_name + ' ' + p.last_name);
@@ -2877,11 +2879,29 @@
             bye: p.bye_week || null,
           });
         }
+
+        // Collect search_rank for ADP — Sleeper ranks fantasy-relevant players 1→N
+        const rank = Number(p.search_rank);
+        if (['QB', 'RB', 'WR', 'TE', 'K'].includes(pos) &&
+            !['inactive', 'retired'].includes(status) &&
+            Number.isFinite(rank) && rank < 9999999) {
+          adpRaw.push({
+            name: `${p.first_name} ${p.last_name}`,
+            position: pos,
+            team: p.team || 'FA',
+            _rank: rank,
+          });
+        }
       });
-      return map;
+
+      // Sort by Sleeper search_rank and assign sequential ADP values
+      adpRaw.sort((a, b) => a._rank - b._rank);
+      const adpList = adpRaw.slice(0, 300).map((p, i) => ({ ...p, adp: i + 1 }));
+
+      return { map, adpList };
     } catch(e) {
       dsSleeperPlayers = [];
-      return {};
+      return { map: {}, adpList: [] };
     }
   }
 
@@ -3047,15 +3067,20 @@
     document.getElementById('ds-loading').style.display = 'flex';
     document.getElementById('ds-load-msg').textContent = 'Fetching live ADP + player data...';
 
-    // Run both API calls in parallel
-    const [liveData, sleeperMap] = await Promise.all([loadLiveADP(), loadSleeperData()]);
-    mergeLiveADP(liveData);
+    // Run both API calls in parallel; Sleeper also provides ADP via search_rank
+    const [liveData, sleeperResult] = await Promise.all([loadLiveADP(), loadSleeperData()]);
+    const { map: sleeperMap, adpList } = sleeperResult;
+    mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
 
     const sleeperCount = Object.keys(sleeperMap).length;
-    document.getElementById('ds-load-msg').textContent = liveData.length
-      ? `Live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP loaded${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''} · ${sleeperCount ? sleeperCount + ' player profiles' : 'photos offline'}`
-      : `Live ADP unavailable · fallback board loaded${sleeperCount ? ' · ' + sleeperCount + ' player profiles' : ''}`;
+    const adpSource = liveData.length
+      ? `Live FFC ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''}`
+      : adpList.length
+        ? `Sleeper ADP ${CURRENT_NFL_YEAR}`
+        : 'Fallback board';
+    document.getElementById('ds-load-msg').textContent =
+      `${adpSource} loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'player profiles offline'}`;
     updateFreshnessText();
     saveDraftPrefs();
 
@@ -3074,7 +3099,7 @@
 
     // Show live ADP badge in topbar
     document.getElementById('ds-pick-info').innerHTML = dsUsingLive
-      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">LIVE ADP ${dsLiveAdpYear || CURRENT_NFL_YEAR}${dsLiveAdpTeams ? ` · ${dsLiveAdpTeams}T` : ''}</span>`
+      ? `<span style="background:rgba(0,200,83,.15);color:#4dff8a;font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:12px;letter-spacing:1px;">${dsLiveAdpYear ? `FFC ADP ${dsLiveAdpYear}${dsLiveAdpTeams ? ` · ${dsLiveAdpTeams}T` : ''}` : `SLEEPER ADP ${CURRENT_NFL_YEAR}`}</span>`
       : `<span style="font-size:.75rem;color:#ffd166;">Fallback Board · verify current preseason ranks</span>`;
 
     const coach = document.getElementById('ds-coach');
@@ -3806,8 +3831,9 @@
       simDetails.innerHTML = '';
     }
 
-    const [liveData, sleeperMap] = await Promise.all([loadLiveADP(), loadSleeperData()]);
-    mergeLiveADP(liveData);
+    const [liveData, sleeperResult] = await Promise.all([loadLiveADP(), loadSleeperData()]);
+    const { map: sleeperMap, adpList } = sleeperResult;
+    mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
     updateFreshnessText();
 
