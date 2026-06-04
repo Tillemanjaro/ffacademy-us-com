@@ -2880,12 +2880,26 @@
     return [];
   }
 
+  function normalizeLivePos(pos) {
+    if (!pos) return 'RB';
+    const p = String(pos).toUpperCase();
+    return (p === 'DST' || p === 'D/ST') ? 'DEF' : p;
+  }
+
   function mergeLiveADP(liveData) {
     if (!liveData.length) { dsUsingLive = false; return; }
     dsUsingLive = true;
     // Build name→adp map from live data
     const adpMap = {};
-    liveData.forEach(p => { adpMap[normalizePlayerKey(p.name)] = { adp: p.adp, bye: p.bye }; });
+    liveData.forEach(p => { adpMap[normalizePlayerKey(p.name)] = { adp: p.adp, bye: p.bye, pos: normalizeLivePos(p.position), team: p.team }; });
+
+    // Also build a team→adp map for DEF so "New York Jets" matches "NYJ Jets D/ST"
+    const defAdpByTeam = {};
+    liveData.forEach(p => {
+      const pos = normalizeLivePos(p.position);
+      if (pos === 'DEF' && p.team) defAdpByTeam[p.team.toUpperCase()] = { adp: p.adp, bye: p.bye };
+    });
+
     // Update our PLAYERS array with live ADP
     PLAYERS.forEach(p => {
       const key = normalizePlayerKey(p.name);
@@ -2893,16 +2907,25 @@
       if (live) {
         p.adp = live.adp;
         p.bye = live.bye;
-        p.rank = live.adp; // use live ADP as rank
+        p.rank = live.adp;
+      } else if (p.pos === 'DEF' && p.team && defAdpByTeam[p.team.toUpperCase()]) {
+        // Match DEF players by team abbreviation when name doesn't align
+        const hit = defAdpByTeam[p.team.toUpperCase()];
+        p.adp = hit.adp;
+        p.bye = hit.bye;
+        p.rank = hit.adp;
       }
     });
-    // Add live players not in our list
+
+    // Add live players not in our list (skip DEF — already matched by team above)
     liveData.forEach(lp => {
+      const pos = normalizeLivePos(lp.position);
+      if (pos === 'DEF') return;
       const key = normalizePlayerKey(lp.name);
       if (!PLAYERS.find(p => normalizePlayerKey(p.name) === key)) {
         PLAYERS.push({
           id: PLAYERS.length + 1000,
-          name: lp.name, pos: lp.position, team: lp.team,
+          name: lp.name, pos, team: lp.team,
           rank: lp.adp, adp: lp.adp, bye: lp.bye, espnId: null
         });
       }
@@ -3593,6 +3616,7 @@
     const cpuRosters = Array.from({ length: dsTeamCount }, () => []);
     const totalPicks = dsTeamCount * getTotalRounds();
     const oldPick = dsCurrentPick;
+    let firstPick = null;
 
     for (let pick = 0; pick < totalPicks; pick++) {
       dsCurrentPick = pick;
@@ -3621,6 +3645,7 @@
       available = available.filter((p) => p.id !== chosen.id);
 
       if (isUser) {
+        if (firstPick === null) firstPick = chosen;
         const slot = findOpenRosterSlot(userRoster, chosen);
         if (slot) slot.player = chosen;
       } else {
@@ -3631,7 +3656,7 @@
     dsCurrentPick = oldPick;
     const picks = userRoster.filter((s) => s.player).map((s) => s.player);
     const metrics = analyzeUserRoster(picks);
-    return { picks, metrics, slots: userRoster };
+    return { picks, metrics, slots: userRoster, firstPick };
   }
 
   function formatSampleRoster(run) {
@@ -3683,24 +3708,40 @@
     const worst = Math.min(...runs.map((r) => r.metrics.overall));
     const firstPickCounts = {};
     runs.forEach((r) => {
-      const fp = r.picks[0]?.name || 'N/A';
+      const fp = r.firstPick?.name || 'N/A';
       firstPickCounts[fp] = (firstPickCounts[fp] || 0) + 1;
     });
     const commonFirst = Object.entries(firstPickCounts).sort((a, b) => b[1] - a[1])[0];
     const sampleRun = runs.slice().sort((a, b) => Math.abs(a.metrics.overall - avgScore) - Math.abs(b.metrics.overall - avgScore))[0] || runs[0];
     const sampleRoster = formatSampleRoster(sampleRun);
 
-    const summary = `Sim ${n}: Avg grade ${scoreToLetter(avgScore).g} (${avgScore.toFixed(1)}), Avg rank #${avgRank.toFixed(1)}, Best ${best}, Worst ${worst}${commonFirst ? `, Most common R1: ${commonFirst[0]} (${commonFirst[1]}/${n})` : ''}`;
+    const gradeLabel = scoreToLetter(avgScore).g;
+    const firstPickLine = commonFirst ? ` · Your pick #1: ${commonFirst[0]} (${commonFirst[1]}/${n} runs)` : '';
+    const summary = `Sim ${n} · Avg ${gradeLabel} (${avgScore.toFixed(1)}) · Avg ADP #${avgRank.toFixed(1)} · Best ${best} / Worst ${worst}${firstPickLine}`;
     if (summaryEl) {
-      summaryEl.textContent = `${summary}${dsUsingLive ? ` · Using live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''}` : ' · Live ADP unavailable, fallback board used'}`;
+      summaryEl.textContent = `${summary}${dsUsingLive ? ` · Live ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''}` : ' · Fallback board'}`;
     }
 
+    const statRows = [
+      { label: 'Avg grade', val: `${gradeLabel} (${avgScore.toFixed(1)}/100)`, note: 'Your average roster score across all ${n} runs — grades are A+/A/B/C/D.' },
+      { label: 'Avg ADP rank', val: `#${avgRank.toFixed(1)}`, note: 'The average draft position of every player you ended up with. Lower is better — it means you consistently landed higher-ranked players.' },
+      { label: 'Best / Worst', val: `${best} / ${worst}`, note: 'Your highest and lowest single-run scores, showing how much variance this slot and strategy produce.' },
+      ...(commonFirst ? [{ label: 'Your pick #1', val: `${commonFirst[0]} (${commonFirst[1]} of ${n} runs)`, note: 'The player you actually drafted first most often — useful to know if this name keeps surprising you.' }] : []),
+    ];
+
     const detailsHtml = `
-      <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
-      <div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.55;">${summary}</div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times (<strong style="color:rgba(255,255,255,.8);">${dsTeamCount}-team · ${dsBenchSpots} bench · ${dsFormat.toUpperCase()}</strong>). The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
+      <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:10px;">What These Numbers Mean</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-bottom:10px;">${dsTeamCount}-team · ${dsBenchSpots} bench · ${dsFormat.toUpperCase()} · slot ${dsUserSlot} · ${dsStrategy}</div>
+      ${statRows.map(r => `
+        <div style="display:flex;flex-direction:column;gap:2px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+            <span style="font-size:.72rem;font-weight:800;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;">${r.label}</span>
+            <span style="font-size:.85rem;font-weight:800;color:#fff;">${r.val}</span>
+          </div>
+          <div style="font-size:.74rem;color:rgba(255,255,255,.45);line-height:1.5;">${r.note.replace('${n}', n)}</div>
+        </div>`).join('')}
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
-        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team</div>
+        <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team <span style="font-weight:400;color:rgba(255,255,255,.35);font-size:.68rem;">(the run closest to average)</span></div>
         ${sampleRoster.map((line) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.55;padding:4px 0;">${line}</div>`).join('')}
       </div>
     `;
