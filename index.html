@@ -3661,15 +3661,10 @@
 
   async function runBatchSims(count = 10) {
     const n = Math.max(1, Math.min(50, Number(count) || 10));
-    dsBenchSpots = 5;
-    updateSetupSubtitle();
-    document.querySelectorAll('[id^="bench-"]').forEach(b => b.classList.remove('active'));
-    document.getElementById('bench-5')?.classList.add('active');
-    saveDraftPrefs();
 
     const summaryEl = document.getElementById('ds-sim-summary');
     const simDetails = document.getElementById('ds-sim-details');
-    if (summaryEl) summaryEl.textContent = `Loading live ADP for ${dsTeamCount}-team, 5-bench sims...`;
+    if (summaryEl) summaryEl.textContent = `Loading live ADP for ${dsTeamCount}-team, ${dsBenchSpots}-bench sims...`;
     if (simDetails) {
       simDetails.style.display = 'none';
       simDetails.innerHTML = '';
@@ -3703,7 +3698,7 @@
     const detailsHtml = `
       <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#a855f7;text-transform:uppercase;margin-bottom:8px;">What Sim ${n} Drafts Means</div>
       <div style="font-size:.8rem;color:rgba(255,255,255,.86);line-height:1.55;">${summary}</div>
-      <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times. The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
+      <div style="font-size:.78rem;color:rgba(255,255,255,.6);line-height:1.55;margin-top:8px;">This uses your current slot, league settings, and strategy mode to auto-draft ${n} times (<strong style="color:rgba(255,255,255,.8);">${dsTeamCount}-team · ${dsBenchSpots} bench · ${dsFormat.toUpperCase()}</strong>). The sample team below is the run closest to the average score, so it shows a representative build instead of only the best-case result.</div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);">
         <div style="font-size:.72rem;font-weight:800;letter-spacing:2px;color:#d8b4fe;text-transform:uppercase;margin-bottom:8px;">Sample Team</div>
         ${sampleRoster.map((line) => `<div style="font-size:.8rem;color:rgba(255,255,255,.82);line-height:1.55;padding:4px 0;">${line}</div>`).join('')}
