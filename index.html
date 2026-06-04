@@ -2997,6 +2997,26 @@
     return (p === 'DST' || p === 'D/ST') ? 'DEF' : p;
   }
 
+  const CURRENT_RANK_OVERRIDES = {
+    christianmccaffrey: { rank: 15, adp: 15, team: 'SF' },
+    saquonbarkley: { rank: 16, adp: 16, team: 'PHI' },
+  };
+
+  function applyCurrentRankOverrides() {
+    PLAYERS.forEach((p) => {
+      const override = CURRENT_RANK_OVERRIDES[normalizePlayerKey(p.name)];
+      if (!override) return;
+      p.rank = override.rank;
+      p.adp = override.adp;
+      if (override.team) p.team = override.team;
+      p.rankOverride = true;
+    });
+    PLAYERS.sort((a, b) => {
+      const rankDiff = Number(a.rank || 999) - Number(b.rank || 999);
+      return rankDiff || String(a.name).localeCompare(String(b.name));
+    });
+  }
+
   function mergeLiveADP(liveData) {
     if (!liveData.length) { dsUsingLive = false; return; }
     dsUsingLive = true;
@@ -3056,6 +3076,7 @@
     const { map: sleeperMap, adpList } = sleeperResult;
     mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
+    applyCurrentRankOverrides();
 
     const sleeperCount = Object.keys(sleeperMap).length;
     const adpSource = liveData.length
@@ -3304,6 +3325,13 @@
     };
   }
 
+  function sortRecommendationCandidates(a, b) {
+    const scoreDiff = b.eval.score - a.eval.score;
+    if (Math.abs(scoreDiff) > 6) return scoreDiff;
+    const rankDiff = playerAdpValue(a.p) - playerAdpValue(b.p);
+    return rankDiff || scoreDiff || String(a.p.name).localeCompare(String(b.p.name));
+  }
+
   function topUserRecommendations(limit = 5) {
     const rosterPlayers = dsUserRoster.filter((s) => s.player).map((s) => s.player);
     const counts = countPositions(rosterPlayers);
@@ -3311,7 +3339,7 @@
     const pool = dsAvailable
       .filter((p) => (p.pos === dsPosFilter || dsPosFilter === 'ALL'))
       .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, false) }))
-      .sort((a, b) => b.eval.score - a.eval.score)
+      .sort(sortRecommendationCandidates)
       .slice(0, limit);
     return pool;
   }
@@ -3423,7 +3451,7 @@
     const counts = countPositions(rosterPlayers);
     let scoredList = list
       .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, !onClockIsUser) }))
-      .sort((a, b) => b.eval.score - a.eval.score);
+      .sort(sortRecommendationCandidates);
 
     const replacementScoreByPos = {};
     ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].forEach((pos) => {
@@ -3819,6 +3847,7 @@
     const { map: sleeperMap, adpList } = sleeperResult;
     mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
+    applyCurrentRankOverrides();
     updateFreshnessText();
 
     const runs = [];
