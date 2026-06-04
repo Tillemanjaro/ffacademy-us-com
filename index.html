@@ -140,10 +140,60 @@
     .breaking-news-btn { padding:7px 10px; }
   }
 
+  /* ── TOP TAB BAR ── */
+  #top-tabs {
+    position: fixed;
+    top: 60px; left: 0; right: 0;
+    height: 44px;
+    background: rgba(10,10,15,.97);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,215,0,.12);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 20px;
+    z-index: 99;
+  }
+  .top-tab {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.4);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+    min-height: auto;
+  }
+  .top-tab:hover { color: rgba(255,255,255,.75); background: rgba(255,255,255,.05); }
+  .top-tab.active { color: var(--gold); background: rgba(255,215,0,.09); }
+  .tab-divider {
+    width: 1px; height: 18px;
+    background: rgba(255,255,255,.12);
+    margin: 0 4px;
+  }
+  .tab-live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ff5555;
+    flex-shrink: 0;
+    animation: blink-dot 1.4s ease-in-out infinite;
+  }
+  @media (max-width: 480px) {
+    #top-tabs { top: 50px; height: 38px; padding: 0 12px; }
+    .top-tab { font-size: .65rem; padding: 5px 10px; letter-spacing: 1px; }
+  }
+
   /* ── SECTIONS ── */
   .section {
     min-height: 100vh;
-    padding: 100px 40px 60px;
+    padding: 148px 40px 60px;
     display: none;
     flex-direction: column;
     align-items: center;
@@ -166,13 +216,13 @@
   
   @media (max-width: 768px) {
     .section {
-      padding: 80px 24px 50px;
+      padding: 128px 24px 50px;
     }
   }
   
   @media (max-width: 480px) {
     .section {
-      padding: 70px 16px 40px;
+      padding: 108px 16px 40px;
     }
   }
 
@@ -680,7 +730,7 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 600px) {
-    .section { padding: 90px 20px 50px; }
+    .section { padding: 138px 20px 50px; }
     .hero-players { gap: 12px; }
     .hero-player-card { width: 130px; }
   }
@@ -693,10 +743,15 @@
 <nav>
   <div class="nav-logo">FF Academy</div>
   <div class="nav-steps" id="nav-dots"></div>
-  <button onclick="openNewsOverlay()" class="breaking-news-btn" id="breaking-news-btn"><span class="breaking-news-dot"></span><span class="breaking-news-label">Breaking News</span></button>
   <button onclick="openTrainingLab()" style="background:rgba(255,255,255,.08);color:#fff;font-weight:800;font-size:.72rem;padding:7px 14px;border:1px solid rgba(255,255,255,.18);border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Training Lab</button>
   <button onclick="openDraftSim()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:.72rem;padding:7px 16px;border:none;border-radius:20px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 12px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">Mock Draft</button>
 </nav>
+
+<div id="top-tabs">
+  <button id="tab-learn" class="top-tab active" onclick="showTab('learn')">📚 LEARN</button>
+  <div class="tab-divider"></div>
+  <button id="tab-news" class="top-tab" onclick="showTab('news')"><span class="tab-live-dot"></span> LIVE NEWS</button>
+</div>
 
 <!-- ══════════════════════════════════════
      STEP 1 — HERO
@@ -2297,7 +2352,7 @@
 <!-- ═══════════════════════════════════════════════════════
      BREAKING NEWS OVERLAY — ESPN news + Sleeper injury tracker
 ═══════════════════════════════════════════════════════ -->
-<div id="news-overlay" style="display:none;position:fixed;inset:0;background:#0a0a0f;z-index:9998;flex-direction:column;font-family:'Inter',sans-serif;">
+<div id="news-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;z-index:9998;flex-direction:column;font-family:'Inter',sans-serif;">
 
   <!-- HEADER BAR -->
   <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid rgba(255,70,70,.15);background:rgba(10,10,15,.98);flex-shrink:0;flex-wrap:wrap;">
@@ -4092,16 +4147,50 @@
     'CBS':      { color: '#c084fc', border: 'rgba(192,132,252,.45)' },
   };
 
+  // ═══════════ TAB BAR ═══════════
+  let newsTabMode = false;
+
+  function showTab(tab) {
+    document.getElementById('tab-learn')?.classList.toggle('active', tab === 'learn');
+    document.getElementById('tab-news')?.classList.toggle('active', tab === 'news');
+    const overlay = document.getElementById('news-overlay');
+    if (tab === 'news') {
+      if (overlay) {
+        const tabBar = document.getElementById('top-tabs');
+        const top = tabBar ? Math.round(tabBar.getBoundingClientRect().bottom) : 104;
+        overlay.style.top = top + 'px';
+        overlay.style.display = 'flex';
+      }
+      newsTabMode = true;
+      refreshNewsOverlay();
+    } else {
+      if (overlay) {
+        overlay.style.display = 'none';
+        overlay.style.top = '0';
+      }
+      newsTabMode = false;
+    }
+  }
+
   function openNewsOverlay() {
     const el = document.getElementById('news-overlay');
     if (!el) return;
+    el.style.top = '0';
     el.style.display = 'flex';
     refreshNewsOverlay();
   }
 
   function closeNewsOverlay() {
     const el = document.getElementById('news-overlay');
-    if (el) el.style.display = 'none';
+    if (el) {
+      el.style.display = 'none';
+      el.style.top = '0';
+    }
+    if (newsTabMode) {
+      newsTabMode = false;
+      document.getElementById('tab-learn')?.classList.add('active');
+      document.getElementById('tab-news')?.classList.remove('active');
+    }
   }
 
   function renderInjuryTracker() {
@@ -4694,9 +4783,10 @@
     if (e.key === 'Escape') {
       if (inLab) closeTrainingLab();
       if (inDraft) closeDraftSim();
+      if (newsTabMode) showTab('learn');
       return;
     }
-    if (inDraft || inLab) return;
+    if (inDraft || inLab || newsTabMode) return;
     if (e.key === 'ArrowRight' && current < TOTAL) goTo(current + 1);
     if (e.key === 'ArrowLeft'  && current > 1)     goTo(current - 1);
   });
