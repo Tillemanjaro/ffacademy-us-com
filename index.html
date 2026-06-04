@@ -2279,6 +2279,19 @@
         </div>
       </div>
 
+      <div style="max-width:860px;margin:0 auto 26px auto;border:1px solid rgba(124,58,237,.22);border-radius:14px;background:rgba(124,58,237,.07);padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:9px;">
+          <div style="font-size:.68rem;color:#d8b4fe;font-weight:900;letter-spacing:2px;text-transform:uppercase;">Gridiron Edge System</div>
+          <div style="font-size:.64rem;color:rgba(255,255,255,.45);">Market + roster + context</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;">
+          <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Market Rank</strong><br>Live ADP/current rank anchors the board.</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Roster Need</strong><br>Open starters and scarce positions raise priority.</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Schedule Edge</strong><br>Team strength-of-schedule index nudges close calls.</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Risk Filters</strong><br>Injury tags, bye overlap, and historical stability discount fragile picks.</div>
+        </div>
+      </div>
+
       <div style="text-align:center;">
         <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
           <button id="ds-start-btn" onclick="startDraft()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:800;font-size:1.1rem;padding:18px 56px;border:none;border-radius:50px;cursor:pointer;letter-spacing:1px;text-transform:uppercase;transition:transform .2s,box-shadow .2s;box-shadow:0 8px 24px rgba(124,58,237,.4);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">START DRAFT</button>
@@ -3426,6 +3439,31 @@
     return warnings.slice(0, 2);
   }
 
+  function signedFactor(n) {
+    const v = Math.round(Number(n) || 0);
+    return `${v >= 0 ? '+' : ''}${v}`;
+  }
+
+  function recommendationLens(player, evalData, idx) {
+    const f = evalData.factors;
+    const bullets = [];
+    if (idx <= 1) bullets.push('best blend of market rank and roster fit');
+    if (f.need >= 12) bullets.push('fills a starting-slot need');
+    if (f.sos >= 3) bullets.push('friendly schedule index');
+    if (f.sos <= -3) bullets.push('tougher schedule index');
+    if (f.injPenalty >= 8) bullets.push('injury-risk discount');
+    if (f.byePenalty >= 6) bullets.push('bye-week overlap risk');
+    if (player.rankOverride) bullets.push('current-rank correction');
+    if (!bullets.length) bullets.push('steady profile');
+    return bullets.slice(0, 3).join(' · ');
+  }
+
+  function recommendationTooltip(player, evalData) {
+    const f = evalData.factors;
+    const rank = Math.round(playerAdpValue(player) * 10) / 10;
+    return `Gridiron Edge score ${Math.round(evalData.score)}: market rank #${rank}, roster need ${signedFactor(f.need)}, schedule ${signedFactor(f.sos)}, historical stability ${signedFactor(f.stabilityScore)}, bye -${Math.round(f.byePenalty)}, injury -${Math.round(f.injPenalty)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%.`;
+  }
+
   function renderAvailable() {
     const el = document.getElementById('ds-available');
     const query = (document.getElementById('ds-search')?.value || '').toLowerCase();
@@ -3469,21 +3507,29 @@
       recWrap.style.cssText = 'position:sticky;top:0;z-index:5;margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,.28);background:rgba(19,14,33,.96);backdrop-filter:blur(5px);';
       recWrap.innerHTML = `
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-          <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;">Smart Recommendations</div>
+          <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;">Gridiron Edge Recommendations</div>
           <div style="font-size:.65rem;color:rgba(255,255,255,.6);">Mode: ${dsStrategy.toUpperCase()}</div>
+        </div>
+        <div style="font-size:.69rem;color:rgba(255,255,255,.58);line-height:1.45;margin-bottom:8px;">
+          Scores blend live market rank, roster need, strength of schedule, historical stability, injury status, bye-week overlap, and your selected draft strategy.
         </div>
         ${warns.map((w) => `<div style="font-size:.7rem;color:#ffd166;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);padding:5px 8px;border-radius:8px;margin-bottom:6px;">${w}</div>`).join('')}
         ${recs.map(({ p, eval: e }, idx) => `
-          <div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(255,255,255,.08);">
-            <div style="display:flex;gap:6px;align-items:center;min-width:0;">
-              <span class="ds-pos-badge ${p.pos}" style="font-size:.62rem;">${p.pos}</span>
-              <span style="font-size:.62rem;color:#ffd166;min-width:18px;">${recommendationTier(idx, Math.max(1, scoredList.length))}</span>
-              <span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
+          <div title="${recommendationTooltip(p, e)}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);">
+            <div style="min-width:0;">
+              <div style="display:flex;gap:6px;align-items:center;min-width:0;">
+                <span class="ds-pos-badge ${p.pos}" style="font-size:.62rem;">${p.pos}</span>
+                <span style="font-size:.62rem;color:#ffd166;min-width:18px;">${recommendationTier(idx, Math.max(1, scoredList.length))}</span>
+                <span style="font-size:.79rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</span>
+              </div>
+              <div style="font-size:.64rem;color:rgba(255,255,255,.45);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${recommendationLens(p, e, idx)}
+              </div>
             </div>
             <div style="font-size:.66rem;color:rgba(255,255,255,.6);text-align:right;white-space:nowrap;">
-              <span>Total ${Math.round(e.score)}</span>
-              <span style="margin-left:6px;">Need ${e.factors.need >= 0 ? '+' : ''}${Math.round(e.factors.need)}</span>
-              <span style="margin-left:6px;">SOS ${e.factors.sos >= 0 ? '+' : ''}${Math.round(e.factors.sos)}</span>
+              <span>Edge ${Math.round(e.score)}</span>
+              <span style="margin-left:6px;">Need ${signedFactor(e.factors.need)}</span>
+              <span style="margin-left:6px;">SOS ${signedFactor(e.factors.sos)}</span>
               <span style="margin-left:6px;">Bye -${Math.round(e.factors.byePenalty)}</span>
               <span style="margin-left:6px;">Inj -${Math.round(e.factors.injPenalty)}</span>
             </div>
@@ -3509,7 +3555,7 @@
       const tier = recommendationTier(idx, scoredList.length);
       const repl = replacementScoreByPos[p.pos] || 0;
       const vor = Math.round(e.score - repl);
-      const whyTitle = `Need ${Math.round(e.factors.need)}, Value ${Math.round(e.factors.marketValue)}, Stability ${Math.round(e.factors.stabilityScore)}, SOS ${Math.round(e.factors.sos)}, Bye -${Math.round(e.factors.byePenalty)}, Inj -${Math.round(e.factors.injPenalty)}`;
+      const whyTitle = recommendationTooltip(p, e);
       row.innerHTML = `
         ${img}
         <span class="ds-pos-badge ${p.pos}">${p.pos}</span>
@@ -3627,7 +3673,7 @@
       if (isReach({...p, rank: p.rank, adp: p.adp})) {
         const adpStr = p.adp ? `Their live ADP is ${p.adp.toFixed(1)} — you took them ${Math.round(p.adp - dsCurrentPick)} picks before the market.` : '';
         showCoach('warning', 'Reach — Know What You Paid',
-          `${adpStr} A reach is not automatically bad, but you should have a clear reason for paying above market. If the reason is only comfort or familiarity, you probably passed on better value.`);
+          `${adpStr} Gridiron Edge allows a reach only when another signal justifies it: strong roster need, a tier drop-off, clean injury profile, or schedule leverage. If the reason is only comfort or familiarity, you probably passed on better value.`);
         return;
       }
 
@@ -3647,7 +3693,7 @@
       }
 
       showCoach('info', 'Process-Based Draft Note',
-        'This pick was graded using roster need, live ADP when available, bye-week overlap, injury tags, and replacement-value drop-off at the position.');
+        'Gridiron Edge grades each pick across seven signals: current market rank, roster need, position scarcity, strength of schedule, historical stability, bye-week collision, and injury risk. The goal is not to copy ADP; it is to explain when ADP should win and when roster construction should override it.');
     }
 
     // ── Pre-pick round tips ──
