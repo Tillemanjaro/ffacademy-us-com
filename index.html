@@ -2289,6 +2289,7 @@
           <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Roster Need</strong><br>Open starters and scarce positions raise priority.</div>
           <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Schedule Edge</strong><br>Team strength-of-schedule index nudges close calls.</div>
           <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Risk Filters</strong><br>Injury tags, bye overlap, and historical stability discount fragile picks.</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.68);line-height:1.45;"><strong style="color:#fff;">Player Notes</strong><br>Manual corrections explain trades, rank updates, and special caveats.</div>
         </div>
       </div>
 
@@ -3010,19 +3011,30 @@
     return (p === 'DST' || p === 'D/ST') ? 'DEF' : p;
   }
 
-  const CURRENT_RANK_OVERRIDES = {
-    christianmccaffrey: { rank: 15, adp: 15, team: 'SF' },
-    saquonbarkley: { rank: 16, adp: 16, team: 'PHI' },
+  const CURRENT_PLAYER_NOTES = {
+    christianmccaffrey: {
+      rank: 15,
+      adp: 15,
+      team: 'SF',
+      note: 'Current-rank correction: keeps CMC ahead of Saquon in PPR after live-market and expert checks.',
+    },
+    saquonbarkley: {
+      rank: 16,
+      adp: 16,
+      team: 'PHI',
+      note: 'Current-rank correction: still elite, but the model keeps him just behind CMC in PPR.',
+    },
   };
 
-  function applyCurrentRankOverrides() {
+  function applyCurrentPlayerNotes() {
     PLAYERS.forEach((p) => {
-      const override = CURRENT_RANK_OVERRIDES[normalizePlayerKey(p.name)];
-      if (!override) return;
-      p.rank = override.rank;
-      p.adp = override.adp;
-      if (override.team) p.team = override.team;
-      p.rankOverride = true;
+      const note = CURRENT_PLAYER_NOTES[normalizePlayerKey(p.name)];
+      if (!note) return;
+      if (Number.isFinite(note.rank)) p.rank = note.rank;
+      if (Number.isFinite(note.adp)) p.adp = note.adp;
+      if (note.team) p.team = note.team;
+      p.playerNote = note.note || '';
+      p.rankOverride = Number.isFinite(note.rank) || Number.isFinite(note.adp);
     });
     PLAYERS.sort((a, b) => {
       const rankDiff = Number(a.rank || 999) - Number(b.rank || 999);
@@ -3089,7 +3101,7 @@
     const { map: sleeperMap, adpList } = sleeperResult;
     mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
-    applyCurrentRankOverrides();
+    applyCurrentPlayerNotes();
 
     const sleeperCount = Object.keys(sleeperMap).length;
     const adpSource = liveData.length
@@ -3454,6 +3466,7 @@
     if (f.injPenalty >= 8) bullets.push('injury-risk discount');
     if (f.byePenalty >= 6) bullets.push('bye-week overlap risk');
     if (player.rankOverride) bullets.push('current-rank correction');
+    if (player.playerNote) bullets.push('manual note');
     if (!bullets.length) bullets.push('steady profile');
     return bullets.slice(0, 3).join(' · ');
   }
@@ -3461,7 +3474,38 @@
   function recommendationTooltip(player, evalData) {
     const f = evalData.factors;
     const rank = Math.round(playerAdpValue(player) * 10) / 10;
-    return `Gridiron Edge score ${Math.round(evalData.score)}: market rank #${rank}, roster need ${signedFactor(f.need)}, schedule ${signedFactor(f.sos)}, historical stability ${signedFactor(f.stabilityScore)}, bye -${Math.round(f.byePenalty)}, injury -${Math.round(f.injPenalty)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%.`;
+    const note = player.playerNote ? ` Note: ${player.playerNote}` : '';
+    return `Gridiron Edge score ${Math.round(evalData.score)}: market rank #${rank}, roster need ${signedFactor(f.need)}, schedule ${signedFactor(f.sos)}, historical stability ${signedFactor(f.stabilityScore)}, bye -${Math.round(f.byePenalty)}, injury -${Math.round(f.injPenalty)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%.${note}`;
+  }
+
+  function recommendationDataSourceLabel() {
+    if (dsUsingLive) {
+      const teams = dsLiveAdpTeams ? ` · ${dsLiveAdpTeams}T` : '';
+      return `Live FFC ${dsLiveAdpYear || CURRENT_NFL_YEAR}${teams}`;
+    }
+    if (dsLastSleeperFetchAt) return `Sleeper ${CURRENT_NFL_YEAR} fallback`;
+    return 'Fallback board';
+  }
+
+  function recommendationComparison(primary, challenger) {
+    if (!primary || !challenger) return '';
+    const a = primary.p, b = challenger.p;
+    const ae = primary.eval.factors, be = challenger.eval.factors;
+    const wins = [];
+    if (playerAdpValue(a) < playerAdpValue(b)) wins.push(`better market rank (#${Math.round(playerAdpValue(a) * 10) / 10} vs #${Math.round(playerAdpValue(b) * 10) / 10})`);
+    if (ae.need > be.need + 3) wins.push('stronger roster need fit');
+    if (ae.sos > be.sos + 2) wins.push('better schedule edge');
+    if (ae.injPenalty + 3 < be.injPenalty) wins.push('cleaner injury profile');
+    if (a.playerNote) wins.push('manual/current-data note');
+
+    const tradeoffs = [];
+    if (be.need > ae.need + 3) tradeoffs.push(`${b.name} fits roster need better`);
+    if (be.sos > ae.sos + 2) tradeoffs.push(`${b.name} has the schedule edge`);
+    if (playerAdpValue(b) < playerAdpValue(a)) tradeoffs.push(`${b.name} has the better market rank`);
+
+    const why = wins.length ? wins.slice(0, 2).join(' and ') : 'a slightly stronger total Gridiron Edge score';
+    const but = tradeoffs.length ? ` Tradeoff: ${tradeoffs.slice(0, 1).join('')}.` : '';
+    return `Why ${a.name} over ${b.name}: ${why}.${but}`;
   }
 
   function renderAvailable() {
@@ -3503,6 +3547,7 @@
     if (isUser) {
       const recs = scoredList.slice(0, 5);
       const warns = rosterWarnings(counts, round);
+      const comparison = recommendationComparison(recs[0], recs[1]);
       const recWrap = document.createElement('div');
       recWrap.style.cssText = 'position:sticky;top:0;z-index:5;margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid rgba(124,58,237,.28);background:rgba(19,14,33,.96);backdrop-filter:blur(5px);';
       recWrap.innerHTML = `
@@ -3510,9 +3555,14 @@
           <div style="font-size:.67rem;color:#d8b4fe;letter-spacing:1.5px;font-weight:800;text-transform:uppercase;">Gridiron Edge Recommendations</div>
           <div style="font-size:.65rem;color:rgba(255,255,255,.6);">Mode: ${dsStrategy.toUpperCase()}</div>
         </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <span style="font-size:.62rem;color:#9be3ff;border:1px solid rgba(79,195,247,.28);background:rgba(79,195,247,.09);border-radius:999px;padding:3px 8px;">Data: ${recommendationDataSourceLabel()}</span>
+          <span style="font-size:.62rem;color:#d8b4fe;border:1px solid rgba(216,180,254,.25);background:rgba(124,58,237,.08);border-radius:999px;padding:3px 8px;">Manual notes: ${Object.keys(CURRENT_PLAYER_NOTES).length}</span>
+        </div>
         <div style="font-size:.69rem;color:rgba(255,255,255,.58);line-height:1.45;margin-bottom:8px;">
           Scores blend live market rank, roster need, strength of schedule, historical stability, injury status, bye-week overlap, and your selected draft strategy.
         </div>
+        ${comparison ? `<div style="font-size:.69rem;color:rgba(255,255,255,.72);line-height:1.45;margin-bottom:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:7px 8px;">${comparison}</div>` : ''}
         ${warns.map((w) => `<div style="font-size:.7rem;color:#ffd166;background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);padding:5px 8px;border-radius:8px;margin-bottom:6px;">${w}</div>`).join('')}
         ${recs.map(({ p, eval: e }, idx) => `
           <div title="${recommendationTooltip(p, e)}" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:7px 0;border-top:1px solid rgba(255,255,255,.08);">
@@ -3569,7 +3619,7 @@
           ${p.injPart ? `<span style="font-size:.65rem;color:rgba(255,255,255,.3);">${p.injPart}${p.injNote ? ' · ' + p.injNote : ''}${byeMeta} · VOR +${vor}</span>` : `<span style="font-size:.65rem;color:rgba(255,255,255,.25);">${p.team}${byeMeta} · VOR +${vor}</span>`}
         </div>
         <span class="ds-rank" title="${whyTitle}">#${Math.round(p.rank * 10) / 10}</span>
-        ${isUser ? `<button class="ds-draft-btn" title="${whyTitle}" onclick="makePick(PLAYERS.find(x=>x.id===${p.id}),true)">DRAFT</button>` : ''}
+        ${isUser ? `<button title="${whyTitle}" onclick="showEdgeCard(${p.id})" style="background:rgba(79,195,247,.12);color:#9be3ff;border:1px solid rgba(79,195,247,.28);border-radius:8px;padding:6px 8px;font-size:.62rem;font-weight:800;cursor:pointer;letter-spacing:.5px;">WHY</button><button class="ds-draft-btn" title="${whyTitle}" onclick="makePick(PLAYERS.find(x=>x.id===${p.id}),true)">DRAFT</button>` : ''}
       `;
       el.appendChild(row);
     });
@@ -3610,6 +3660,29 @@
     document.getElementById('ds-coach-title').style.color = c.title;
     document.getElementById('ds-coach-title').textContent = title || '';
     document.getElementById('ds-coach-text').textContent = text || '';
+  }
+
+  function showEdgeCard(playerId) {
+    const player = dsAvailable.find((p) => p.id === playerId) || PLAYERS.find((p) => p.id === playerId);
+    if (!player) return;
+    const rosterPlayers = dsUserRoster.filter((s) => s.player).map((s) => s.player);
+    const counts = countPositions(rosterPlayers);
+    const round = getRound(dsCurrentPick);
+    const evalData = scorePlayerForRoster(player, rosterPlayers, counts, round, false);
+    const f = evalData.factors;
+    const rank = Math.round(playerAdpValue(player) * 10) / 10;
+    const note = player.playerNote ? ` Note: ${player.playerNote}` : '';
+    const panel = document.getElementById('ds-coach');
+    panel.style.display = 'block';
+    panel.style.background = 'rgba(79,195,247,.07)';
+    panel.style.borderBottomColor = 'rgba(79,195,247,.25)';
+    document.getElementById('ds-coach-badge').style.background = 'rgba(79,195,247,.2)';
+    document.getElementById('ds-coach-badge').style.color = '#81d4fa';
+    document.getElementById('ds-coach-badge').textContent = 'EDGE';
+    document.getElementById('ds-coach-title').style.color = '#81d4fa';
+    document.getElementById('ds-coach-title').textContent = `${player.name} · Gridiron Edge ${Math.round(evalData.score)}`;
+    document.getElementById('ds-coach-text').textContent =
+      `Market rank #${rank}. Roster need ${signedFactor(f.need)}. Strength of schedule ${signedFactor(f.sos)}. Historical stability ${signedFactor(f.stabilityScore)}. Bye overlap -${Math.round(f.byePenalty)}. Injury risk -${Math.round(f.injPenalty)}. Strategy multiplier ${Math.round((f.posMult || 1) * 100)}%. ${recommendationLens(player, evalData, 0)}.${note}`;
   }
 
   function getDemoCoach(afterPick) {
@@ -3893,7 +3966,7 @@
     const { map: sleeperMap, adpList } = sleeperResult;
     mergeLiveADP(liveData.length ? liveData : adpList);
     mergeSleeperData(sleeperMap);
-    applyCurrentRankOverrides();
+    applyCurrentPlayerNotes();
     updateFreshnessText();
 
     const runs = [];
