@@ -3049,28 +3049,21 @@
       if (pos === 'DEF' && p.team) defAdpByTeam[p.team.toUpperCase()] = { adp: p.adp, bye: p.bye };
     });
 
-    // Update our PLAYERS array with live ADP
+    // Update our PLAYERS array — team and bye only; rank/adp stay from curated top list
     PLAYERS.forEach(p => {
       const key = normalizePlayerKey(p.name);
       const live = adpMap[key];
       if (live) {
-        p.adp = live.adp;
-        p.bye = live.bye;
-        p.rank = live.adp;
-        p.team = live.team;
+        if (live.team) p.team = live.team;
+        if (live.bye) p.bye = live.bye;
       } else if (p.pos === 'DEF' && p.team && defAdpByTeam[p.team.toUpperCase()]) {
-        // Match DEF players by team abbreviation when name doesn't align
         const hit = defAdpByTeam[p.team.toUpperCase()];
-        p.adp = hit.adp;
-        p.bye = hit.bye;
-        p.rank = hit.adp;
+        if (hit.bye) p.bye = hit.bye;
       }
     });
 
     // Do not inject unknown names from external ADP feeds.
-    // We rely on the curated baseline + Sleeper rostered player merge.
-    // Re-sort by rank
-    PLAYERS.sort((a, b) => a.rank - b.rank);
+    // Rank order is owned by the curated Fantasy Footballers top list.
   }
 
   async function startDraft() {
