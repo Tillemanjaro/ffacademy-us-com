@@ -2665,6 +2665,13 @@
     name: p[0], pos: p[1], team: p[2], rank: p[3], espnId: p[4],
   }));
 
+  const BASE_PLAYERS_SNAPSHOT = PLAYERS.map((p) => ({ ...p }));
+
+  function resetPlayersToBaseline() {
+    const fresh = BASE_PLAYERS_SNAPSHOT.map((p) => ({ ...p }));
+    PLAYERS.splice(0, PLAYERS.length, ...fresh);
+  }
+
   function normalizePlayerKey(name) {
     return String(name || '')
       .toLowerCase()
@@ -3096,6 +3103,7 @@
   }
 
   async function startDraft() {
+    resetPlayersToBaseline();
     // Show loading
     document.getElementById('ds-setup').style.display = 'none';
     document.getElementById('ds-loading').style.display = 'flex';
@@ -4075,6 +4083,7 @@
   }
 
   async function runBatchSims(count = 10) {
+    resetPlayersToBaseline();
     const n = Math.max(1, Math.min(50, Number(count) || 10));
 
     const summaryEl = document.getElementById('ds-sim-summary');
