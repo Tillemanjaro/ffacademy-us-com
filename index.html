@@ -2978,7 +2978,7 @@
   // ── Live ADP loader ──
   async function loadLiveADP() {
     const teams = dsTeamCount > 14 ? 12 : dsTeamCount; // FFC max supported is 14
-    const years = [CURRENT_NFL_YEAR - 1, CURRENT_NFL_YEAR, CURRENT_NFL_YEAR + 1]
+    const years = [CURRENT_NFL_YEAR, CURRENT_NFL_YEAR - 1, CURRENT_NFL_YEAR + 1]
       .filter((y, i, arr) => arr.indexOf(y) === i);
 
     const fetchThroughProxies = async (targetUrl) => {
