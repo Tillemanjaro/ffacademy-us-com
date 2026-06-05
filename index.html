@@ -3013,6 +3013,19 @@
     return (p === 'DST' || p === 'D/ST') ? 'DEF' : p;
   }
 
+  function isValidLiveAdpEntry(entry) {
+    if (!entry) return false;
+    const adp = Number(entry.adp);
+    const pos = normalizeLivePos(entry.position);
+    const team = String(entry.team || '').trim().toUpperCase();
+    const name = String(entry.name || '').trim();
+    if (!Number.isFinite(adp) || adp <= 0 || adp > 400) return false;
+    if (!['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(pos)) return false;
+    if (!team || team === 'FA' || team === 'N/A' || team === 'NONE') return false;
+    if (name.length < 4 || !name.includes(' ')) return false;
+    return true;
+  }
+
   const CURRENT_PLAYER_NOTES = {
     christianmccaffrey: {
       rank: 15,
@@ -3047,13 +3060,14 @@
   function mergeLiveADP(liveData) {
     if (!liveData.length) { dsUsingLive = false; return; }
     dsUsingLive = true;
+    const cleanLiveData = liveData.filter(isValidLiveAdpEntry);
     // Build name→adp map from live data
     const adpMap = {};
-    liveData.forEach(p => { adpMap[normalizePlayerKey(p.name)] = { adp: p.adp, bye: p.bye, pos: normalizeLivePos(p.position), team: p.team }; });
+    cleanLiveData.forEach(p => { adpMap[normalizePlayerKey(p.name)] = { adp: p.adp, bye: p.bye, pos: normalizeLivePos(p.position), team: p.team }; });
 
     // Also build a team→adp map for DEF so "New York Jets" matches "NYJ Jets D/ST"
     const defAdpByTeam = {};
-    liveData.forEach(p => {
+    cleanLiveData.forEach(p => {
       const pos = normalizeLivePos(p.position);
       if (pos === 'DEF' && p.team) defAdpByTeam[p.team.toUpperCase()] = { adp: p.adp, bye: p.bye };
     });
@@ -3075,19 +3089,8 @@
       }
     });
 
-    // Add live players not in our list (skip DEF — already matched by team above)
-    liveData.forEach(lp => {
-      const pos = normalizeLivePos(lp.position);
-      if (pos === 'DEF') return;
-      const key = normalizePlayerKey(lp.name);
-      if (!PLAYERS.find(p => normalizePlayerKey(p.name) === key)) {
-        PLAYERS.push({
-          id: PLAYERS.length + 1000,
-          name: lp.name, pos, team: lp.team,
-          rank: lp.adp, adp: lp.adp, bye: lp.bye, espnId: null
-        });
-      }
-    });
+    // Do not inject unknown names from external ADP feeds.
+    // We rely on the curated baseline + Sleeper rostered player merge.
     // Re-sort by rank
     PLAYERS.sort((a, b) => a.rank - b.rank);
   }
