@@ -2950,28 +2950,7 @@
       }
     }
 
-    // Add missing players from Sleeper so the board is much closer to full player coverage.
-    let nextId = PLAYERS.length + 5000;
-    const maxRank = Math.max(...PLAYERS.map((p) => Number(p.rank) || 0), 300);
-    dsSleeperPlayers.forEach((sp, idx) => {
-      if (!sp.name || !sp.pos) return;
-      const key = normalizePlayerKey(sp.name);
-      if (PLAYERS.find((p) => normalizePlayerKey(p.name) === key)) return;
-      PLAYERS.push({
-        id: nextId++,
-        name: sp.name,
-        pos: sp.pos,
-        team: sp.team || 'FA',
-        rank: maxRank + idx + 1,
-        adp: maxRank + idx + 1,
-        espnId: sp.espnId || null,
-        injStatus: sp.injStatus || null,
-        injPart: sp.injPart || null,
-        injNote: sp.injNote || null,
-        yearsExp: sp.yearsExp,
-        bye: sp.bye || null,
-      });
-    });
+    // Do NOT add missing players from Sleeper — use only curated top 120 from baseline.
   }
 
   // ── Live ADP loader ──
