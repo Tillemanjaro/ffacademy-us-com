@@ -3091,6 +3091,7 @@
         p.adp = live.adp;
         p.bye = live.bye;
         p.rank = live.adp;
+        p.team = live.team;
       } else if (p.pos === 'DEF' && p.team && defAdpByTeam[p.team.toUpperCase()]) {
         // Match DEF players by team abbreviation when name doesn't align
         const hit = defAdpByTeam[p.team.toUpperCase()];
