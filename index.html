@@ -2950,7 +2950,28 @@
       }
     }
 
-    // Do NOT add missing players from Sleeper — use only curated top 120 from baseline.
+    // Do NOT add missing skill players — top 120 curated list is authoritative.
+    // DO add DEF and K from Sleeper since they're not in the curated list.
+    let nextId = PLAYERS.length + 5000;
+    let defKRank = 201;
+    dsSleeperPlayers.forEach((sp) => {
+      if (!sp.name || !['K', 'DEF'].includes(sp.pos)) return;
+      if (!sp.team || sp.team === 'FA') return;
+      const key = normalizePlayerKey(sp.name);
+      if (PLAYERS.find((p) => normalizePlayerKey(p.name) === key)) return;
+      PLAYERS.push({
+        id: nextId++,
+        name: sp.name,
+        pos: sp.pos,
+        team: sp.team,
+        rank: defKRank++,
+        adp: defKRank,
+        espnId: sp.espnId || null,
+        injStatus: sp.injStatus || null,
+        yearsExp: sp.yearsExp,
+        bye: sp.bye || null,
+      });
+    });
   }
 
   // ── Live ADP loader ──
