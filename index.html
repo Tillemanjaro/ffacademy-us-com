@@ -3046,6 +3046,10 @@
       team: 'PHI',
       note: 'Current-rank correction: still elite, but the model keeps him just behind CMC in PPR.',
     },
+    tyreekhill: {
+      team: 'FA',
+      note: '2026 status: unrostered / not expected to play. Excluded from draft board.',
+    },
   };
 
   function applyCurrentPlayerNotes() {
@@ -3272,6 +3276,8 @@
     if (!['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(String(player.pos || '').toUpperCase())) return false;
     const sleeperStatus = String(player.sleeperStatus || '').toLowerCase();
     if (sleeperStatus === 'inactive' || sleeperStatus === 'retired') return false;
+    const injStatus = String(player.injStatus || '').toLowerCase();
+    if (injStatus === 'out' || injStatus === 'ir') return false;
     return hasActiveTeamTag(player.team);
   }
 
