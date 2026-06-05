@@ -3073,21 +3073,16 @@
     document.getElementById('ds-loading').style.display = 'flex';
     document.getElementById('ds-load-msg').textContent = 'Fetching live ADP + player data...';
 
-    // Run both API calls in parallel; Sleeper also provides ADP via search_rank
-    const [liveData, sleeperResult] = await Promise.all([loadLiveADP(), loadSleeperData()]);
-    const { map: sleeperMap, adpList } = sleeperResult;
-    mergeLiveADP(liveData.length ? liveData : adpList);
+    // Use Sleeper only for team/bye/injury updates; rankings are owned by FF top 200 list
+    const sleeperResult = await loadSleeperData();
+    const { map: sleeperMap } = sleeperResult;
     mergeSleeperData(sleeperMap);
     applyCurrentPlayerNotes();
+    dsUsingLive = false;
 
     const sleeperCount = Object.keys(sleeperMap).length;
-    const adpSource = liveData.length
-      ? `Live FFC ${dsLiveAdpYear || CURRENT_NFL_YEAR} ADP${dsLiveAdpTeams ? ` (${dsLiveAdpTeams}-team)` : ''}`
-      : adpList.length
-        ? `Sleeper ADP ${CURRENT_NFL_YEAR}`
-        : 'Fallback board';
     document.getElementById('ds-load-msg').textContent =
-      `${adpSource} loaded · ${sleeperCount ? sleeperCount + ' player profiles' : 'player profiles offline'}`;
+      `FF Top 200 rankings · ${sleeperCount ? sleeperCount + ' player profiles from Sleeper' : 'player profiles offline'}`;
     updateFreshnessText();
     saveDraftPrefs();
 
@@ -4054,15 +4049,14 @@
 
     const summaryEl = document.getElementById('ds-sim-summary');
     const simDetails = document.getElementById('ds-sim-details');
-    if (summaryEl) summaryEl.textContent = `Loading live ADP for ${dsTeamCount}-team, ${dsBenchSpots}-bench sims...`;
+    if (summaryEl) summaryEl.textContent = `Running ${n} simulations with FF Top 200 rankings...`;
     if (simDetails) {
       simDetails.style.display = 'none';
       simDetails.innerHTML = '';
     }
 
-    const [liveData, sleeperResult] = await Promise.all([loadLiveADP(), loadSleeperData()]);
-    const { map: sleeperMap, adpList } = sleeperResult;
-    mergeLiveADP(liveData.length ? liveData : adpList);
+    const sleeperResult = await loadSleeperData();
+    const { map: sleeperMap } = sleeperResult;
     mergeSleeperData(sleeperMap);
     applyCurrentPlayerNotes();
     updateFreshnessText();
