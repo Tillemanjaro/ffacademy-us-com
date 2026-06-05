@@ -2890,15 +2890,17 @@
           });
         }
 
-        // Collect search_rank for ADP — Sleeper ranks fantasy-relevant players 1→N
+        // Collect search_rank for ADP — only active, rostered NFL players.
+        // Sleeper search_rank is popularity-based and can elevate retired/unsigned names.
         const rank = Number(p.search_rank);
-        if (['QB', 'RB', 'WR', 'TE', 'K'].includes(pos) &&
+        if (p.team &&
+            ['QB', 'RB', 'WR', 'TE', 'K'].includes(pos) &&
             !['inactive', 'retired'].includes(status) &&
             Number.isFinite(rank) && rank < 9999999) {
           adpRaw.push({
             name: `${p.first_name} ${p.last_name}`,
             position: pos,
-            team: p.team || 'FA',
+            team: p.team,
             _rank: rank,
           });
         }
@@ -3116,7 +3118,10 @@
 
     await new Promise(r => setTimeout(r, 400));
 
-    dsAvailable = PLAYERS.map(p => ({...p})).sort((a,b) => a.rank - b.rank);
+    dsAvailable = PLAYERS
+      .map(p => ({...p}))
+      .filter((p) => isDraftBoardEligible(p))
+      .sort((a,b) => a.rank - b.rank);
     dsAllPicks = [];
     dsUserRoster = buildDraftSlots().map(s => ({...s, player: null}));
     dsCpuRosters = Array.from({length: dsTeamCount}, () => []);
@@ -3245,7 +3250,22 @@
     };
   }
 
+  function hasActiveTeamTag(team) {
+    if (!team) return false;
+    const t = String(team).trim().toUpperCase();
+    return t && t !== 'FA' && t !== 'N/A' && t !== 'NONE';
+  }
+
+  function isDraftBoardEligible(player) {
+    if (!player) return false;
+    if (!['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].includes(String(player.pos || '').toUpperCase())) return false;
+    const sleeperStatus = String(player.sleeperStatus || '').toLowerCase();
+    if (sleeperStatus === 'inactive' || sleeperStatus === 'retired') return false;
+    return hasActiveTeamTag(player.team);
+  }
+
   function canAddPlayerToRoster(player, rosterPlayers, rosterSlots = null) {
+    if (!isDraftBoardEligible(player)) return false;
     const caps = draftPositionCaps();
     const counts = countPositions(rosterPlayers);
     if (counts[player.pos] >= (caps[player.pos] || getTotalRounds())) return false;
@@ -3362,6 +3382,7 @@
     const counts = countPositions(rosterPlayers);
     const round = getRound(dsCurrentPick);
     const pool = dsAvailable
+      .filter((p) => isDraftBoardEligible(p))
       .filter((p) => (p.pos === dsPosFilter || dsPosFilter === 'ALL'))
       .map((p) => ({ p, eval: scorePlayerForRoster(p, rosterPlayers, counts, round, false) }))
       .sort(sortRecommendationCandidates)
@@ -3520,6 +3541,7 @@
     });
 
     let list = dsAvailable.filter(p => {
+      if (!isDraftBoardEligible(p)) return false;
       if (dsPosFilter !== 'ALL' && p.pos !== dsPosFilter) return false;
       if (query && !p.name.toLowerCase().includes(query)) return false;
       return true;
@@ -3973,7 +3995,10 @@
   }
 
   function simulateSingleDraft() {
-    let available = PLAYERS.map((p) => ({ ...p })).sort((a, b) => (a.rank || 999) - (b.rank || 999));
+    let available = PLAYERS
+      .map((p) => ({ ...p }))
+      .filter((p) => isDraftBoardEligible(p))
+      .sort((a, b) => (a.rank || 999) - (b.rank || 999));
     const userRoster = buildDraftSlots().map((s) => ({ ...s, player: null }));
     const cpuRosters = Array.from({ length: dsTeamCount }, () => []);
     const totalPicks = dsTeamCount * getTotalRounds();
