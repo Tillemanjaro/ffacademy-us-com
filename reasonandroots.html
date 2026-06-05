@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reason &amp; Roots</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --amber:   #c8832a;
+      --amber-lt: #e0a045;
+      --cream:   #f5ede0;
+      --dark:    #0e0b07;
+      --dark-mid: #1c1409;
+      --text:    rgba(245,237,224,.88);
+      --muted:   rgba(245,237,224,.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: Georgia, 'Times New Roman', serif;
+      line-height: 1.7;
+    }
+
+    /* ── Hero ──────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow: hidden;
+    }
+
+    .hero__bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(14,11,7,.35) 0%, rgba(14,11,7,.75) 70%, var(--dark) 100%),
+        url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80') center/cover no-repeat;
+      z-index: 0;
+    }
+
+    .hero__label {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--amber);
+      z-index: 1;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 1;
+      padding: 0 1.5rem 3.5rem;
+      max-width: 38rem;
+    }
+
+    .hero__headline {
+      font-size: clamp(2.4rem, 8vw, 4.2rem);
+      font-weight: 400;
+      line-height: 1.1;
+      color: #fff;
+      letter-spacing: -.01em;
+    }
+
+    /* ── Shared section wrapper ────────────────────────── */
+    .section {
+      padding: 4rem 1.5rem;
+      max-width: 38rem;
+      margin: 0 auto;
+    }
+
+    .section + .section {
+      border-top: 1px solid rgba(200,131,42,.18);
+    }
+
+    /* ── Section number badge ──────────────────────────── */
+    .section__num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1.5px solid var(--amber);
+      border-radius: 50%;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--amber);
+      margin-bottom: 1.1rem;
+    }
+
+    .section__title {
+      font-size: 1.55rem;
+      font-weight: 400;
+      color: #fff;
+      margin-bottom: .55rem;
+      line-height: 1.2;
+    }
+
+    .section__sub {
+      font-size: 1rem;
+      color: var(--amber-lt);
+      font-style: italic;
+      margin-bottom: 1.6rem;
+    }
+
+    .section__body {
+      font-size: 1.05rem;
+      color: var(--text);
+      line-height: 1.8;
+    }
+
+    .section__body p + p {
+      margin-top: 1.1rem;
+    }
+
+    /* ── CTA button ────────────────────────────────────── */
+    .btn {
+      display: inline-block;
+      margin-top: 2rem;
+      padding: .75rem 1.75rem;
+      background: transparent;
+      border: 1.5px solid var(--amber);
+      color: var(--amber-lt);
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: .85rem;
+      font-weight: 600;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+
+    .btn:hover, .btn:focus-visible {
+      background: var(--amber);
+      color: var(--dark);
+      outline: none;
+    }
+
+    /* ── Chapter nav strip ─────────────────────────────── */
+    .chapter-nav {
+      padding: 2.5rem 1.5rem 0;
+      max-width: 38rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .chapter-nav__item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .chapter-nav__item:hover .chapter-nav__title {
+      color: var(--amber-lt);
+    }
+
+    .chapter-nav__num {
+      flex-shrink: 0;
+      width: 1.8rem;
+      height: 1.8rem;
+      border: 1.5px solid var(--amber);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--amber);
+      margin-top: .15rem;
+    }
+
+    .chapter-nav__text {}
+
+    .chapter-nav__title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      transition: color .2s;
+    }
+
+    .chapter-nav__desc {
+      font-size: .875rem;
+      color: var(--muted);
+      margin-top: .2rem;
+    }
+
+    /* ── Footer ────────────────────────────────────────── */
+    footer {
+      padding: 3rem 1.5rem;
+      text-align: center;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: .75rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── 01 Hero ─────────────────────────────────────── -->
+  <section class="hero" id="s01">
+    <div class="hero__bg" aria-hidden="true"></div>
+    <p class="hero__label">01 — The Question</p>
+    <div class="hero__content">
+      <h1 class="hero__headline">Every search begins with an ache.</h1>
+    </div>
+  </section>
+
+  <!-- ── Chapter navigation ──────────────────────────── -->
+  <nav class="chapter-nav" aria-label="Chapters">
+    <a class="chapter-nav__item" href="#s02">
+      <span class="chapter-nav__num">02</span>
+      <span class="chapter-nav__text">
+        <span class="chapter-nav__title">The Question</span>
+        <p class="chapter-nav__desc">The human ache for meaning is the door.</p>
+      </span>
+    </a>
+    <a class="chapter-nav__item" href="#s03">
+      <span class="chapter-nav__num">03</span>
+      <span class="chapter-nav__text">
+        <span class="chapter-nav__title">Cross</span>
+        <p class="chapter-nav__desc">Hard questions are carried into Christ's wounds.</p>
+      </span>
+    </a>
+    <a class="chapter-nav__item" href="#s04">
+      <span class="chapter-nav__num">04</span>
+      <span class="chapter-nav__text">
+        <span class="chapter-nav__title">Resurrection</span>
+        <p class="chapter-nav__desc">Death is not the final word.</p>
+      </span>
+    </a>
+  </nav>
+
+  <!-- ── 02 The Question ─────────────────────────────── -->
+  <section class="section" id="s02">
+    <div class="section__num">02</div>
+    <h2 class="section__title">The Question</h2>
+    <p class="section__sub">The human ache for meaning is the door.</p>
+    <div class="section__body">
+      <p>Before doctrine, there is longing: What is true? Why am I here? Does God come close?</p>
+      <p>The center is not an idea. It is a person.</p>
+    </div>
+    <a class="btn" href="#s03">Enter the Story</a>
+  </section>
+
+  <!-- ── 03 Cross ────────────────────────────────────── -->
+  <section class="section" id="s03">
+    <div class="section__num">03</div>
+    <h2 class="section__title">Cross</h2>
+    <p class="section__sub">Hard questions are carried into Christ's wounds.</p>
+    <div class="section__body">
+      <p>Every honest doubt, every unanswered cry—Christ did not bypass them. He entered them. The cross is not the silencing of the question; it is God absorbing it.</p>
+      <p>The wound is real. So is the one who bears it.</p>
+    </div>
+    <a class="btn" href="#s04">Continue</a>
+  </section>
+
+  <!-- ── 04 Resurrection ─────────────────────────────── -->
+  <section class="section" id="s04">
+    <div class="section__num">04</div>
+    <h2 class="section__title">Resurrection</h2>
+    <p class="section__sub">Death is not the final word.</p>
+    <div class="section__body">
+      <p>The tomb was empty—not as metaphor, but as fact. History records a movement that would not stop even when its founder was executed. Something changed them.</p>
+      <p>Reason follows the evidence. The roots go deeper than doubt.</p>
+    </div>
+    <a class="btn" href="#s01">Back to the Beginning</a>
+  </section>
+
+  <footer>
+    &copy; Reason &amp; Roots
+  </footer>
+
+</body>
+</html>
