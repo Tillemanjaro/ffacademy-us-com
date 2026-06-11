@@ -620,27 +620,55 @@ button { cursor:pointer; border:none; background:none; }
 /* Hero */
 .land-hero {
   display:flex; flex-direction:column; align-items:center;
-  padding:16px 24px 64px; text-align:center;
-  background:radial-gradient(ellipse 90% 55% at 50% 0%, rgba(79,142,247,.16) 0%, transparent 68%);
+  padding:16px 24px 72px; text-align:center; position:relative; overflow:hidden;
+  background:
+    radial-gradient(ellipse 130% 70% at 50% -5%, rgba(79,142,247,.24) 0%, transparent 58%),
+    radial-gradient(ellipse 50% 40% at 15% 90%, rgba(251,191,36,.08) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 90%, rgba(79,247,196,.06) 0%, transparent 55%);
 }
 .land-eyebrow {
   font-size:.68rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
   color:var(--blue); background:rgba(79,142,247,.12);
   border:1px solid rgba(79,142,247,.25); padding:5px 14px;
-  border-radius:20px; margin-bottom:20px;
+  border-radius:20px; margin-bottom:24px;
 }
+/* Overlapping player avatar row */
+.land-player-avatars {
+  display:flex; justify-content:center; margin-bottom:32px;
+}
+.land-p-avatar {
+  width:58px; height:58px; border-radius:50%;
+  border:3px solid var(--bg); overflow:hidden;
+  margin-left:-16px; background:var(--card2);
+  box-shadow:0 4px 20px rgba(0,0,0,.55); flex-shrink:0;
+  position:relative; transition:transform .2s; cursor:default;
+}
+.land-p-avatar:first-child { margin-left:0; }
+.land-p-avatar:hover { transform:translateY(-8px) scale(1.12); z-index:10; }
+.land-p-avatar img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
 .land-h1 {
-  font-size:clamp(1.9rem, 6vw, 3.2rem); font-weight:900;
-  letter-spacing:-1.5px; line-height:1.1; margin-bottom:20px; max-width:640px;
+  font-size:clamp(2rem, 7vw, 3.4rem); font-weight:900;
+  letter-spacing:-2px; line-height:1.08; margin-bottom:20px; max-width:640px;
 }
-.land-h1-dim { color:rgba(255,255,255,.38); }
+.land-h1-dim { color:rgba(255,255,255,.32); }
 .land-hero-sub {
-  font-size:1rem; color:var(--t2); max-width:500px;
-  line-height:1.7; margin-bottom:36px;
+  font-size:1rem; color:var(--t2); max-width:480px;
+  line-height:1.72; margin-bottom:36px;
 }
 .land-hero-cta {
   display:flex; flex-direction:column; gap:10px;
   width:100%; max-width:300px; margin-bottom:0;
+}
+/* Headshots inside draft preview card */
+.lp-headshot {
+  width:46px; height:46px; border-radius:50%;
+  object-fit:cover; object-position:top center;
+  flex-shrink:0; background:var(--card2);
+}
+.lp-mini-head {
+  width:26px; height:26px; border-radius:50%;
+  object-fit:cover; object-position:top center;
+  flex-shrink:0; background:var(--card2);
 }
 .land-cta-primary {
   padding:16px; background:var(--blue); color:#fff;
@@ -671,18 +699,21 @@ button { cursor:pointer; border:none; background:none; }
 }
 .land-pain-grid { display:grid; gap:12px; }
 .land-pain-card {
-  background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.18);
-  border-radius:16px; padding:20px 20px 20px 18px;
-  display:flex; gap:14px; align-items:flex-start;
+  background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.22);
+  border-left:4px solid rgba(239,68,68,.5);
+  border-radius:16px; padding:22px 22px 22px 20px;
+  display:flex; gap:16px; align-items:flex-start;
+  transition:transform .2s, box-shadow .2s;
 }
-.pain-icon { font-size:1.6rem; flex-shrink:0; line-height:1; margin-top:2px; }
+.land-pain-card:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(239,68,68,.12); }
+.pain-icon { font-size:1.8rem; flex-shrink:0; line-height:1; margin-top:2px; }
 .pain-quote {
-  font-size:.9rem; color:rgba(255,255,255,.72);
-  line-height:1.6; font-style:italic;
+  font-size:.92rem; color:rgba(255,255,255,.78);
+  line-height:1.65; font-style:italic;
 }
 .pain-source {
-  font-size:.72rem; color:var(--t3); margin-top:6px;
-  font-style:normal; font-weight:600;
+  font-size:.72rem; color:rgba(239,68,68,.55); margin-top:8px;
+  font-style:normal; font-weight:700; letter-spacing:.3px;
 }
 
 /* Solution section */
@@ -693,10 +724,15 @@ button { cursor:pointer; border:none; background:none; }
 .land-sol-card {
   background:var(--card); border:1px solid var(--border2);
   border-radius:16px; padding:22px;
+  transition:transform .2s, border-color .2s, box-shadow .2s;
 }
-.land-sol-icon { font-size:1.6rem; margin-bottom:10px; }
-.land-sol-title { font-size:.95rem; font-weight:800; margin-bottom:6px; }
-.land-sol-text { font-size:.82rem; color:var(--t2); line-height:1.6; }
+.land-sol-card:hover {
+  transform:translateY(-3px); border-color:rgba(79,142,247,.4);
+  box-shadow:0 10px 32px rgba(79,142,247,.12);
+}
+.land-sol-icon { font-size:1.8rem; margin-bottom:12px; }
+.land-sol-title { font-size:.95rem; font-weight:800; margin-bottom:7px; }
+.land-sol-text { font-size:.82rem; color:var(--t2); line-height:1.65; }
 
 /* Mock draft preview */
 .land-preview-wrap {
@@ -870,6 +906,16 @@ button { cursor:pointer; border:none; background:none; }
   <!-- Hero -->
   <div class="land-hero">
     <div class="land-eyebrow">⚡ Snap — Fantasy Football</div>
+
+    <!-- Real player photos -->
+    <div class="land-player-avatars">
+      <div class="land-p-avatar"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png" alt="Josh Allen" onerror="this.style.opacity=0"></div>
+      <div class="land-p-avatar"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/4427366.png" alt="Breece Hall" onerror="this.style.opacity=0"></div>
+      <div class="land-p-avatar"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/4362628.png" alt="Ja'Marr Chase" onerror="this.style.opacity=0"></div>
+      <div class="land-p-avatar"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/4241389.png" alt="CeeDee Lamb" onerror="this.style.opacity=0"></div>
+      <div class="land-p-avatar"><img src="https://a.espncdn.com/i/headshots/nfl/players/full/15847.png" alt="Travis Kelce" onerror="this.style.opacity=0"></div>
+    </div>
+
     <h1 class="land-h1">
       <span class="land-h1-dim">Other apps just drop you in.</span><br>
       Snap walks you through it.
@@ -951,7 +997,8 @@ button { cursor:pointer; border:none; background:none; }
           <div class="lp-clock">⚡ On the Clock</div>
         </div>
         <div class="lp-player">
-          <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
+          <img src="https://a.espncdn.com/i/headshots/nfl/players/full/4427366.png" class="lp-headshot" alt="Breece Hall" onerror="this.style.opacity=0">
+          <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem;flex-shrink:0">RB</div>
           <div class="lp-player-info">
             <div class="name">Breece Hall</div>
             <div class="meta">NYJ · 22.8 PPR pts/gm</div>
@@ -961,16 +1008,19 @@ button { cursor:pointer; border:none; background:none; }
         </div>
         <div class="lp-others">
           <div class="lp-other-row">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/4362628.png" class="lp-mini-head" alt="Ja'Marr Chase" onerror="this.style.opacity=0">
             <div class="pos-chip pos-WR" style="width:28px;height:16px;font-size:.55rem">WR</div>
             <span>Ja'Marr Chase</span><span style="margin-left:auto;color:var(--green);font-weight:700">23.2</span>
           </div>
           <div class="lp-other-row">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/4430807.png" class="lp-mini-head" alt="Bijan Robinson" onerror="this.style.opacity=0">
             <div class="pos-chip pos-RB" style="width:28px;height:16px;font-size:.55rem">RB</div>
             <span>Bijan Robinson</span><span style="margin-left:auto;color:var(--green);font-weight:700">22.1</span>
           </div>
           <div class="lp-other-row">
+            <img src="https://a.espncdn.com/i/headshots/nfl/players/full/15847.png" class="lp-mini-head" alt="Travis Kelce" onerror="this.style.opacity=0">
             <div class="pos-chip pos-TE" style="width:28px;height:16px;font-size:.55rem">TE</div>
-            <span>Sam LaPorta</span><span style="margin-left:auto;color:var(--green);font-weight:700">16.5</span>
+            <span>Travis Kelce</span><span style="margin-left:auto;color:var(--green);font-weight:700">17.4</span>
           </div>
         </div>
       </div>
