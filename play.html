@@ -1093,7 +1093,26 @@ if (NEEDS_SETUP) {
   onAuthStateChanged(auth, async user => {
     if (!user) {
       setLoading('Signing in…');
-      await signInAnonymously(auth);
+      try {
+        await signInAnonymously(auth);
+      } catch(e) {
+        document.getElementById('loading').innerHTML = `
+          <div style="max-width:380px;padding:32px;text-align:center">
+            <div style="font-size:2rem;margin-bottom:16px">⚠️</div>
+            <div style="font-weight:800;font-size:1.1rem;margin-bottom:10px">Firebase setup needed</div>
+            <div style="font-size:.85rem;color:rgba(255,255,255,.6);line-height:1.6;margin-bottom:20px">
+              Anonymous Authentication is not enabled yet.<br><br>
+              In Firebase Console:<br>
+              <strong style="color:#fff">Authentication → Sign-in method → Anonymous → Enable → Save</strong>
+            </div>
+            <div style="background:#1a2540;border-radius:10px;padding:12px;font-size:.75rem;color:rgba(255,255,255,.4);font-family:monospace;text-align:left">
+              Error: ${e.code || e.message}
+            </div>
+            <button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:#4f8ef7;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem">
+              Try Again
+            </button>
+          </div>`;
+      }
       return;
     }
     S.uid = user.uid;
