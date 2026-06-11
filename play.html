@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Fantasy Copilot – Live</title>
+<title>Snap – Fantasy Football</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ── TOKENS ─────────────────────────────────────────── */
@@ -570,15 +570,279 @@ button { cursor:pointer; border:none; background:none; }
 .stat-row:last-child { border-bottom:none; }
 .stat-label { color:var(--t2); }
 .stat-val   { font-weight:700; }
+
+/* ── LANDING PAGE ────────────────────────────────────── */
+#view-landing {
+  min-height:100vh; display:none; flex-direction:column;
+  background:var(--bg); overflow-x:hidden;
+}
+#view-landing.active { display:flex; }
+
+.land-hero {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:60px 24px 40px; text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,142,247,.18) 0%, transparent 70%);
+}
+.land-wordmark {
+  font-size:3.8rem; font-weight:900; letter-spacing:-2px;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.7) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:6px; line-height:1;
+}
+.land-wordmark span { color:var(--blue); -webkit-text-fill-color:var(--blue); }
+.land-tagline {
+  font-size:1.05rem; color:var(--t2); font-weight:500; margin-bottom:36px; line-height:1.5;
+}
+.land-ctas { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; margin-bottom:48px; }
+.land-cta-primary {
+  padding:16px; background:var(--blue); color:#fff;
+  border-radius:14px; font-size:1rem; font-weight:800;
+  border:none; cursor:pointer; transition:all .2s; letter-spacing:-.2px;
+}
+.land-cta-primary:hover { background:#6fa1f8; transform:translateY(-2px); box-shadow:0 8px 24px rgba(79,142,247,.4); }
+.land-cta-secondary {
+  padding:15px; background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15); color:var(--t1);
+  border-radius:14px; font-size:1rem; font-weight:700;
+  cursor:pointer; transition:all .2s;
+}
+.land-cta-secondary:hover { background:rgba(255,255,255,.12); }
+
+/* Mock draft preview */
+.land-preview {
+  width:100%; max-width:340px; margin:0 auto;
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:20px; overflow:hidden;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);
+}
+.lp-bar {
+  padding:10px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.lp-pick { font-size:.72rem; font-weight:800; color:var(--blue); }
+.lp-clock {
+  margin-left:auto; background:var(--green-d); color:var(--green);
+  font-size:.7rem; font-weight:800; padding:4px 10px;
+  border-radius:20px; animation:glow 1.6s ease-in-out infinite;
+}
+.lp-player {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 14px; border-bottom:1px solid var(--border);
+  background:rgba(251,191,36,.05); border-left:3px solid var(--yellow);
+}
+.lp-player-info .name { font-size:.9rem; font-weight:800; }
+.lp-player-info .meta { font-size:.7rem; color:var(--t2); }
+.lp-pts { font-size:.88rem; font-weight:800; color:var(--green); margin-left:auto; }
+.lp-rec { font-size:.7rem; color:var(--yellow); padding:2px 0 0; }
+.lp-others { padding:8px 14px; }
+.lp-other-row {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 0; border-bottom:1px solid var(--border);
+  font-size:.78rem; color:var(--t2);
+}
+.lp-other-row:last-child { border-bottom:none; }
+
+/* Features strip */
+.land-features {
+  display:flex; gap:0;
+  border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.land-feature {
+  flex:1; padding:20px 16px; text-align:center;
+  border-right:1px solid var(--border);
+}
+.land-feature:last-child { border-right:none; }
+.lf-icon { font-size:1.4rem; margin-bottom:6px; }
+.lf-title { font-size:.72rem; font-weight:800; letter-spacing:.3px; margin-bottom:3px; }
+.lf-sub { font-size:.65rem; color:var(--t2); line-height:1.4; }
+
+/* Join via link input */
+.land-join-row {
+  display:flex; gap:8px; width:100%; max-width:320px; margin-top:-30px;
+}
+.land-join-input {
+  flex:1; padding:13px 14px; background:rgba(255,255,255,.06);
+  border:1px solid var(--border2); border-radius:12px;
+  color:var(--t1); font-size:.95rem; text-align:center;
+  letter-spacing:3px; text-transform:uppercase; font-weight:700;
+}
+.land-join-input::placeholder { letter-spacing:0; font-weight:400; text-transform:none; color:var(--t3); }
+.land-join-input:focus { outline:none; border-color:var(--blue); }
+#land-join-section { display:none; }
+
+/* ── ONBOARDING TOUR ─────────────────────────────────── */
+#tour-overlay {
+  position:fixed; inset:0; z-index:10000;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(6px);
+  display:none; align-items:flex-end; justify-content:center;
+  padding:0 16px 24px;
+}
+#tour-overlay.active { display:flex; }
+
+.tour-card {
+  width:100%; max-width:440px;
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:24px; overflow:hidden;
+  animation:slideUp .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+.tour-progress { display:flex; gap:6px; padding:16px 20px 0; }
+.tour-pip { flex:1; height:3px; border-radius:2px; background:rgba(255,255,255,.1); }
+.tour-pip.done { background:var(--blue); }
+.tour-pip.active { background:var(--blue); opacity:.6; }
+
+.tour-body { padding:20px; }
+.tour-step-label {
+  font-size:.65rem; font-weight:800; letter-spacing:1px;
+  text-transform:uppercase; color:var(--blue); margin-bottom:8px;
+}
+.tour-title { font-size:1.3rem; font-weight:900; letter-spacing:-.4px; margin-bottom:8px; }
+.tour-desc { font-size:.85rem; color:var(--t2); line-height:1.6; margin-bottom:16px; }
+
+/* Tour mock content */
+.tour-mock {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:14px; margin-bottom:16px;
+}
+.tour-mock-pick-row {
+  display:flex; align-items:center; gap:8px; margin-bottom:10px;
+  padding-bottom:10px; border-bottom:1px solid var(--border);
+}
+.tour-mock-timer {
+  margin-left:auto; background:var(--green-d); color:var(--green);
+  font-size:.72rem; font-weight:800; padding:4px 10px; border-radius:20px;
+}
+.tour-mock-player {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(251,191,36,.08); border-radius:10px;
+  padding:10px; border-left:3px solid var(--yellow);
+  margin-bottom:6px;
+}
+.tour-mock-roster { display:flex; flex-direction:column; gap:6px; }
+.tour-mock-roster-row {
+  display:flex; align-items:center; gap:8px;
+  font-size:.8rem; padding:6px 0; border-bottom:1px solid var(--border);
+}
+.tour-mock-roster-row:last-child { border-bottom:none; }
+.tour-mock-trade {
+  display:grid; grid-template-columns:1fr 24px 1fr; gap:8px; align-items:center;
+}
+.tour-mock-trade-side { background:rgba(255,255,255,.04); border-radius:8px; padding:8px; }
+.tour-mock-trade-label { font-size:.6rem; font-weight:800; letter-spacing:.8px; text-transform:uppercase; margin-bottom:5px; }
+.tour-mock-trade-player { font-size:.78rem; font-weight:700; }
+.tour-mock-trade-meta { font-size:.65rem; color:var(--t2); }
+.tour-mock-arrow { text-align:center; font-size:1rem; color:var(--t3); }
+
+.tour-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-top:1px solid var(--border);
+}
+.tour-skip { font-size:.78rem; color:var(--t3); font-weight:600; cursor:pointer; }
+.tour-skip:hover { color:var(--t2); }
+.tour-next {
+  padding:11px 24px; background:var(--blue); color:#fff;
+  border-radius:12px; font-size:.88rem; font-weight:800;
+  border:none; cursor:pointer; transition:all .2s;
+}
+.tour-next:hover { background:#6fa1f8; }
 </style>
 </head>
 <body>
 
+<!-- ══ TOUR OVERLAY ══ -->
+<div id="tour-overlay">
+  <div class="tour-card">
+    <div class="tour-progress" id="tour-progress"></div>
+    <div class="tour-body" id="tour-body"></div>
+    <div class="tour-footer">
+      <span class="tour-skip" onclick="endTour()">Skip tour</span>
+      <button class="tour-next" id="tour-next-btn" onclick="tourNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIEW: LANDING ══ -->
+<div id="view-landing" class="view">
+  <div class="land-hero">
+    <div class="land-wordmark">Snap<span>⚡</span></div>
+    <div class="land-tagline">Fantasy football, the fast way.<br>Draft live. Trade anytime. Win together.</div>
+
+    <div class="land-ctas" id="land-main-ctas">
+      <button class="land-cta-primary" onclick="landCreate()">Create a League →</button>
+      <button class="land-cta-secondary" onclick="landShowJoin()">Join with Invite Code</button>
+    </div>
+
+    <div id="land-join-section">
+      <div class="land-join-row" style="width:100%;max-width:320px;margin:0 auto 16px;">
+        <input class="land-join-input" id="land-code-input" type="text"
+          placeholder="Enter code e.g. XK4F2M" maxlength="6"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <button class="land-cta-primary" style="width:100%;max-width:320px;" onclick="landJoin()">Join League →</button>
+      <div style="margin-top:10px;text-align:center">
+        <span class="tour-skip" onclick="landHideJoin()">← Back</span>
+      </div>
+    </div>
+
+    <!-- Mock draft preview -->
+    <div class="land-preview">
+      <div class="lp-bar">
+        <div class="lp-pick">Pick 2.03 · Round 2</div>
+        <div class="lp-clock">⚡ On the Clock</div>
+      </div>
+      <div class="lp-player">
+        <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
+        <div class="lp-player-info">
+          <div class="name">Breece Hall</div>
+          <div class="meta">NYJ · 22.8 PPR pts/gm</div>
+          <div class="lp-rec">⭐ Recommended Pick</div>
+        </div>
+        <div class="lp-pts">22.8</div>
+      </div>
+      <div class="lp-others">
+        <div class="lp-other-row">
+          <div class="pos-chip pos-WR" style="width:28px;height:16px;font-size:.55rem">WR</div>
+          <span>Ja'Marr Chase</span><span style="margin-left:auto;color:var(--green);font-weight:700">23.2</span>
+        </div>
+        <div class="lp-other-row">
+          <div class="pos-chip pos-RB" style="width:28px;height:16px;font-size:.55rem">RB</div>
+          <span>Bijan Robinson</span><span style="margin-left:auto;color:var(--green);font-weight:700">22.1</span>
+        </div>
+        <div class="lp-other-row">
+          <div class="pos-chip pos-TE" style="width:28px;height:16px;font-size:.55rem">TE</div>
+          <span>Sam LaPorta</span><span style="margin-left:auto;color:var(--green);font-weight:700">16.5</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="land-features">
+    <div class="land-feature">
+      <div class="lf-icon">⚡</div>
+      <div class="lf-title">Live Draft</div>
+      <div class="lf-sub">Real-time picks with a timer. Everyone on the clock together.</div>
+    </div>
+    <div class="land-feature">
+      <div class="lf-icon">🔄</div>
+      <div class="lf-title">Trade Anytime</div>
+      <div class="lf-sub">Send offers, negotiate deals all season long.</div>
+    </div>
+    <div class="land-feature">
+      <div class="lf-icon">💬</div>
+      <div class="lf-title">League Chat</div>
+      <div class="lf-sub">Talk trash and celebrate every week.</div>
+    </div>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <header id="topbar">
   <div class="topbar-logo">
-    <div class="logo-icon">🏈</div>
-    Fantasy Copilot
+    <div class="logo-icon">⚡</div>
+    Snap
   </div>
   <div id="topbar-right" style="display:none">
     <span class="topbar-badge" id="tb-week"></span>
@@ -628,9 +892,9 @@ button { cursor:pointer; border:none; background:none; }
   <div class="center-view">
     <div class="center-card">
       <div class="auth-logo">
-        <div class="big-icon">🏈</div>
-        <h2>Welcome to Fantasy Copilot</h2>
-        <p>Pick a username and team name to get started. No email needed.</p>
+        <div class="big-icon">⚡</div>
+        <h2>Create your Snap profile</h2>
+        <p>Pick a username and team name. No email needed — you're in instantly.</p>
       </div>
       <div class="field">
         <label>Username</label>
@@ -707,10 +971,13 @@ button { cursor:pointer; border:none; background:none; }
   <div class="lobby-wrap">
 
     <div class="invite-hero">
-      <div class="label">Share This Code With Your League</div>
+      <div class="label">Invite Your League</div>
       <div class="invite-code" id="lobby-code">——</div>
-      <div class="invite-sub">Anyone with this code can join your league</div>
-      <button class="copy-btn" onclick="copyInviteCode()">Copy Code</button>
+      <div class="invite-sub">Share the link — they tap it and land straight in your league</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+        <button class="copy-btn" onclick="copyInviteLink()">📋 Copy Invite Link</button>
+        <button class="copy-btn" style="background:rgba(255,255,255,.15)" onclick="copyInviteCode()">Copy Code Only</button>
+      </div>
     </div>
 
     <div class="lobby-teams">
@@ -935,6 +1202,9 @@ const FIREBASE_CONFIG = {
 
 const NEEDS_SETUP = FIREBASE_CONFIG.apiKey === "YOUR_API_KEY";
 
+/* ── URL INVITE CODE ──────────────────────────────────── */
+const URL_CODE = new URLSearchParams(window.location.search).get('code')?.toUpperCase() || null;
+
 /* ── PLAYER DATABASE ──────────────────────────────────────
    PPR-optimized 2025 rankings. Replace ppg values with
    live projections from FantasyPros / Sleeper API.
@@ -1086,6 +1356,11 @@ if (NEEDS_SETUP) {
   hide('loading');
   showView('setup');
 } else {
+  // Pre-fill join code if arriving via invite link
+  if (URL_CODE) {
+    document.getElementById('land-code-input').value = URL_CODE;
+    document.getElementById('join-code-input').value = URL_CODE;
+  }
   const app = initializeApp(FIREBASE_CONFIG);
   auth = getAuth(app);
   db   = getFirestore(app);
@@ -1124,14 +1399,31 @@ if (NEEDS_SETUP) {
 async function bootstrap() {
   setLoading('Loading your profile…');
   const userSnap = await getDoc(doc(db,'users',S.uid));
-  if (!userSnap.exists()) { hide('loading'); showView('auth'); return; }
+  if (!userSnap.exists()) {
+    hide('loading');
+    // If arriving via invite link, go straight to auth (skip landing)
+    if (URL_CODE) { showView('auth'); }
+    else { showView('landing'); }
+    return;
+  }
 
   const u = userSnap.data();
   S.username = u.username;
   S.teamName = u.teamName;
   setTopbar();
 
-  if (!u.leagueId) { hide('loading'); showView('home'); return; }
+  if (!u.leagueId) {
+    hide('loading');
+    // If arriving via invite link, skip home and auto-join
+    if (URL_CODE) {
+      showView('home');
+      switchHomeTab('join', document.querySelector('.home-tab:last-child'));
+      eid('join-code-input').value = URL_CODE;
+    } else {
+      showView('home');
+    }
+    return;
+  }
 
   S.leagueId = u.leagueId;
   const leagueSnap = await getDoc(doc(db,'leagues',S.leagueId));
@@ -1169,8 +1461,17 @@ window.submitAuth = async function() {
   });
   S.username = username; S.teamName = teamName;
   setTopbar();
-  hide('loading'); showView('home');
+  hide('loading');
+  if (URL_CODE) {
+    showView('home');
+    switchHomeTab('join', document.querySelector('.home-tab:last-child'));
+    eid('join-code-input').value = URL_CODE;
+  } else {
+    showView('home');
+  }
   eid('home-greeting-name').textContent = `Welcome, ${username}!`;
+  // Show tour for brand new users
+  if (!localStorage.getItem('snap_tour_done')) startTour();
 };
 
 /* ── HOME TABS ────────────────────────────────────────── */
@@ -1875,6 +2176,160 @@ window.respondTrade = async function(tradeId, accept) {
     await updateDoc(tradeRef,{status:'rejected'});
     toast('Trade declined.');
   }
+};
+
+/* ── LANDING FLOW ─────────────────────────────────────── */
+window.landCreate = function() {
+  showView('auth');
+  // After auth, home panel will default to create
+};
+window.landShowJoin = function() {
+  eid('land-main-ctas').style.display = 'none';
+  eid('land-join-section').style.display = 'block';
+};
+window.landHideJoin = function() {
+  eid('land-main-ctas').style.display = 'flex';
+  eid('land-join-section').style.display = 'none';
+};
+window.landJoin = function() {
+  const code = eid('land-code-input').value.trim().toUpperCase();
+  if (code.length !== 6) { toast('Enter a 6-character code','error'); return; }
+  // Store code and go to auth
+  eid('join-code-input').value = code;
+  showView('auth');
+};
+
+/* ── INVITE LINK ──────────────────────────────────────── */
+window.copyInviteLink = function() {
+  const code = S.league?.code || '';
+  const link = `https://ffacademy.us.com/play.html?code=${code}`;
+  navigator.clipboard.writeText(link).then(() => toast('Invite link copied! 🔗', 'success'));
+};
+
+/* ── ONBOARDING TOUR ──────────────────────────────────── */
+const TOUR_STEPS = [
+  {
+    label: 'Step 1 of 4',
+    title: 'Welcome to Snap ⚡',
+    desc: 'The fastest way to play fantasy football with your friends. PPR scoring, live draft room, trades, and chat — all in one place. Here\'s a quick look at how it works.',
+    mock: `<div style="text-align:center;padding:10px 0">
+      <div style="font-size:2.4rem;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#fff,rgba(255,255,255,.6));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Snap⚡</div>
+      <div style="font-size:.82rem;color:var(--t2);margin-top:6px">Fantasy football with your crew.<br>Invite code. Live draft. Win the league.</div>
+    </div>`,
+  },
+  {
+    label: 'Step 2 of 4',
+    title: 'Live Draft Room',
+    desc: 'When your commissioner starts the draft, everyone picks in real time. A timer counts down — pick your player or we\'ll auto-pick the best available.',
+    mock: `<div class="tour-mock-pick-row">
+        <div>
+          <div style="font-size:.8rem;font-weight:800">Pick 2.03 · Round 2</div>
+          <div style="font-size:.7rem;color:var(--t2)">Drafting: Your Team</div>
+        </div>
+        <div class="tour-mock-timer">⚡ 47s</div>
+      </div>
+      <div class="tour-mock-player">
+        <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
+        <div style="flex:1">
+          <div style="font-size:.88rem;font-weight:800">Breece Hall</div>
+          <div style="font-size:.7rem;color:var(--t2)">NYJ · 22.8 PPR pts/gm</div>
+        </div>
+        <div style="font-size:.68rem;color:var(--yellow)">⭐ Recommended</div>
+      </div>
+      <div style="margin-top:8px;font-size:.72rem;color:var(--t2)">Tap <strong style="color:var(--green)">Draft</strong> to pick. Copilot recommends the best player for your roster needs.</div>`,
+  },
+  {
+    label: 'Step 3 of 4',
+    title: 'Your Team All Season',
+    desc: 'After the draft your roster is set. View starters vs bench, check your projected points, and manage trades whenever you want.',
+    mock: `<div class="tour-mock-roster">
+      <div class="tour-mock-roster-row">
+        <div class="pos-chip pos-QB" style="width:28px;height:16px;font-size:.57rem">QB</div>
+        <div style="flex:1;font-weight:700;font-size:.82rem">Josh Allen</div>
+        <span class="starter-tag">START</span>
+        <div style="color:var(--green);font-weight:800;font-size:.82rem">28.5</div>
+      </div>
+      <div class="tour-mock-roster-row">
+        <div class="pos-chip pos-RB" style="width:28px;height:16px;font-size:.57rem">RB</div>
+        <div style="flex:1;font-weight:700;font-size:.82rem">Breece Hall</div>
+        <span class="starter-tag">START</span>
+        <div style="color:var(--green);font-weight:800;font-size:.82rem">22.8</div>
+      </div>
+      <div class="tour-mock-roster-row">
+        <div class="pos-chip pos-WR" style="width:28px;height:16px;font-size:.57rem">WR</div>
+        <div style="flex:1;font-weight:700;font-size:.82rem">CeeDee Lamb</div>
+        <span class="starter-tag">START</span>
+        <div style="color:var(--green);font-weight:800;font-size:.82rem">22.1</div>
+      </div>
+      <div class="tour-mock-roster-row">
+        <div class="pos-chip pos-TE" style="width:28px;height:16px;font-size:.57rem">TE</div>
+        <div style="flex:1;font-weight:700;font-size:.82rem">Travis Kelce</div>
+        <span class="bench-tag">BN</span>
+        <div style="color:var(--t2);font-weight:800;font-size:.82rem">15.8</div>
+      </div>
+    </div>`,
+  },
+  {
+    label: 'Step 4 of 4',
+    title: 'Trade & Talk Trash',
+    desc: 'Send trade offers to anyone in your league. Accept, decline, or counter. Chat with your league all season — no app download needed.',
+    mock: `<div class="tour-mock-trade">
+      <div class="tour-mock-trade-side">
+        <div class="tour-mock-trade-label" style="color:var(--red)">You Give</div>
+        <div class="tour-mock-trade-player">James Cook</div>
+        <div class="tour-mock-trade-meta">RB · BUF · 18.9/gm</div>
+      </div>
+      <div class="tour-mock-arrow">⇄</div>
+      <div class="tour-mock-trade-side">
+        <div class="tour-mock-trade-label" style="color:var(--green)">You Get</div>
+        <div class="tour-mock-trade-player">Tee Higgins</div>
+        <div class="tour-mock-trade-meta">WR · CIN · 14.2/gm</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;background:rgba(79,142,247,.08);border-radius:8px;padding:8px 10px;font-size:.75rem;color:var(--t2)">
+      💬 "Need WR depth — you've got RB surplus. Let's deal."
+    </div>`,
+  },
+];
+
+let tourStep = 0;
+
+function startTour() {
+  tourStep = 0;
+  renderTourStep();
+  eid('tour-overlay').classList.add('active');
+}
+
+function renderTourStep() {
+  const step = TOUR_STEPS[tourStep];
+  const total = TOUR_STEPS.length;
+  // Progress pips
+  eid('tour-progress').innerHTML = TOUR_STEPS.map((_,i) =>
+    `<div class="tour-pip ${i<tourStep?'done':i===tourStep?'active':''}"></div>`
+  ).join('');
+  // Body
+  eid('tour-body').innerHTML = `
+    <div class="tour-step-label">${step.label}</div>
+    <div class="tour-title">${step.title}</div>
+    <div class="tour-desc">${step.desc}</div>
+    <div class="tour-mock">${step.mock}</div>
+  `;
+  // Button label
+  eid('tour-next-btn').textContent = tourStep === total-1 ? "Let's Go! 🏈" : 'Next →';
+}
+
+window.tourNext = function() {
+  if (tourStep < TOUR_STEPS.length - 1) {
+    tourStep++;
+    renderTourStep();
+  } else {
+    endTour();
+  }
+};
+
+window.endTour = function() {
+  localStorage.setItem('snap_tour_done','1');
+  eid('tour-overlay').classList.remove('active');
 };
 
 /* ── UTILITIES ────────────────────────────────────────── */
