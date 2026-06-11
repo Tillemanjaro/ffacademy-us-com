@@ -849,6 +849,7 @@ button { cursor:pointer; border:none; background:none; }
     <div class="topbar-user">
       <span id="tb-username"></span>
     </div>
+    <button onclick="doSignOut()" title="Sign out" style="background:none;border:none;cursor:pointer;color:rgba(255,255,255,.45);font-size:1.1rem;padding:4px 6px;border-radius:6px;line-height:1" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,.45)'">⏏</button>
   </div>
 </header>
 
@@ -1175,7 +1176,7 @@ button { cursor:pointer; border:none; background:none; }
 /* ── FIREBASE IMPORTS ─────────────────────────────────── */
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInAnonymously, onAuthStateChanged }
+import { getAuth, signInAnonymously, onAuthStateChanged, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getFirestore,
@@ -2339,6 +2340,13 @@ function setTopbar() {
   eid('tb-username').textContent = `@${S.username}`;
   if (S.league?.week) eid('tb-week').textContent=`Week ${S.league.week}`;
 }
+
+window.doSignOut = async function() {
+  if (!confirm('Sign out? You can sign back in with a new username.')) return;
+  localStorage.removeItem('snap_tour_done');
+  await signOut(auth);
+  location.reload();
+};
 
 function setLoading(msg='Loading…') {
   eid('loading-msg').textContent=msg;
