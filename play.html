@@ -167,6 +167,35 @@ button { cursor:pointer; border:none; background:none; }
 .btn-outline { background:none; border:1px solid var(--border2); color:var(--t2); }
 .btn-outline:hover { border-color:var(--blue); color:var(--blue); }
 
+/* ── LOGIN VIEW ──────────────────────────────────────── */
+.google-btn {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; padding:13px; background:#fff; color:#1a1a2e;
+  border:none; border-radius:12px; font-size:.95rem; font-weight:700;
+  cursor:pointer; margin-bottom:16px; transition:opacity .18s;
+}
+.google-btn:hover { opacity:.88; }
+.auth-divider {
+  text-align:center; position:relative; margin:4px 0 16px;
+  color:rgba(255,255,255,.35); font-size:.78rem;
+}
+.auth-divider::before {
+  content:''; position:absolute; top:50%; left:0; right:0;
+  height:1px; background:rgba(255,255,255,.1);
+}
+.auth-divider span { background:#141d30; padding:0 10px; position:relative; }
+.auth-error {
+  background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3);
+  color:#fca5a5; border-radius:8px; padding:10px 12px;
+  font-size:.82rem; margin-bottom:12px; display:none; line-height:1.5;
+}
+.auth-toggle {
+  text-align:center; margin-top:14px;
+  font-size:.83rem; color:rgba(255,255,255,.45);
+}
+.auth-toggle-link { color:var(--blue); cursor:pointer; font-weight:700; }
+.auth-toggle-link:hover { text-decoration:underline; }
+
 /* ── HOME VIEW ───────────────────────────────────────── */
 #view-home .center-view { padding-top:72px; }
 .home-greeting { text-align:center; margin-bottom:24px; }
@@ -871,7 +900,7 @@ button { cursor:pointer; border:none; background:none; }
       <ol class="setup-steps">
         <li><span class="step-num">1</span>Go to <strong>console.firebase.google.com</strong> → Create a project</li>
         <li><span class="step-num">2</span>Click the <strong>&lt;/&gt;</strong> icon to add a Web App, copy the config</li>
-        <li><span class="step-num">3</span>Go to <strong>Authentication → Sign-in method</strong> → Enable <strong>Anonymous</strong></li>
+        <li><span class="step-num">3</span>Go to <strong>Authentication → Sign-in method</strong> → Enable <strong>Google</strong> and <strong>Email/Password</strong></li>
         <li><span class="step-num">4</span>Go to <strong>Firestore Database</strong> → Create database → Start in <strong>test mode</strong></li>
         <li><span class="step-num">5</span>Paste your config into <code>FIREBASE_CONFIG</code> at the top of this file's script tag</li>
       </ol>
@@ -888,24 +917,58 @@ button { cursor:pointer; border:none; background:none; }
   </div>
 </div>
 
-<!-- ══ VIEW: AUTH ══ -->
-<div id="view-auth" class="view">
+<!-- ══ VIEW: LOGIN ══ -->
+<div id="view-login" class="view">
   <div class="center-view">
     <div class="center-card">
       <div class="auth-logo">
         <div class="big-icon">⚡</div>
-        <h2>Create your Snap profile</h2>
-        <p>Pick a username and team name. No email needed — you're in instantly.</p>
+        <h2 id="login-title">Sign in to Snap</h2>
+        <p id="login-sub">Welcome back — your league is waiting.</p>
+      </div>
+      <button class="google-btn" onclick="doGoogleSignIn()">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+          <path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/>
+          <path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/>
+          <path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24c0 3.55.85 6.91 2.34 9.88l7.35-5.7z"/>
+          <path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider"><span>or sign in with email</span></div>
+      <div class="field">
+        <input class="input" id="login-email" type="email" placeholder="Email address" autocomplete="email">
+      </div>
+      <div class="field">
+        <input class="input" id="login-password" type="password" placeholder="Password" autocomplete="current-password">
+      </div>
+      <div id="login-error" class="auth-error"></div>
+      <button class="btn btn-primary" id="login-submit-btn" onclick="doEmailAuth()">Sign In →</button>
+      <div class="auth-toggle">
+        <span id="login-toggle-text">New to Snap?</span>&nbsp;<span class="auth-toggle-link" id="login-toggle-action" onclick="toggleAuthMode()">Create an account</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIEW: PROFILE SETUP (new users only) ══ -->
+<div id="view-profile" class="view">
+  <div class="center-view">
+    <div class="center-card">
+      <div class="auth-logo">
+        <div class="big-icon">⚡</div>
+        <h2>One last thing</h2>
+        <p>Pick a username and team name to finish setting up.</p>
       </div>
       <div class="field">
         <label>Username</label>
-        <input class="input" id="auth-username" type="text" placeholder="e.g. Nick" maxlength="20" autocomplete="off">
+        <input class="input" id="profile-username" type="text" placeholder="e.g. Nick" maxlength="20" autocomplete="off">
       </div>
       <div class="field">
         <label>Team Name</label>
-        <input class="input" id="auth-teamname" type="text" placeholder="e.g. Nick's Renegades" maxlength="30" autocomplete="off">
+        <input class="input" id="profile-teamname" type="text" placeholder="e.g. Nick's Renegades" maxlength="30" autocomplete="off">
       </div>
-      <button class="btn btn-primary" id="auth-btn" onclick="submitAuth()">Let's Play →</button>
+      <button class="btn btn-primary" onclick="submitProfile()">Let's Play →</button>
     </div>
   </div>
 </div>
@@ -1176,8 +1239,11 @@ button { cursor:pointer; border:none; background:none; }
 /* ── FIREBASE IMPORTS ─────────────────────────────────── */
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, signInAnonymously, onAuthStateChanged, signOut }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getAuth, onAuthStateChanged, signOut,
+  GoogleAuthProvider, signInWithPopup,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getFirestore,
   doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
@@ -1368,27 +1434,8 @@ if (NEEDS_SETUP) {
 
   onAuthStateChanged(auth, async user => {
     if (!user) {
-      setLoading('Signing in…');
-      try {
-        await signInAnonymously(auth);
-      } catch(e) {
-        document.getElementById('loading').innerHTML = `
-          <div style="max-width:380px;padding:32px;text-align:center">
-            <div style="font-size:2rem;margin-bottom:16px">⚠️</div>
-            <div style="font-weight:800;font-size:1.1rem;margin-bottom:10px">Firebase setup needed</div>
-            <div style="font-size:.85rem;color:rgba(255,255,255,.6);line-height:1.6;margin-bottom:20px">
-              Anonymous Authentication is not enabled yet.<br><br>
-              In Firebase Console:<br>
-              <strong style="color:#fff">Authentication → Sign-in method → Anonymous → Enable → Save</strong>
-            </div>
-            <div style="background:#1a2540;border-radius:10px;padding:12px;font-size:.75rem;color:rgba(255,255,255,.4);font-family:monospace;text-align:left">
-              Error: ${e.code || e.message}
-            </div>
-            <button onclick="location.reload()" style="margin-top:16px;padding:12px 24px;background:#4f8ef7;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem">
-              Try Again
-            </button>
-          </div>`;
-      }
+      hide('loading');
+      showView('landing');
       return;
     }
     S.uid = user.uid;
@@ -1402,9 +1449,12 @@ async function bootstrap() {
   const userSnap = await getDoc(doc(db,'users',S.uid));
   if (!userSnap.exists()) {
     hide('loading');
-    // If arriving via invite link, go straight to auth (skip landing)
-    if (URL_CODE) { showView('auth'); }
-    else { showView('landing'); }
+    // Pre-fill username from Google display name if available
+    const displayName = auth.currentUser?.displayName;
+    if (displayName) {
+      eid('profile-username').value = displayName.split(' ')[0];
+    }
+    showView('profile');
     return;
   }
 
@@ -1451,10 +1501,76 @@ function showView(name) {
   if (el) el.classList.add('active');
 }
 
-/* ── AUTH ─────────────────────────────────────────────── */
-window.submitAuth = async function() {
-  const username = eid('auth-username').value.trim();
-  const teamName = eid('auth-teamname').value.trim();
+/* ── GOOGLE / EMAIL AUTH ──────────────────────────────── */
+let _authMode = 'signin';
+
+window.toggleAuthMode = function() {
+  _authMode = _authMode === 'signin' ? 'create' : 'signin';
+  const creating = _authMode === 'create';
+  eid('login-title').textContent   = creating ? 'Create your account' : 'Sign in to Snap';
+  eid('login-sub').textContent     = creating ? 'Start playing in seconds.' : 'Welcome back — your league is waiting.';
+  eid('login-submit-btn').textContent = creating ? 'Create Account →' : 'Sign In →';
+  eid('login-toggle-text').textContent = creating ? 'Already have an account?' : 'New to Snap?';
+  eid('login-toggle-action').textContent = creating ? 'Sign in' : 'Create an account';
+  eid('login-error').style.display = 'none';
+  eid('login-password').autocomplete = creating ? 'new-password' : 'current-password';
+};
+
+function _showLoginError(msg) {
+  const el = eid('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function _friendlyAuthError(code) {
+  const map = {
+    'auth/user-not-found':       'No account with that email. Try creating one.',
+    'auth/wrong-password':       'Wrong password. Try again.',
+    'auth/invalid-credential':   'Incorrect email or password.',
+    'auth/invalid-email':        'Please enter a valid email address.',
+    'auth/email-already-in-use': 'An account with this email already exists. Try signing in.',
+    'auth/weak-password':        'Password must be at least 6 characters.',
+    'auth/too-many-requests':    'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return map[code] || `Sign-in error (${code})`;
+}
+
+window.doGoogleSignIn = async function() {
+  eid('login-error').style.display = 'none';
+  setLoading('Opening Google sign-in…');
+  try {
+    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    S.uid = cred.user.uid;
+    await bootstrap();
+  } catch(e) {
+    hide('loading');
+    if (e.code !== 'auth/popup-closed-by-user') _showLoginError(_friendlyAuthError(e.code));
+  }
+};
+
+window.doEmailAuth = async function() {
+  const email    = eid('login-email').value.trim();
+  const password = eid('login-password').value;
+  eid('login-error').style.display = 'none';
+  if (!email || !password) { _showLoginError('Please enter your email and password.'); return; }
+  setLoading(_authMode === 'create' ? 'Creating account…' : 'Signing in…');
+  try {
+    const cred = _authMode === 'create'
+      ? await createUserWithEmailAndPassword(auth, email, password)
+      : await signInWithEmailAndPassword(auth, email, password);
+    S.uid = cred.user.uid;
+    await bootstrap();
+  } catch(e) {
+    hide('loading');
+    _showLoginError(_friendlyAuthError(e.code));
+  }
+};
+
+/* ── PROFILE SETUP (new users only) ──────────────────── */
+window.submitProfile = async function() {
+  const username = eid('profile-username').value.trim();
+  const teamName = eid('profile-teamname').value.trim();
   if (!username || !teamName) { toast('Enter a username and team name','error'); return; }
   setLoading('Setting up your profile…');
   await setDoc(doc(db,'users',S.uid),{
@@ -1471,7 +1587,6 @@ window.submitAuth = async function() {
     showView('home');
   }
   eid('home-greeting-name').textContent = `Welcome, ${username}!`;
-  // Show tour for brand new users
   if (!localStorage.getItem('snap_tour_done')) startTour();
 };
 
@@ -2181,8 +2296,7 @@ window.respondTrade = async function(tradeId, accept) {
 
 /* ── LANDING FLOW ─────────────────────────────────────── */
 window.landCreate = function() {
-  showView('auth');
-  // After auth, home panel will default to create
+  showView('login');
 };
 window.landShowJoin = function() {
   eid('land-main-ctas').style.display = 'none';
@@ -2195,9 +2309,8 @@ window.landHideJoin = function() {
 window.landJoin = function() {
   const code = eid('land-code-input').value.trim().toUpperCase();
   if (code.length !== 6) { toast('Enter a 6-character code','error'); return; }
-  // Store code and go to auth
   eid('join-code-input').value = code;
-  showView('auth');
+  showView('login');
 };
 
 /* ── INVITE LINK ──────────────────────────────────────── */
@@ -2342,10 +2455,9 @@ function setTopbar() {
 }
 
 window.doSignOut = async function() {
-  if (!confirm('Sign out? You can sign back in with a new username.')) return;
-  localStorage.removeItem('snap_tour_done');
+  if (!confirm('Sign out of Snap?')) return;
   await signOut(auth);
-  location.reload();
+  // onAuthStateChanged will fire → showView('landing')
 };
 
 function setLoading(msg='Loading…') {
