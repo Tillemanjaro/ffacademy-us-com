@@ -2,1406 +2,1911 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FF Academy – Draft & Play</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fantasy Copilot – Live</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
+/* ── TOKENS ─────────────────────────────────────────── */
 :root {
-  --gold: #FFD700;
-  --green: #00C853;
-  --dark: #0a0a0f;
-  --card: #12121a;
-  --accent: #1e1e2e;
-  --red: #FF3D3D;
-  --blue: #4FC3F7;
-  --purple: #9b59b6;
-  --orange: #ff8c00;
+  --bg:       #070c18;
+  --surface:  #0e1525;
+  --card:     #141d30;
+  --card2:    #1a2540;
+  --border:   rgba(255,255,255,.07);
+  --border2:  rgba(255,255,255,.14);
+  --blue:     #4f8ef7;
+  --blue-d:   rgba(79,142,247,.15);
+  --green:    #22d47f;
+  --green-d:  rgba(34,212,127,.15);
+  --yellow:   #fbbf24;
+  --yel-d:    rgba(251,191,36,.15);
+  --red:      #f87171;
+  --red-d:    rgba(248,113,113,.15);
+  --purple:   #a78bfa;
+  --pur-d:    rgba(167,139,250,.15);
+  --t1: #fff;
+  --t2: rgba(255,255,255,.6);
+  --t3: rgba(255,255,255,.35);
+  --r: 14px;
+  --rp: 100px;
 }
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: var(--dark); color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; }
 
-/* NAV */
-nav {
-  position: fixed; top: 0; width: 100%;
-  background: rgba(10,10,15,.95);
-  backdrop-filter: blur(12px);
-  padding: 0 24px;
-  display: flex; align-items: center; justify-content: space-between;
-  z-index: 200; height: 58px;
-  border-bottom: 1px solid rgba(255,215,0,.15);
-}
-.nav-logo {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, var(--gold), var(--orange));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  text-decoration: none;
-}
-.nav-tabs { display: flex; gap: 4px; }
-.nav-tab {
-  padding: 6px 16px; border-radius: 20px; cursor: pointer;
-  font-size: .8rem; font-weight: 600; letter-spacing: .5px;
-  border: 1px solid transparent;
-  transition: all .2s;
-  background: none; color: rgba(255,255,255,.5);
-}
-.nav-tab:hover { color: #fff; border-color: rgba(255,255,255,.2); }
-.nav-tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
+/* ── RESET ──────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { font-size:16px; }
+body { background:var(--bg); color:var(--t1); font-family:'Inter',sans-serif;
+       min-height:100vh; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+input, select, textarea, button { font-family:'Inter',sans-serif; }
+button { cursor:pointer; border:none; background:none; }
 
-/* VIEWS */
-.view { display: none; padding-top: 70px; min-height: 100vh; }
-.view.active { display: block; }
+/* ── TOPBAR ─────────────────────────────────────────── */
+#topbar {
+  position:fixed; top:0; left:0; right:0; height:56px;
+  background:rgba(7,12,24,.94); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px; z-index:200;
+}
+.topbar-logo { display:flex; align-items:center; gap:8px;
+  font-weight:800; font-size:.95rem; letter-spacing:-.2px; }
+.logo-icon { width:28px; height:28px; border-radius:8px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex; align-items:center; justify-content:center; font-size:.85rem; }
+#topbar-right { display:flex; align-items:center; gap:10px; font-size:.8rem; }
+.topbar-badge { background:var(--blue-d); border:1px solid rgba(79,142,247,.3);
+  color:var(--blue); font-size:.68rem; font-weight:700;
+  padding:3px 10px; border-radius:var(--rp); }
+.topbar-user { display:flex; align-items:center; gap:6px; color:var(--t2); font-weight:600; }
 
-/* SETUP VIEW */
-.setup-wrap {
-  max-width: 540px; margin: 60px auto; padding: 0 20px;
-  text-align: center;
+/* ── LOADING OVERLAY ────────────────────────────────── */
+#loading {
+  position:fixed; inset:0; background:var(--bg); z-index:9999;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
 }
-.setup-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 3.2rem; letter-spacing: 3px;
-  background: linear-gradient(135deg, var(--gold), var(--orange));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: 8px;
+#loading .spin {
+  width:36px; height:36px; border-radius:50%;
+  border:3px solid rgba(79,142,247,.2); border-top-color:var(--blue);
+  animation:spin .8s linear infinite;
 }
-.setup-sub { color: rgba(255,255,255,.55); font-size: .9rem; margin-bottom: 40px; }
-.setup-card {
-  background: var(--card); border-radius: 16px;
-  padding: 32px; border: 1px solid rgba(255,255,255,.08);
-  text-align: left; margin-bottom: 20px;
-}
-.form-group { margin-bottom: 20px; }
-.form-label { display: block; font-size: .75rem; font-weight: 700; letter-spacing: 1px;
-  color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
-.form-input {
-  width: 100%; padding: 12px 16px;
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
-  border-radius: 10px; color: #fff; font-size: .95rem; font-family: 'Inter', sans-serif;
-  transition: border-color .2s;
-}
-.form-input:focus { outline: none; border-color: var(--gold); }
-.form-select {
-  width: 100%; padding: 12px 16px;
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
-  border-radius: 10px; color: #fff; font-size: .95rem; font-family: 'Inter', sans-serif;
-  cursor: pointer;
-}
-.form-select option { background: #1e1e2e; }
-.scoring-badge {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: rgba(0,200,83,.12); border: 1px solid var(--green);
-  border-radius: 8px; padding: 10px 14px;
-  font-size: .82rem; color: var(--green); font-weight: 600;
-}
-.btn-primary {
-  width: 100%; padding: 16px;
-  background: linear-gradient(135deg, var(--gold), var(--orange));
-  color: #000; font-weight: 900; font-size: 1rem;
-  border: none; border-radius: 12px; cursor: pointer;
-  letter-spacing: 1px; text-transform: uppercase;
-  transition: transform .15s, box-shadow .15s;
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,215,0,.3); }
-.btn-secondary {
-  padding: 10px 20px;
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
-  color: #fff; font-weight: 600; font-size: .85rem;
-  border-radius: 10px; cursor: pointer; transition: all .2s;
-}
-.btn-secondary:hover { background: rgba(255,255,255,.15); }
-.btn-danger {
-  padding: 8px 16px;
-  background: rgba(255,61,61,.12); border: 1px solid var(--red);
-  color: var(--red); font-weight: 600; font-size: .8rem;
-  border-radius: 8px; cursor: pointer; transition: all .2s;
-}
-.btn-danger:hover { background: rgba(255,61,61,.25); }
+@keyframes spin { to { transform:rotate(360deg); } }
+#loading p { font-size:.85rem; color:var(--t2); }
+#loading.hidden { display:none; }
 
-/* DRAFT VIEW */
+/* ── VIEWS ──────────────────────────────────────────── */
+.view { display:none; }
+.view.active { display:block; }
+
+/* ── CENTERED CARD VIEWS (setup / auth / home) ──────── */
+.center-view {
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:80px 20px 40px;
+}
+.center-card {
+  width:100%; max-width:440px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:32px 28px;
+}
+
+/* ── SETUP VIEW ─────────────────────────────────────── */
+.setup-logo { text-align:center; margin-bottom:24px; }
+.setup-logo .icon { font-size:2.4rem; }
+.setup-logo h1 { font-size:1.4rem; font-weight:800; margin-top:8px; }
+.setup-logo p { font-size:.82rem; color:var(--t2); margin-top:4px; }
+
+.setup-steps { list-style:none; margin:16px 0; }
+.setup-steps li {
+  display:flex; gap:12px; align-items:flex-start;
+  padding:10px 0; border-bottom:1px solid var(--border);
+  font-size:.84rem; line-height:1.5; color:var(--t2);
+}
+.setup-steps li:last-child { border-bottom:none; }
+.step-num {
+  width:22px; height:22px; border-radius:6px;
+  background:var(--blue-d); color:var(--blue);
+  font-size:.72rem; font-weight:800;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;
+}
+.setup-steps strong { color:var(--t1); }
+
+.code-snippet {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:10px; padding:14px;
+  font-family:monospace; font-size:.75rem; color:var(--t2);
+  margin:16px 0; white-space:pre; overflow-x:auto;
+  line-height:1.6;
+}
+.code-snippet .key   { color:var(--blue); }
+.code-snippet .val   { color:var(--yellow); }
+.code-snippet .cmt   { color:var(--t3); }
+
+/* ── AUTH VIEW ──────────────────────────────────────── */
+.auth-logo { text-align:center; margin-bottom:28px; }
+.auth-logo .big-icon { font-size:2.8rem; }
+.auth-logo h2 { font-size:1.25rem; font-weight:800; margin-top:10px; letter-spacing:-.3px; }
+.auth-logo p { font-size:.82rem; color:var(--t2); margin-top:5px; line-height:1.5; }
+
+/* ── FORM ELEMENTS ──────────────────────────────────── */
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:.72rem; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--t3); margin-bottom:7px; }
+.input {
+  width:100%; padding:13px 14px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:10px; color:var(--t1); font-size:.92rem;
+  transition:border-color .2s;
+}
+.input:focus { outline:none; border-color:var(--blue); }
+.input::placeholder { color:var(--t3); }
+.select {
+  width:100%; padding:12px 14px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:10px; color:var(--t1); font-size:.92rem;
+  appearance:none;
+}
+.select option { background:#1a2540; }
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:13px 20px; border-radius:12px; font-weight:700;
+  font-size:.9rem; transition:all .18s; border:none;
+}
+.btn-primary { background:var(--blue); color:#fff; width:100%; }
+.btn-primary:hover { background:#6fa1f8; transform:translateY(-1px); }
+.btn-primary:disabled { opacity:.45; pointer-events:none; }
+.btn-ghost { background:rgba(255,255,255,.07); border:1px solid var(--border2);
+  color:var(--t1); }
+.btn-ghost:hover { background:rgba(255,255,255,.12); }
+.btn-green { background:var(--green); color:#000; }
+.btn-green:hover { filter:brightness(1.1); }
+.btn-red { background:var(--red-d); border:1px solid rgba(248,113,113,.3); color:var(--red); }
+.btn-red:hover { background:rgba(248,113,113,.25); }
+.btn-sm { padding:8px 14px; font-size:.78rem; border-radius:9px; }
+.btn-full { width:100%; }
+.btn-outline { background:none; border:1px solid var(--border2); color:var(--t2); }
+.btn-outline:hover { border-color:var(--blue); color:var(--blue); }
+
+/* ── HOME VIEW ───────────────────────────────────────── */
+#view-home .center-view { padding-top:72px; }
+.home-greeting { text-align:center; margin-bottom:24px; }
+.home-greeting h2 { font-size:1.5rem; font-weight:800; letter-spacing:-.4px; }
+.home-greeting p { font-size:.84rem; color:var(--t2); margin-top:5px; }
+
+.home-tabs { display:flex; background:rgba(255,255,255,.05); border-radius:12px; padding:4px; margin-bottom:20px; }
+.home-tab { flex:1; padding:9px; border-radius:9px; font-size:.82rem; font-weight:700;
+  color:var(--t2); transition:all .2s; text-align:center; }
+.home-tab.active { background:var(--card2); color:var(--t1); }
+
+.home-panel { display:none; }
+.home-panel.active { display:block; }
+
+.divider { height:1px; background:var(--border); margin:16px 0; }
+.or-divider { display:flex; align-items:center; gap:10px; margin:16px 0;
+  font-size:.75rem; color:var(--t3); font-weight:600; }
+.or-divider::before, .or-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── LOBBY VIEW ──────────────────────────────────────── */
+#view-lobby { padding-top:72px; }
+.lobby-wrap { max-width:520px; margin:0 auto; padding:20px 16px; }
+
+.invite-hero {
+  background:linear-gradient(135deg,var(--blue-d),var(--pur-d));
+  border:1px solid rgba(79,142,247,.25);
+  border-radius:var(--r); padding:20px;
+  text-align:center; margin-bottom:16px;
+}
+.invite-hero .label { font-size:.68rem; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:var(--blue); margin-bottom:8px; }
+.invite-code { font-size:2.4rem; font-weight:900; letter-spacing:8px;
+  font-variant-numeric:tabular-nums; color:var(--t1); }
+.invite-sub { font-size:.75rem; color:var(--t2); margin-top:6px; }
+
+.copy-btn { margin-top:12px; padding:8px 20px; background:var(--blue); color:#fff;
+  border-radius:20px; font-size:.78rem; font-weight:700; transition:all .2s; }
+.copy-btn:hover { filter:brightness(1.15); }
+
+.lobby-teams { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); overflow:hidden; margin-bottom:16px; }
+.lobby-teams-title { padding:12px 16px; font-size:.7rem; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; color:var(--t3);
+  border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.lobby-team-row { display:flex; align-items:center; gap:10px;
+  padding:11px 16px; border-bottom:1px solid var(--border); }
+.lobby-team-row:last-child { border-bottom:none; }
+.lobby-avatar { width:32px; height:32px; border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--purple));
+  display:flex; align-items:center; justify-content:center;
+  font-size:.8rem; font-weight:800; flex-shrink:0; }
+.lobby-team-info { flex:1; }
+.lobby-team-name { font-size:.88rem; font-weight:700; }
+.lobby-team-user { font-size:.7rem; color:var(--t2); }
+.lobby-comm-badge { font-size:.6rem; font-weight:800; letter-spacing:.5px;
+  background:var(--yel-d); color:var(--yellow); padding:2px 7px;
+  border-radius:4px; text-transform:uppercase; }
+.lobby-waiting { padding:20px 16px; text-align:center; color:var(--t3);
+  font-size:.82rem; }
+
+.lobby-settings { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:14px 16px; margin-bottom:16px; }
+.lobby-settings-row { display:flex; justify-content:space-between; align-items:center;
+  font-size:.82rem; padding:5px 0; border-bottom:1px solid var(--border); }
+.lobby-settings-row:last-child { border-bottom:none; }
+.lobby-settings-label { color:var(--t2); }
+.lobby-settings-val { font-weight:700; color:var(--t1); }
+
+/* ── DRAFT VIEW ──────────────────────────────────────── */
+#view-draft { padding-top:56px; }
+
+.draft-top {
+  position:sticky; top:56px; z-index:100;
+  background:rgba(7,12,24,.96); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:10px 14px;
+}
+.draft-top-inner { max-width:1200px; margin:0 auto;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+
+.pick-info { display:flex; align-items:center; gap:10px; }
+.pick-badge { font-size:1.2rem; font-weight:900; letter-spacing:-.5px; white-space:nowrap; }
+.pick-meta { font-size:.72rem; color:var(--t2); line-height:1.4; }
+
+.on-clock-banner {
+  background:linear-gradient(135deg,rgba(34,212,127,.2),rgba(34,212,127,.08));
+  border:1px solid rgba(34,212,127,.35);
+  border-radius:8px; padding:6px 14px;
+  font-size:.8rem; font-weight:800; color:var(--green);
+  animation:glow 1.6s ease-in-out infinite;
+}
+@keyframes glow {
+  0%,100% { box-shadow:0 0 0 rgba(34,212,127,0); }
+  50% { box-shadow:0 0 12px rgba(34,212,127,.35); }
+}
+.ai-drafting-banner {
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:8px; padding:6px 14px;
+  font-size:.8rem; font-weight:600; color:var(--t2);
+}
+
+/* Timer */
+.timer-wrap { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.timer-num { font-size:1.4rem; font-weight:900; font-variant-numeric:tabular-nums;
+  letter-spacing:-.5px; min-width:36px; text-align:right; }
+.timer-num.urgent { color:var(--red); animation:pulse .8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
+.timer-bar-track { width:80px; height:4px; border-radius:var(--rp);
+  background:rgba(255,255,255,.1); overflow:hidden; }
+.timer-bar-fill { height:100%; border-radius:var(--rp);
+  background:var(--green); transition:width .5s linear, background .5s; }
+.timer-bar-fill.urgent { background:var(--red); }
+
+/* Draft layout */
 .draft-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 16px;
-  padding: 16px;
-  max-width: 1280px;
-  margin: 0 auto;
+  display:grid;
+  grid-template-columns:1fr 300px;
+  gap:0;
+  max-width:1200px;
+  margin:0 auto;
+  height:calc(100vh - 112px);
 }
-@media (max-width: 900px) {
-  .draft-layout { grid-template-columns: 1fr; }
-  .draft-sidebar { order: -1; }
+@media(max-width:800px){
+  .draft-layout { grid-template-columns:1fr; height:auto; }
+  .draft-sidebar { display:none; }
+  .draft-sidebar.mobile-open { display:flex; }
 }
-
-/* Draft header */
-.draft-header {
-  background: var(--card); border-radius: 14px;
-  padding: 16px 20px; margin: 0 16px 16px;
-  max-width: 1248px; margin-left: auto; margin-right: auto;
-  border: 1px solid rgba(255,255,255,.08);
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  flex-wrap: wrap;
-}
-.pick-info { display: flex; align-items: center; gap: 16px; }
-.pick-badge {
-  font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
-  color: var(--gold); letter-spacing: 1px; white-space: nowrap;
-}
-.pick-detail { font-size: .8rem; color: rgba(255,255,255,.5); }
-.pick-detail strong { color: #fff; }
-.your-pick-banner {
-  background: linear-gradient(135deg, rgba(255,215,0,.2), rgba(255,140,0,.1));
-  border: 1px solid var(--gold); border-radius: 10px;
-  padding: 8px 16px; font-size: .85rem; font-weight: 700; color: var(--gold);
-  animation: pulse 1.5s infinite;
-}
-.ai-pick-banner {
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
-  border-radius: 10px; padding: 8px 16px;
-  font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.6);
-}
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
 
 /* Player pool */
-.pool-filters {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+.draft-pool-wrap { display:flex; flex-direction:column; border-right:1px solid var(--border); }
+.pool-filters { display:flex; gap:6px; padding:10px 12px; flex-wrap:wrap;
+  border-bottom:1px solid var(--border); }
+.pool-search { padding:8px 12px; border-bottom:1px solid var(--border); }
+.pool-search-input {
+  width:100%; padding:9px 12px;
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:9px; color:var(--t1); font-size:.85rem;
 }
+.pool-search-input:focus { outline:none; border-color:var(--blue); }
+.pool-search-input::placeholder { color:var(--t3); }
+
 .filter-btn {
-  padding: 6px 14px; border-radius: 20px; cursor: pointer;
-  font-size: .75rem; font-weight: 700; letter-spacing: .5px;
-  border: 1px solid rgba(255,255,255,.15);
-  background: none; color: rgba(255,255,255,.5);
-  transition: all .2s;
+  padding:5px 12px; border-radius:var(--rp);
+  font-size:.7rem; font-weight:700; border:1px solid var(--border2);
+  color:var(--t3); transition:all .18s;
 }
-.filter-btn:hover, .filter-btn.active { background: rgba(255,255,255,.1); color: #fff; }
-.filter-btn.pos-qb.active { background: rgba(231,76,60,.2); color: #e74c3c; border-color: #e74c3c; }
-.filter-btn.pos-rb.active { background: rgba(39,174,96,.2); color: #27ae60; border-color: #27ae60; }
-.filter-btn.pos-wr.active { background: rgba(52,152,219,.2); color: #3498db; border-color: #3498db; }
-.filter-btn.pos-te.active { background: rgba(243,156,18,.2); color: #f39c12; border-color: #f39c12; }
-.filter-btn.pos-k.active { background: rgba(149,165,166,.2); color: #95a5a6; border-color: #95a5a6; }
-.filter-btn.pos-dst.active { background: rgba(155,89,182,.2); color: #9b59b6; border-color: #9b59b6; }
+.filter-btn:hover { color:var(--t1); }
+.filter-btn.f-ALL.active   { background:rgba(255,255,255,.1); color:var(--t1); border-color:rgba(255,255,255,.2); }
+.filter-btn.f-QB.active    { background:rgba(248,113,113,.15); color:var(--red); border-color:rgba(248,113,113,.4); }
+.filter-btn.f-RB.active    { background:var(--green-d); color:var(--green); border-color:rgba(34,212,127,.4); }
+.filter-btn.f-WR.active    { background:var(--blue-d); color:var(--blue); border-color:rgba(79,142,247,.4); }
+.filter-btn.f-TE.active    { background:var(--yel-d); color:var(--yellow); border-color:rgba(251,191,36,.4); }
+.filter-btn.f-K.active     { background:rgba(255,255,255,.08); color:var(--t2); border-color:rgba(255,255,255,.2); }
+.filter-btn.f-DST.active   { background:var(--pur-d); color:var(--purple); border-color:rgba(167,139,250,.4); }
 
-.search-input {
-  width: 100%; padding: 10px 14px; margin-bottom: 10px;
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px; color: #fff; font-size: .88rem; font-family: 'Inter', sans-serif;
-}
-.search-input:focus { outline: none; border-color: var(--gold); }
+.player-list { flex:1; overflow-y:auto; }
+.player-list::-webkit-scrollbar { width:3px; }
+.player-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:2px; }
 
-.player-pool {
-  max-height: calc(100vh - 280px); overflow-y: auto;
-  border-radius: 12px; background: var(--card);
-  border: 1px solid rgba(255,255,255,.08);
-}
-.player-pool::-webkit-scrollbar { width: 4px; }
-.player-pool::-webkit-scrollbar-track { background: transparent; }
-.player-pool::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+.tier-header { padding:6px 12px; font-size:.62rem; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--t3);
+  background:rgba(255,255,255,.02); border-bottom:1px solid var(--border); }
 
 .player-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-  transition: background .15s; cursor: pointer;
+  display:flex; align-items:center; gap:9px;
+  padding:9px 12px; border-bottom:1px solid var(--border);
+  transition:background .13s; cursor:default;
 }
-.player-row:last-child { border-bottom: none; }
-.player-row:hover { background: rgba(255,255,255,.04); }
-.player-row.recommended { background: rgba(255,215,0,.06); border-left: 3px solid var(--gold); }
-.player-row.drafted { opacity: .3; pointer-events: none; }
+.player-row:hover { background:rgba(255,255,255,.03); }
+.player-row.is-rec { background:rgba(251,191,36,.05); border-left:2px solid var(--yellow); }
+.player-row.is-drafted { opacity:.28; pointer-events:none; }
 
-.player-rank {
-  font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.35);
-  width: 26px; text-align: center; flex-shrink: 0;
+.pr-rank { font-size:.68rem; color:var(--t3); width:22px; text-align:right; flex-shrink:0; }
+.pos-chip {
+  width:30px; height:18px; border-radius:5px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.6rem; font-weight:800; flex-shrink:0;
 }
-.tier-divider {
-  padding: 6px 14px;
-  background: rgba(255,255,255,.03);
-  font-size: .65rem; font-weight: 700; letter-spacing: 1.5px;
-  color: rgba(255,255,255,.3); text-transform: uppercase;
-  border-bottom: 1px solid rgba(255,255,255,.05);
-}
-.pos-badge {
-  width: 32px; height: 20px; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .65rem; font-weight: 800; flex-shrink: 0;
-}
-.pos-badge.QB { background: rgba(231,76,60,.25); color: #e74c3c; }
-.pos-badge.RB { background: rgba(39,174,96,.25); color: #27ae60; }
-.pos-badge.WR { background: rgba(52,152,219,.25); color: #3498db; }
-.pos-badge.TE { background: rgba(243,156,18,.25); color: #f39c12; }
-.pos-badge.K  { background: rgba(149,165,166,.25); color: #95a5a6; }
-.pos-badge.DST { background: rgba(155,89,182,.25); color: #9b59b6; font-size: .55rem; }
+.pos-QB  { background:rgba(248,113,113,.2); color:var(--red); }
+.pos-RB  { background:var(--green-d); color:var(--green); }
+.pos-WR  { background:var(--blue-d); color:var(--blue); }
+.pos-TE  { background:var(--yel-d); color:var(--yellow); }
+.pos-K   { background:rgba(255,255,255,.08); color:var(--t2); }
+.pos-DST { background:var(--pur-d); color:var(--purple); font-size:.52rem; }
 
-.player-name { font-size: .88rem; font-weight: 600; flex: 1; }
-.player-team { font-size: .72rem; color: rgba(255,255,255,.4); }
-.player-ppg {
-  font-size: .8rem; font-weight: 700;
-  color: var(--green); white-space: nowrap;
-}
-.rec-star {
-  font-size: .7rem; color: var(--gold); white-space: nowrap;
-}
+.pr-info { flex:1; min-width:0; }
+.pr-name { font-size:.85rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pr-team { font-size:.68rem; color:var(--t2); }
+.pr-ppg { font-size:.78rem; font-weight:700; color:var(--green); white-space:nowrap; }
+.pr-rec-star { font-size:.65rem; color:var(--yellow); white-space:nowrap; }
+
 .draft-btn {
-  padding: 6px 14px;
-  background: var(--green); color: #000;
-  font-weight: 800; font-size: .75rem; border: none;
-  border-radius: 8px; cursor: pointer; white-space: nowrap;
-  transition: transform .1s;
+  padding:5px 12px; border-radius:8px;
+  background:var(--green); color:#000; font-size:.72rem; font-weight:800;
+  transition:transform .1s; white-space:nowrap; flex-shrink:0;
 }
-.draft-btn:hover { transform: scale(1.05); }
-.draft-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+.draft-btn:hover { transform:scale(1.05); }
+.draft-btn:disabled { opacity:.35; pointer-events:none; background:rgba(255,255,255,.1); color:var(--t2); }
 
-/* Sidebar */
-.draft-sidebar { display: flex; flex-direction: column; gap: 12px; }
-.sidebar-card {
-  background: var(--card); border-radius: 14px;
-  padding: 16px; border: 1px solid rgba(255,255,255,.08);
+/* Draft sidebar */
+.draft-sidebar {
+  display:flex; flex-direction:column;
+  height:calc(100vh - 112px); overflow:hidden;
 }
-.sidebar-title {
-  font-size: .7rem; font-weight: 700; letter-spacing: 1.5px;
-  color: rgba(255,255,255,.4); text-transform: uppercase; margin-bottom: 12px;
-}
-.roster-slot {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05);
-  font-size: .8rem;
-}
-.roster-slot:last-child { border-bottom: none; }
-.slot-label {
-  width: 42px; font-size: .65rem; font-weight: 700;
-  color: rgba(255,255,255,.35); text-transform: uppercase; flex-shrink: 0;
-}
-.slot-player { font-weight: 600; flex: 1; }
-.slot-empty { color: rgba(255,255,255,.2); font-style: italic; font-weight: 400; }
-.slot-ppg { font-size: .72rem; color: var(--green); }
+.sidebar-section { border-bottom:1px solid var(--border); }
+.sidebar-section-title { padding:10px 12px; font-size:.65rem; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; color:var(--t3); }
+.rec-box { padding:10px 12px; background:rgba(251,191,36,.06);
+  border-bottom:1px solid var(--border); }
+.rec-label { font-size:.62rem; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--yellow); margin-bottom:5px; }
+.rec-player { font-size:.88rem; font-weight:800; }
+.rec-reason { font-size:.72rem; color:var(--t2); margin-top:3px; line-height:1.4; }
 
-.rec-box {
-  background: rgba(255,215,0,.07); border: 1px solid rgba(255,215,0,.25);
-  border-radius: 10px; padding: 12px;
+.my-picks-list { overflow-y:auto; flex:1; }
+.my-picks-list::-webkit-scrollbar { width:3px; }
+.my-picks-list::-webkit-scrollbar-thumb { background:rgba(255,255,255,.08); }
+.pick-slot {
+  display:flex; align-items:center; gap:8px;
+  padding:7px 12px; border-bottom:1px solid var(--border);
+  font-size:.78rem;
 }
-.rec-label { font-size: .65rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-.rec-player { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
-.rec-reason { font-size: .75rem; color: rgba(255,255,255,.55); line-height: 1.4; }
+.slot-tag { font-size:.58rem; font-weight:700; letter-spacing:.5px;
+  color:var(--t3); text-transform:uppercase; width:26px; flex-shrink:0; }
+.slot-player { font-weight:600; flex:1; }
+.slot-empty { color:var(--t3); font-style:italic; font-weight:400; }
+.slot-ppg { font-size:.7rem; color:var(--green); }
 
-.teams-mini { max-height: 200px; overflow-y: auto; }
-.team-mini-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 5px 0; font-size: .78rem;
-  border-bottom: 1px solid rgba(255,255,255,.05);
+.draft-chat-wrap { flex:0 0 200px; display:flex; flex-direction:column;
+  border-top:1px solid var(--border); }
+.chat-messages { flex:1; overflow-y:auto; padding:8px 10px; }
+.chat-messages::-webkit-scrollbar { width:3px; }
+.chat-message { padding:4px 0; font-size:.74rem; line-height:1.4; color:var(--t2); }
+.chat-message .cm-user { font-weight:700; color:var(--t1); margin-right:4px; }
+.chat-message.system { color:var(--t3); font-style:italic; }
+.chat-message.mine .cm-user { color:var(--blue); }
+.chat-input-row { display:flex; gap:6px; padding:8px 10px;
+  border-top:1px solid var(--border); }
+.chat-input {
+  flex:1; padding:7px 10px; font-size:.78rem;
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:8px; color:var(--t1);
 }
-.team-mini-row:last-child { border-bottom: none; }
-.team-mini-name { font-weight: 600; }
-.team-mini-pick { color: rgba(255,255,255,.4); font-size: .72rem; }
+.chat-input:focus { outline:none; border-color:var(--blue); }
+.chat-send { padding:7px 12px; background:var(--blue); color:#fff;
+  border-radius:8px; font-size:.72rem; font-weight:700; }
 
-/* Draft complete */
-.draft-complete {
-  text-align: center; padding: 60px 20px;
+/* ── SEASON VIEW ─────────────────────────────────────── */
+#view-season { padding-top:56px; }
+.season-tabs {
+  position:sticky; top:56px; z-index:100;
+  background:rgba(7,12,24,.96); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex; padding:0 8px; overflow-x:auto;
 }
-.complete-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 3rem;
-  letter-spacing: 3px; color: var(--gold); margin-bottom: 12px;
+.season-tabs::-webkit-scrollbar { display:none; }
+.season-tab {
+  padding:13px 14px; font-size:.78rem; font-weight:700; color:var(--t3);
+  border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s;
 }
+.season-tab.active { color:var(--blue); border-bottom-color:var(--blue); }
 
-/* MY TEAM VIEW */
-.team-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
-.team-header-card {
-  background: var(--card); border-radius: 16px;
-  padding: 24px; margin-bottom: 20px;
-  border: 1px solid rgba(255,255,255,.08);
-  display: flex; align-items: center; justify-content: space-between; gap: 20px;
-  flex-wrap: wrap;
-}
-.team-name-big {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
-  letter-spacing: 2px; color: var(--gold);
-}
-.team-stats { display: flex; gap: 24px; flex-wrap: wrap; }
-.team-stat { text-align: center; }
-.team-stat-val { font-size: 1.4rem; font-weight: 900; color: #fff; }
-.team-stat-label { font-size: .68rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; }
+.season-content { max-width:640px; margin:0 auto; padding:16px; }
+.season-panel { display:none; }
+.season-panel.active { display:block; }
 
-.position-section { margin-bottom: 20px; }
-.position-section-title {
-  font-size: .7rem; font-weight: 700; letter-spacing: 2px;
-  text-transform: uppercase; margin-bottom: 10px;
-  padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08);
-}
+/* ── GENERIC CARD ────────────────────────────────────── */
+.card { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:16px; margin-bottom:12px; }
+.card-title { font-size:.68rem; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; color:var(--t3); margin-bottom:12px; }
+
+/* ── ROSTER CARDS ────────────────────────────────────── */
 .roster-card {
-  background: var(--card); border-radius: 12px;
-  padding: 14px 16px; margin-bottom: 8px;
-  border: 1px solid rgba(255,255,255,.06);
-  display: flex; align-items: center; gap: 14px;
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:12px; padding:12px 14px; margin-bottom:7px;
+  display:flex; align-items:center; gap:12px;
 }
-.roster-card .pos-badge { width: 38px; height: 24px; font-size: .7rem; }
-.roster-card .player-info { flex: 1; }
-.roster-card .player-info h4 { font-size: .95rem; font-weight: 700; margin-bottom: 2px; }
-.roster-card .player-info p { font-size: .75rem; color: rgba(255,255,255,.45); }
-.roster-card .proj-pts {
-  text-align: right;
-}
-.roster-card .proj-pts .pts-val { font-size: 1.1rem; font-weight: 900; color: var(--green); }
-.roster-card .proj-pts .pts-label { font-size: .65rem; color: rgba(255,255,255,.35); }
-.starter-tag {
-  font-size: .6rem; font-weight: 800; letter-spacing: 1px;
-  background: rgba(0,200,83,.15); color: var(--green);
-  border-radius: 4px; padding: 2px 6px; text-transform: uppercase;
-}
-.bench-tag {
-  font-size: .6rem; font-weight: 800; letter-spacing: 1px;
-  background: rgba(255,255,255,.06); color: rgba(255,255,255,.35);
-  border-radius: 4px; padding: 2px 6px; text-transform: uppercase;
-}
+.roster-card.starter { border-color:rgba(34,212,127,.2); }
+.rc-slot { font-size:.6rem; font-weight:700; text-transform:uppercase;
+  color:var(--t3); width:26px; flex-shrink:0; }
+.rc-info { flex:1; }
+.rc-name { font-size:.88rem; font-weight:700; }
+.rc-meta { font-size:.7rem; color:var(--t2); }
+.rc-ppg { font-size:.9rem; font-weight:800; color:var(--green); }
+.starter-tag { font-size:.58rem; font-weight:800; letter-spacing:.5px;
+  background:var(--green-d); color:var(--green); padding:2px 6px;
+  border-radius:4px; text-transform:uppercase; }
+.bench-tag { font-size:.58rem; font-weight:800; letter-spacing:.5px;
+  background:rgba(255,255,255,.06); color:var(--t3); padding:2px 6px;
+  border-radius:4px; text-transform:uppercase; }
 
-/* TRADE VIEW */
-.trade-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
-.trade-page-title {
-  font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem;
-  letter-spacing: 2px; color: var(--gold);
-  margin-bottom: 6px;
+/* ── STANDINGS ───────────────────────────────────────── */
+.standings-row {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; background:var(--card2); border:1px solid var(--border);
+  border-radius:10px; margin-bottom:6px;
 }
-.trade-sub { font-size: .85rem; color: rgba(255,255,255,.45); margin-bottom: 24px; }
+.standings-rank { font-size:.8rem; font-weight:800; color:var(--t3); width:20px; }
+.standings-name { flex:1; font-size:.88rem; font-weight:700; }
+.standings-pts { font-size:.82rem; font-weight:700; color:var(--green); }
+.standings-record { font-size:.72rem; color:var(--t2); }
 
+/* ── TRADES ──────────────────────────────────────────── */
 .trade-card {
-  background: var(--card); border-radius: 16px;
-  padding: 20px; margin-bottom: 16px;
-  border: 1px solid rgba(255,255,255,.08);
-  transition: border-color .2s;
+  background:var(--card2); border:1px solid var(--border);
+  border-radius:var(--r); overflow:hidden; margin-bottom:10px;
 }
-.trade-card:hover { border-color: rgba(255,215,0,.3); }
-.trade-card-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 14px;
-}
-.trade-value-badge {
-  font-size: .7rem; font-weight: 800; letter-spacing: .5px;
-  padding: 4px 10px; border-radius: 6px; text-transform: uppercase;
-}
-.value-win { background: rgba(0,200,83,.15); color: var(--green); }
-.value-fair { background: rgba(255,215,0,.15); color: var(--gold); }
-.value-loss { background: rgba(255,61,61,.15); color: var(--red); }
+.trade-header { padding:12px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; font-size:.82rem; }
+.trade-header strong { font-weight:700; }
+.trade-body { display:grid; grid-template-columns:1fr 30px 1fr;
+  align-items:center; gap:8px; padding:12px 14px; }
+.trade-side-label { font-size:.62rem; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; margin-bottom:6px; }
+.give-label { color:var(--red); }
+.get-label  { color:var(--green); }
+.trade-player-chip { background:rgba(255,255,255,.05); border-radius:8px;
+  padding:7px 10px; margin-bottom:5px; }
+.trade-player-chip:last-child { margin-bottom:0; }
+.tpc-name { font-size:.82rem; font-weight:700; }
+.tpc-meta { font-size:.68rem; color:var(--t2); }
+.trade-arrow { text-align:center; font-size:1.1rem; color:var(--t3); }
+.trade-footer { padding:10px 14px; border-top:1px solid var(--border);
+  display:flex; gap:8px; }
 
-.trade-players {
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-  gap: 12px; margin-bottom: 14px;
+.send-trade-form { background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:16px; margin-bottom:12px; }
+.trade-select-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.trade-select-panel h4 { font-size:.7rem; font-weight:700; letter-spacing:.8px;
+  text-transform:uppercase; color:var(--t3); margin-bottom:8px; }
+.trade-player-toggle {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:8px; cursor:pointer;
+  border:1px solid var(--border); background:none;
+  color:var(--t2); font-size:.8rem; font-weight:600;
+  transition:all .18s; margin-bottom:5px; width:100%; text-align:left;
 }
-.trade-side { }
-.trade-side-label {
-  font-size: .65rem; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; margin-bottom: 6px;
-}
-.trade-player-chip {
-  background: rgba(255,255,255,.06); border-radius: 8px;
-  padding: 8px 12px; margin-bottom: 6px;
-  display: flex; align-items: center; gap: 8px;
-}
-.trade-player-chip:last-child { margin-bottom: 0; }
-.trade-arrow { font-size: 1.4rem; text-align: center; color: rgba(255,255,255,.3); }
-.trade-rationale {
-  font-size: .8rem; color: rgba(255,255,255,.55); line-height: 1.5;
-  padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06);
-}
-.trade-rationale strong { color: #fff; }
+.trade-player-toggle.selected { background:var(--blue-d); border-color:rgba(79,142,247,.4); color:var(--t1); }
 
-.strength-meter {
-  display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+/* ── FULL CHAT ───────────────────────────────────────── */
+.full-chat { display:flex; flex-direction:column; height:calc(100vh - 140px); }
+.full-chat-messages { flex:1; overflow-y:auto; padding:12px; }
+.full-chat-messages::-webkit-scrollbar { width:4px; }
+.full-chat-messages::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:2px; }
+.fcm { padding:8px 0; border-bottom:1px solid var(--border); }
+.fcm:last-child { border-bottom:none; }
+.fcm-header { display:flex; align-items:baseline; gap:6px; margin-bottom:3px; }
+.fcm-user { font-size:.78rem; font-weight:700; }
+.fcm-time { font-size:.65rem; color:var(--t3); }
+.fcm-text { font-size:.84rem; color:var(--t2); line-height:1.45; }
+.fcm.system { opacity:.6; }
+.fcm.system .fcm-text { color:var(--t3); font-style:italic; }
+.full-chat-input-row {
+  display:flex; gap:8px; padding:12px;
+  border-top:1px solid var(--border);
+  background:var(--surface);
 }
-.strength-item {
-  flex: 1; min-width: 120px;
-  background: var(--card); border-radius: 10px;
-  padding: 12px; border: 1px solid rgba(255,255,255,.08);
-  text-align: center;
+.full-chat-input {
+  flex:1; padding:11px 14px; font-size:.88rem;
+  background:rgba(255,255,255,.05); border:1px solid var(--border2);
+  border-radius:10px; color:var(--t1);
 }
-.strength-pos { font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-.strength-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); margin: 6px 0; }
-.strength-fill { height: 100%; border-radius: 2px; transition: width .5s; }
-.strength-grade { font-size: .85rem; font-weight: 900; }
-.grade-A { color: var(--green); }
-.grade-B { color: #7ddd9c; }
-.grade-C { color: var(--gold); }
-.grade-D { color: #f39c12; }
-.grade-F { color: var(--red); }
+.full-chat-input:focus { outline:none; border-color:var(--blue); }
+.full-chat-send { padding:11px 18px; background:var(--blue); color:#fff;
+  border-radius:10px; font-size:.82rem; font-weight:700; }
 
-/* Empty state */
-.empty-state {
-  text-align: center; padding: 60px 20px;
-  color: rgba(255,255,255,.35);
-}
-.empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; }
-.empty-state p { font-size: .85rem; }
+/* ── BADGE ───────────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; gap:4px;
+  padding:3px 9px; border-radius:var(--rp);
+  font-size:.63rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; }
+.badge-green  { background:var(--green-d); color:var(--green); }
+.badge-yellow { background:var(--yel-d);  color:var(--yellow); }
+.badge-blue   { background:var(--blue-d); color:var(--blue); }
+.badge-red    { background:var(--red-d);  color:var(--red); }
+.badge-gray   { background:rgba(255,255,255,.07); color:var(--t2); }
 
-/* Draft log */
-.draft-log-entries { max-height: 180px; overflow-y: auto; }
-.log-entry {
-  padding: 5px 0; font-size: .75rem;
-  border-bottom: 1px solid rgba(255,255,255,.04);
-  color: rgba(255,255,255,.55);
+/* ── TOAST ───────────────────────────────────────────── */
+#toast {
+  position:fixed; bottom:24px; left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--card2); border:1px solid var(--border2);
+  color:var(--t1); padding:10px 20px; border-radius:var(--rp);
+  font-size:.84rem; font-weight:600;
+  opacity:0; transition:all .3s; z-index:9999; white-space:nowrap; pointer-events:none;
 }
-.log-entry.mine { color: var(--gold); }
-.log-entry:last-child { border-bottom: none; }
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+#toast.success { border-color:var(--green); color:var(--green); }
+#toast.error   { border-color:var(--red);   color:var(--red); }
 
-/* Toast */
-.toast {
-  position: fixed; bottom: 24px; right: 24px;
-  background: #1e1e2e; border: 1px solid rgba(255,255,255,.15);
-  border-radius: 10px; padding: 12px 18px;
-  font-size: .85rem; font-weight: 600;
-  z-index: 9999; transform: translateY(100px); opacity: 0;
-  transition: all .3s;
-}
-.toast.show { transform: translateY(0); opacity: 1; }
-.toast.success { border-color: var(--green); color: var(--green); }
-.toast.error { border-color: var(--red); color: var(--red); }
-
-/* Responsive */
-@media (max-width: 600px) {
-  .draft-layout { padding: 10px; }
-  .draft-header { margin: 0 10px 10px; padding: 12px; }
-  .team-wrap, .trade-wrap { padding: 12px; }
-  .trade-players { grid-template-columns: 1fr; }
-  .trade-arrow { transform: rotate(90deg); }
-  nav { padding: 0 14px; }
-  .nav-tab { padding: 5px 10px; font-size: .72rem; }
-}
+/* ── MISC ────────────────────────────────────────────── */
+.section-head { margin-bottom:16px; }
+.section-head h3 { font-size:1.1rem; font-weight:800; letter-spacing:-.3px; }
+.section-head p  { font-size:.8rem; color:var(--t2); margin-top:4px; }
+.empty-state { text-align:center; padding:40px 20px; color:var(--t3); }
+.empty-state .big { font-size:2rem; margin-bottom:10px; }
+.empty-state h4 { font-size:.95rem; font-weight:700; color:var(--t2); margin-bottom:6px; }
+.empty-state p  { font-size:.8rem; line-height:1.5; }
+.stat-row { display:flex; justify-content:space-between; align-items:center;
+  padding:9px 0; border-bottom:1px solid var(--border); font-size:.82rem; }
+.stat-row:last-child { border-bottom:none; }
+.stat-label { color:var(--t2); }
+.stat-val   { font-weight:700; }
 </style>
 </head>
 <body>
 
-<nav>
-  <a href="index.html" class="nav-logo">FF Academy</a>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showView('draft')">Draft</button>
-    <button class="nav-tab" onclick="showView('team')">My Team</button>
-    <button class="nav-tab" onclick="showView('trades')">Trades</button>
+<!-- TOPBAR -->
+<header id="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">🏈</div>
+    Fantasy Copilot
   </div>
-</nav>
-
-<!-- SETUP VIEW -->
-<div id="view-setup" class="view active">
-  <div class="setup-wrap">
-    <div class="setup-title">Build Your Team</div>
-    <div class="setup-sub">PPR scoring · Snake draft · Trade advisor included</div>
-
-    <div class="setup-card">
-      <div class="form-group">
-        <label class="form-label">Your Team Name</label>
-        <input class="form-input" id="team-name-input" type="text" placeholder="e.g. Touchdown Kings" maxlength="30">
-      </div>
-      <div class="form-group">
-        <label class="form-label">League Size</label>
-        <select class="form-select" id="league-size-select">
-          <option value="10">10 Teams</option>
-          <option value="12" selected>12 Teams (Recommended)</option>
-          <option value="14">14 Teams</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Your Draft Position</label>
-        <select class="form-select" id="draft-pos-select">
-          <option value="random">Random</option>
-          <option value="1">Pick 1 (First Pick)</option>
-          <option value="2">Pick 2</option>
-          <option value="3">Pick 3</option>
-          <option value="6">Middle (6)</option>
-          <option value="12">Pick 12 (Last — Two Fast)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Scoring Format</label>
-        <div class="scoring-badge">
-          ✓ PPR — 1 point per reception (already locked in)
-        </div>
-      </div>
+  <div id="topbar-right" style="display:none">
+    <span class="topbar-badge" id="tb-week"></span>
+    <div class="topbar-user">
+      <span id="tb-username"></span>
     </div>
+  </div>
+</header>
 
-    <button class="btn-primary" onclick="startDraft()">Start Draft →</button>
+<!-- LOADING -->
+<div id="loading">
+  <div class="spin"></div>
+  <p id="loading-msg">Connecting…</p>
+</div>
+
+<!-- ══ VIEW: SETUP (Firebase config needed) ══ -->
+<div id="view-setup" class="view">
+  <div class="center-view">
+    <div class="center-card">
+      <div class="setup-logo">
+        <div class="icon">🔧</div>
+        <h1>Connect Firebase</h1>
+        <p>This app needs a free Firebase project for live multiplayer.</p>
+      </div>
+      <ol class="setup-steps">
+        <li><span class="step-num">1</span>Go to <strong>console.firebase.google.com</strong> → Create a project</li>
+        <li><span class="step-num">2</span>Click the <strong>&lt;/&gt;</strong> icon to add a Web App, copy the config</li>
+        <li><span class="step-num">3</span>Go to <strong>Authentication → Sign-in method</strong> → Enable <strong>Anonymous</strong></li>
+        <li><span class="step-num">4</span>Go to <strong>Firestore Database</strong> → Create database → Start in <strong>test mode</strong></li>
+        <li><span class="step-num">5</span>Paste your config into <code>FIREBASE_CONFIG</code> at the top of this file's script tag</li>
+      </ol>
+      <div class="code-snippet"><span class="cmt">// Replace these values with yours:</span>
+<span class="key">const</span> FIREBASE_CONFIG = {
+  <span class="key">apiKey</span>: <span class="val">"YOUR_API_KEY"</span>,
+  <span class="key">authDomain</span>: <span class="val">"YOUR_PROJECT.firebaseapp.com"</span>,
+  <span class="key">projectId</span>: <span class="val">"YOUR_PROJECT_ID"</span>,
+  <span class="key">storageBucket</span>: <span class="val">"YOUR_PROJECT.appspot.com"</span>,
+  <span class="key">messagingSenderId</span>: <span class="val">"YOUR_SENDER_ID"</span>,
+  <span class="key">appId</span>: <span class="val">"YOUR_APP_ID"</span>
+};</div>
+    </div>
   </div>
 </div>
 
-<!-- DRAFT VIEW -->
-<div id="view-draft" class="view">
-  <div id="draft-header" class="draft-header">
-    <div class="pick-info">
-      <div class="pick-badge" id="pick-badge">Pick 1.01</div>
-      <div>
-        <div class="pick-detail">Round <strong id="round-num">1</strong> of 15</div>
-        <div class="pick-detail">Drafting: <strong id="current-drafter">—</strong></div>
+<!-- ══ VIEW: AUTH ══ -->
+<div id="view-auth" class="view">
+  <div class="center-view">
+    <div class="center-card">
+      <div class="auth-logo">
+        <div class="big-icon">🏈</div>
+        <h2>Welcome to Fantasy Copilot</h2>
+        <p>Pick a username and team name to get started. No email needed.</p>
+      </div>
+      <div class="field">
+        <label>Username</label>
+        <input class="input" id="auth-username" type="text" placeholder="e.g. Nick" maxlength="20" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Team Name</label>
+        <input class="input" id="auth-teamname" type="text" placeholder="e.g. Nick's Renegades" maxlength="30" autocomplete="off">
+      </div>
+      <button class="btn btn-primary" id="auth-btn" onclick="submitAuth()">Let's Play →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIEW: HOME ══ -->
+<div id="view-home" class="view">
+  <div class="center-view">
+    <div class="center-card">
+      <div class="home-greeting">
+        <h2 id="home-greeting-name">Welcome back!</h2>
+        <p>Create a league or join one with an invite code.</p>
+      </div>
+      <div class="home-tabs">
+        <div class="home-tab active" onclick="switchHomeTab('create',this)">Create League</div>
+        <div class="home-tab" onclick="switchHomeTab('join',this)">Join League</div>
+      </div>
+
+      <!-- Create panel -->
+      <div id="home-panel-create" class="home-panel active">
+        <div class="field">
+          <label>League Name</label>
+          <input class="input" id="league-name-input" type="text" placeholder="e.g. Friday Night Lights" maxlength="40">
+        </div>
+        <div class="field">
+          <label>League Size</label>
+          <select class="input select" id="league-size-input">
+            <option value="8">8 Teams</option>
+            <option value="10">10 Teams</option>
+            <option value="12" selected>12 Teams (Recommended)</option>
+            <option value="14">14 Teams</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pick Timer</label>
+          <select class="input select" id="league-timer-input">
+            <option value="60">60 seconds</option>
+            <option value="90" selected>90 seconds</option>
+            <option value="120">2 minutes</option>
+            <option value="180">3 minutes (beginner-friendly)</option>
+          </select>
+        </div>
+        <div style="background:var(--green-d);border:1px solid rgba(34,212,127,.25);border-radius:10px;padding:10px 14px;font-size:.8rem;color:var(--green);margin-bottom:16px;">
+          ✓ PPR Scoring · Snake Draft · 15 Rounds · 12 Roster Spots
+        </div>
+        <button class="btn btn-primary" onclick="createLeague()">Create League →</button>
+      </div>
+
+      <!-- Join panel -->
+      <div id="home-panel-join" class="home-panel">
+        <div class="field">
+          <label>Invite Code</label>
+          <input class="input" id="join-code-input" type="text" placeholder="e.g. XK4F2M"
+            maxlength="6" style="letter-spacing:4px;font-size:1.1rem;font-weight:700;text-transform:uppercase"
+            oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <button class="btn btn-primary" onclick="joinLeague()">Join League →</button>
       </div>
     </div>
-    <div id="pick-status" class="your-pick-banner">YOUR PICK — SELECT A PLAYER</div>
+  </div>
+</div>
+
+<!-- ══ VIEW: LOBBY ══ -->
+<div id="view-lobby" class="view">
+  <div class="lobby-wrap">
+
+    <div class="invite-hero">
+      <div class="label">Share This Code With Your League</div>
+      <div class="invite-code" id="lobby-code">——</div>
+      <div class="invite-sub">Anyone with this code can join your league</div>
+      <button class="copy-btn" onclick="copyInviteCode()">Copy Code</button>
+    </div>
+
+    <div class="lobby-teams">
+      <div class="lobby-teams-title">
+        <span>Teams Joined</span>
+        <span id="lobby-team-count" style="color:var(--blue);font-weight:800">0 / 12</span>
+      </div>
+      <div id="lobby-teams-list"><div class="lobby-waiting">Waiting for players to join…</div></div>
+    </div>
+
+    <div class="lobby-settings" id="lobby-settings-card">
+      <div class="lobby-settings-row">
+        <span class="lobby-settings-label">Scoring</span>
+        <span class="lobby-settings-val">PPR (1 pt per reception)</span>
+      </div>
+      <div class="lobby-settings-row">
+        <span class="lobby-settings-label">Draft</span>
+        <span class="lobby-settings-val">Snake · 15 Rounds</span>
+      </div>
+      <div class="lobby-settings-row">
+        <span class="lobby-settings-label">Pick Timer</span>
+        <span class="lobby-settings-val" id="lobby-timer-label">90 sec</span>
+      </div>
+    </div>
+
+    <div id="lobby-actions">
+      <button class="btn btn-primary btn-full" id="start-draft-btn" onclick="startDraft()" disabled>
+        Waiting for players… (2 minimum)
+      </button>
+      <div style="margin-top:8px">
+        <button class="btn btn-ghost btn-full btn-sm" onclick="leaveLeague()">Leave League</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ VIEW: DRAFT ══ -->
+<div id="view-draft" class="view">
+
+  <!-- Sticky header bar -->
+  <div class="draft-top">
+    <div class="draft-top-inner">
+      <div class="pick-info">
+        <div class="pick-badge" id="pick-badge">Pick 1.01</div>
+        <div class="pick-meta" id="pick-meta">Round 1 · Drafting: —</div>
+      </div>
+      <div id="clock-banner" class="ai-drafting-banner">Waiting…</div>
+      <div class="timer-wrap" id="timer-wrap">
+        <div class="timer-num" id="timer-num">—</div>
+        <div class="timer-bar-track">
+          <div class="timer-bar-fill" id="timer-bar" style="width:100%"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="draft-layout">
-    <!-- Left: player pool -->
-    <div>
-      <div class="pool-filters" id="pool-filters">
-        <button class="filter-btn active" data-pos="ALL" onclick="filterPool('ALL',this)">All</button>
-        <button class="filter-btn pos-qb" data-pos="QB" onclick="filterPool('QB',this)">QB</button>
-        <button class="filter-btn pos-rb" data-pos="RB" onclick="filterPool('RB',this)">RB</button>
-        <button class="filter-btn pos-wr" data-pos="WR" onclick="filterPool('WR',this)">WR</button>
-        <button class="filter-btn pos-te" data-pos="TE" onclick="filterPool('TE',this)">TE</button>
-        <button class="filter-btn pos-k"  data-pos="K"  onclick="filterPool('K',this)">K</button>
-        <button class="filter-btn pos-dst" data-pos="DST" onclick="filterPool('DST',this)">D/ST</button>
+
+    <!-- Left: Player Pool -->
+    <div class="draft-pool-wrap">
+      <div class="pool-filters">
+        <button class="filter-btn f-ALL active" onclick="setPoolFilter('ALL',this)">All</button>
+        <button class="filter-btn f-QB"  onclick="setPoolFilter('QB',this)">QB</button>
+        <button class="filter-btn f-RB"  onclick="setPoolFilter('RB',this)">RB</button>
+        <button class="filter-btn f-WR"  onclick="setPoolFilter('WR',this)">WR</button>
+        <button class="filter-btn f-TE"  onclick="setPoolFilter('TE',this)">TE</button>
+        <button class="filter-btn f-K"   onclick="setPoolFilter('K',this)">K</button>
+        <button class="filter-btn f-DST" onclick="setPoolFilter('DST',this)">D/ST</button>
       </div>
-      <input class="search-input" id="player-search" type="text" placeholder="Search players…" oninput="renderPool()">
-      <div class="player-pool" id="player-pool"></div>
+      <div class="pool-search">
+        <input class="pool-search-input" id="pool-search" type="text" placeholder="Search players…" oninput="renderPool()">
+      </div>
+      <div class="player-list" id="player-list"></div>
     </div>
 
-    <!-- Right: sidebar -->
+    <!-- Right: Sidebar -->
     <div class="draft-sidebar">
+
       <!-- Recommendation -->
-      <div class="sidebar-card">
-        <div class="sidebar-title">Recommendation</div>
-        <div id="rec-box" class="rec-box">
-          <div class="rec-label">⭐ Best Pick</div>
-          <div class="rec-player" id="rec-player-name">Loading…</div>
-          <div class="rec-reason" id="rec-reason">Analyzing your roster needs…</div>
-        </div>
+      <div class="rec-box">
+        <div class="rec-label">⭐ Copilot Pick</div>
+        <div class="rec-player" id="rec-player">—</div>
+        <div class="rec-reason" id="rec-reason">Analyzing…</div>
       </div>
 
       <!-- My Roster -->
-      <div class="sidebar-card">
-        <div class="sidebar-title">My Roster</div>
-        <div id="my-roster-slots"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">My Roster</div>
       </div>
+      <div class="my-picks-list" id="my-picks-list"></div>
 
-      <!-- Draft Log -->
-      <div class="sidebar-card">
-        <div class="sidebar-title">Draft Log</div>
-        <div class="draft-log-entries" id="draft-log"></div>
+      <!-- Draft Chat -->
+      <div class="draft-chat-wrap">
+        <div class="sidebar-section-title" style="padding:8px 12px;border-bottom:1px solid var(--border)">League Chat</div>
+        <div class="chat-messages" id="draft-chat-messages"></div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="draft-chat-input" type="text" placeholder="Say something…" maxlength="200"
+            onkeydown="if(event.key==='Enter')sendDraftChat()">
+          <button class="chat-send" onclick="sendDraftChat()">→</button>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- MY TEAM VIEW -->
-<div id="view-team" class="view">
-  <div class="team-wrap">
-    <div id="team-content"></div>
+<!-- ══ VIEW: SEASON ══ -->
+<div id="view-season" class="view">
+
+  <div class="season-tabs">
+    <button class="season-tab active" onclick="switchSeasonTab('team',this)">My Team</button>
+    <button class="season-tab" onclick="switchSeasonTab('standings',this)">Standings</button>
+    <button class="season-tab" onclick="switchSeasonTab('trades',this)">Trades</button>
+    <button class="season-tab" onclick="switchSeasonTab('chat',this)">Chat</button>
+  </div>
+
+  <div class="season-content">
+
+    <!-- My Team -->
+    <div id="season-panel-team" class="season-panel active">
+      <div class="section-head">
+        <h3 id="season-team-name">My Team</h3>
+        <p id="season-team-sub">PPR Roster</p>
+      </div>
+      <div id="season-roster"></div>
+    </div>
+
+    <!-- Standings -->
+    <div id="season-panel-standings" class="season-panel">
+      <div class="section-head">
+        <h3>League Standings</h3>
+        <p>Week <span id="standings-week">1</span> — all teams ranked by projected PPR output</p>
+      </div>
+      <div id="standings-list"></div>
+    </div>
+
+    <!-- Trades -->
+    <div id="season-panel-trades" class="season-panel">
+      <div class="section-head">
+        <h3>Trade Center</h3>
+        <p>Send offers, review incoming trades.</p>
+      </div>
+      <div id="pending-trades"></div>
+      <div class="divider"></div>
+      <div class="send-trade-form">
+        <div class="card-title" style="margin-bottom:12px">Send a Trade Offer</div>
+        <div class="field">
+          <label>Trade With</label>
+          <select class="input select" id="trade-target-select" onchange="updateTradeForm()">
+            <option value="">Select a team…</option>
+          </select>
+        </div>
+        <div class="trade-select-grid" id="trade-select-grid" style="display:none">
+          <div class="trade-select-panel">
+            <h4>You Give</h4>
+            <div id="trade-give-players"></div>
+          </div>
+          <div class="trade-select-panel">
+            <h4>You Get</h4>
+            <div id="trade-get-players"></div>
+          </div>
+        </div>
+        <div class="field" id="trade-message-field" style="display:none">
+          <label>Message (optional)</label>
+          <input class="input" id="trade-message-input" type="text" placeholder="Add a note…" maxlength="100">
+        </div>
+        <button class="btn btn-primary" id="send-trade-btn" onclick="sendTradeOffer()" style="display:none">Send Trade Offer →</button>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div id="season-panel-chat" class="season-panel">
+      <div class="full-chat" id="full-chat-wrap">
+        <div class="full-chat-messages" id="season-chat-messages"></div>
+        <div class="full-chat-input-row">
+          <input class="full-chat-input" id="season-chat-input" type="text"
+            placeholder="Message your league…" maxlength="200"
+            onkeydown="if(event.key==='Enter')sendSeasonChat()">
+          <button class="full-chat-send" onclick="sendSeasonChat()">Send</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- TRADES VIEW -->
-<div id="view-trades" class="view">
-  <div class="trade-wrap">
-    <div id="trades-content"></div>
-  </div>
-</div>
+<div id="toast"></div>
 
-<div class="toast" id="toast"></div>
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+     ══════════════════════════════════════════════════════ -->
+<script type="module">
 
-<script>
-// ══════════════════════════════════════════════════════
-//  PLAYER DATABASE  (PPR optimized, 2025 NFL season)
-// ══════════════════════════════════════════════════════
-const PLAYERS = [
-  // ── QB ──
-  { id:1,  name:'Josh Allen',        team:'BUF', pos:'QB',  rank:1,  ppg:28.5, tier:1 },
-  { id:2,  name:'Lamar Jackson',     team:'BAL', pos:'QB',  rank:2,  ppg:27.8, tier:1 },
-  { id:3,  name:'Jalen Hurts',       team:'PHI', pos:'QB',  rank:3,  ppg:26.4, tier:1 },
-  { id:4,  name:'CJ Stroud',         team:'HOU', pos:'QB',  rank:4,  ppg:24.9, tier:2 },
-  { id:5,  name:'Patrick Mahomes',   team:'KC',  pos:'QB',  rank:5,  ppg:24.2, tier:2 },
-  { id:6,  name:'Dak Prescott',      team:'DAL', pos:'QB',  rank:6,  ppg:23.8, tier:2 },
-  { id:7,  name:'Joe Burrow',        team:'CIN', pos:'QB',  rank:7,  ppg:23.1, tier:3 },
-  { id:8,  name:'Jordan Love',       team:'GB',  pos:'QB',  rank:8,  ppg:22.5, tier:3 },
-  { id:9,  name:'Anthony Richardson',team:'IND', pos:'QB',  rank:9,  ppg:22.0, tier:3 },
-  { id:10, name:'Sam Darnold',       team:'MIN', pos:'QB',  rank:10, ppg:21.4, tier:4 },
-  { id:11, name:'Brock Purdy',       team:'SF',  pos:'QB',  rank:11, ppg:21.0, tier:4 },
-  { id:12, name:'Tua Tagovailoa',    team:'MIA', pos:'QB',  rank:12, ppg:20.6, tier:4 },
+/* ── FIREBASE IMPORTS ─────────────────────────────────── */
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import {
+  getFirestore,
+  doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc,
+  collection, query, where, orderBy, limit,
+  onSnapshot, getDocs,
+  serverTimestamp, arrayUnion, increment,
+  runTransaction, Timestamp,
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-  // ── RB ──
-  { id:20, name:'Christian McCaffrey',team:'SF', pos:'RB', rank:1,  ppg:26.2, tier:1 },
-  { id:21, name:'Breece Hall',        team:'NYJ',pos:'RB', rank:2,  ppg:22.8, tier:1 },
-  { id:22, name:'Bijan Robinson',     team:'ATL',pos:'RB', rank:3,  ppg:22.1, tier:1 },
-  { id:23, name:'Derrick Henry',      team:'BAL',pos:'RB', rank:4,  ppg:21.5, tier:1 },
-  { id:24, name:'Saquon Barkley',     team:'PHI',pos:'RB', rank:5,  ppg:20.9, tier:2 },
-  { id:25, name:'Jonathan Taylor',    team:'IND',pos:'RB', rank:6,  ppg:20.3, tier:2 },
-  { id:26, name:'Josh Jacobs',        team:'GB', pos:'RB', rank:7,  ppg:19.6, tier:2 },
-  { id:27, name:'James Cook',         team:'BUF',pos:'RB', rank:8,  ppg:18.9, tier:2 },
-  { id:28, name:'Jahmyr Gibbs',       team:'DET',pos:'RB', rank:9,  ppg:18.5, tier:3 },
-  { id:29, name:'Tony Pollard',       team:'TEN',pos:'RB', rank:10, ppg:17.8, tier:3 },
-  { id:30, name:'Rhamondre Stevenson',team:'NE', pos:'RB', rank:11, ppg:17.2, tier:3 },
-  { id:31, name:'Kyren Williams',     team:'LAR',pos:'RB', rank:12, ppg:16.8, tier:3 },
-  { id:32, name:'David Montgomery',   team:'DET',pos:'RB', rank:13, ppg:16.2, tier:4 },
-  { id:33, name:'Zack Moss',          team:'IND',pos:'RB', rank:14, ppg:15.8, tier:4 },
-  { id:34, name:'Aaron Jones',        team:'MIN',pos:'RB', rank:15, ppg:15.5, tier:4 },
-  { id:35, name:'Chuba Hubbard',      team:'CAR',pos:'RB', rank:16, ppg:15.0, tier:4 },
-  { id:36, name:'Rachaad White',      team:'TB', pos:'RB', rank:17, ppg:14.6, tier:5 },
-  { id:37, name:'Najee Harris',       team:'PIT',pos:'RB', rank:18, ppg:14.2, tier:5 },
-  { id:38, name:'Kenneth Walker',     team:'SEA',pos:'RB', rank:19, ppg:13.8, tier:5 },
-  { id:39, name:'Travis Etienne',     team:'JAX',pos:'RB', rank:20, ppg:13.5, tier:5 },
-  { id:40, name:'De\'Von Achane',     team:'MIA',pos:'RB', rank:21, ppg:13.2, tier:6 },
-  { id:41, name:'Gus Edwards',        team:'LAC',pos:'RB', rank:22, ppg:12.8, tier:6 },
-  { id:42, name:'Jerome Ford',        team:'CLE',pos:'RB', rank:23, ppg:12.5, tier:6 },
-  { id:43, name:'AJ Dillon',          team:'GB', pos:'RB', rank:24, ppg:11.9, tier:6 },
-  { id:44, name:'Tank Bigsby',        team:'JAX',pos:'RB', rank:25, ppg:11.5, tier:7 },
-  { id:45, name:'Isiah Pacheco',      team:'KC', pos:'RB', rank:26, ppg:11.2, tier:7 },
-  { id:46, name:'Miles Sanders',      team:'CAR',pos:'RB', rank:27, ppg:10.8, tier:7 },
-  { id:47, name:'Roschon Johnson',    team:'CHI',pos:'RB', rank:28, ppg:10.5, tier:7 },
-
-  // ── WR ──
-  { id:60, name:'Tyreek Hill',        team:'MIA',pos:'WR', rank:1,  ppg:24.5, tier:1 },
-  { id:61, name:"Ja'Marr Chase",      team:'CIN',pos:'WR', rank:2,  ppg:23.2, tier:1 },
-  { id:62, name:'Justin Jefferson',   team:'MIN',pos:'WR', rank:3,  ppg:22.8, tier:1 },
-  { id:63, name:'CeeDee Lamb',        team:'DAL',pos:'WR', rank:4,  ppg:22.1, tier:1 },
-  { id:64, name:'Davante Adams',      team:'LV', pos:'WR', rank:5,  ppg:20.5, tier:2 },
-  { id:65, name:'Stefon Diggs',       team:'BUF',pos:'WR', rank:6,  ppg:19.8, tier:2 },
-  { id:66, name:"Amon-Ra St. Brown",  team:'DET',pos:'WR', rank:7,  ppg:19.2, tier:2 },
-  { id:67, name:'Puka Nacua',         team:'LAR',pos:'WR', rank:8,  ppg:18.5, tier:2 },
-  { id:68, name:'Jordan Addison',     team:'MIN',pos:'WR', rank:9,  ppg:17.9, tier:3 },
-  { id:69, name:'Jaylen Waddle',      team:'MIA',pos:'WR', rank:10, ppg:17.4, tier:3 },
-  { id:70, name:'Drake London',       team:'ATL',pos:'WR', rank:11, ppg:16.8, tier:3 },
-  { id:71, name:"DeVonta Smith",      team:'PHI',pos:'WR', rank:12, ppg:16.5, tier:3 },
-  { id:72, name:'Tank Dell',          team:'HOU',pos:'WR', rank:13, ppg:16.0, tier:4 },
-  { id:73, name:'Garrett Wilson',     team:'NYJ',pos:'WR', rank:14, ppg:15.6, tier:4 },
-  { id:74, name:'Diontae Johnson',    team:'CAR',pos:'WR', rank:15, ppg:15.2, tier:4 },
-  { id:75, name:'Michael Pittman',    team:'IND',pos:'WR', rank:16, ppg:14.8, tier:4 },
-  { id:76, name:'DJ Moore',           team:'CHI',pos:'WR', rank:17, ppg:14.5, tier:4 },
-  { id:77, name:'Tee Higgins',        team:'CIN',pos:'WR', rank:18, ppg:14.2, tier:5 },
-  { id:78, name:'Christian Watson',   team:'GB', pos:'WR', rank:19, ppg:13.8, tier:5 },
-  { id:79, name:'Rashid Shaheed',     team:'NO', pos:'WR', rank:20, ppg:13.5, tier:5 },
-  { id:80, name:'Keenan Allen',       team:'CHI',pos:'WR', rank:21, ppg:13.2, tier:5 },
-  { id:81, name:'Curtis Samuel',      team:'BUF',pos:'WR', rank:22, ppg:12.8, tier:5 },
-  { id:82, name:'Josh Downs',         team:'IND',pos:'WR', rank:23, ppg:12.5, tier:6 },
-  { id:83, name:'Quentin Johnston',   team:'LAC',pos:'WR', rank:24, ppg:12.2, tier:6 },
-  { id:84, name:'Zay Flowers',        team:'BAL',pos:'WR', rank:25, ppg:12.0, tier:6 },
-  { id:85, name:'Chris Olave',        team:'NO', pos:'WR', rank:26, ppg:11.8, tier:6 },
-  { id:86, name:'Kadarius Toney',     team:'KC', pos:'WR', rank:27, ppg:11.5, tier:6 },
-  { id:87, name:'Van Jefferson',      team:'LAR',pos:'WR', rank:28, ppg:11.0, tier:7 },
-
-  // ── TE ──
-  { id:100, name:'Sam LaPorta',       team:'DET',pos:'TE', rank:1,  ppg:16.5, tier:1 },
-  { id:101, name:'Travis Kelce',      team:'KC', pos:'TE', rank:2,  ppg:15.8, tier:1 },
-  { id:102, name:'Mark Andrews',      team:'BAL',pos:'TE', rank:3,  ppg:15.2, tier:1 },
-  { id:103, name:'Evan Engram',       team:'JAX',pos:'TE', rank:4,  ppg:14.5, tier:2 },
-  { id:104, name:'Dallas Goedert',    team:'PHI',pos:'TE', rank:5,  ppg:13.8, tier:2 },
-  { id:105, name:'TJ Hockenson',      team:'MIN',pos:'TE', rank:6,  ppg:13.2, tier:2 },
-  { id:106, name:'Kyle Pitts',        team:'ATL',pos:'TE', rank:7,  ppg:12.5, tier:3 },
-  { id:107, name:'Jake Ferguson',     team:'DAL',pos:'TE', rank:8,  ppg:12.0, tier:3 },
-  { id:108, name:'Pat Freiermuth',    team:'PIT',pos:'TE', rank:9,  ppg:11.5, tier:3 },
-  { id:109, name:'Isaiah Likely',     team:'BAL',pos:'TE', rank:10, ppg:11.0, tier:4 },
-  { id:110, name:'Tyler Higbee',      team:'LAR',pos:'TE', rank:11, ppg:10.5, tier:4 },
-  { id:111, name:'Chigoziem Okonkwo', team:'TEN',pos:'TE', rank:12, ppg:10.0, tier:4 },
-
-  // ── K ──
-  { id:130, name:'Justin Tucker',     team:'BAL',pos:'K', rank:1, ppg:10.2, tier:1 },
-  { id:131, name:'Harrison Butker',   team:'KC', pos:'K', rank:2, ppg:9.8,  tier:1 },
-  { id:132, name:'Evan McPherson',    team:'CIN',pos:'K', rank:3, ppg:9.5,  tier:1 },
-  { id:133, name:'Tyler Bass',        team:'BUF',pos:'K', rank:4, ppg:9.2,  tier:2 },
-  { id:134, name:'Brandon McManus',   team:'GB', pos:'K', rank:5, ppg:9.0,  tier:2 },
-  { id:135, name:'Jake Elliott',      team:'PHI',pos:'K', rank:6, ppg:8.8,  tier:2 },
-  { id:136, name:'Cairo Santos',      team:'CHI',pos:'K', rank:7, ppg:8.5,  tier:3 },
-  { id:137, name:'Chris Boswell',     team:'PIT',pos:'K', rank:8, ppg:8.2,  tier:3 },
-
-  // ── D/ST ──
-  { id:150, name:'San Francisco 49ers', team:'SF', pos:'DST', rank:1, ppg:11.5, tier:1 },
-  { id:151, name:'Dallas Cowboys',      team:'DAL',pos:'DST', rank:2, ppg:11.0, tier:1 },
-  { id:152, name:'Baltimore Ravens',    team:'BAL',pos:'DST', rank:3, ppg:10.5, tier:1 },
-  { id:153, name:'New York Jets',       team:'NYJ',pos:'DST', rank:4, ppg:10.0, tier:2 },
-  { id:154, name:'Philadelphia Eagles', team:'PHI',pos:'DST', rank:5, ppg:9.5,  tier:2 },
-  { id:155, name:'Pittsburgh Steelers', team:'PIT',pos:'DST', rank:6, ppg:9.2,  tier:2 },
-  { id:156, name:'Cleveland Browns',    team:'CLE',pos:'DST', rank:7, ppg:8.8,  tier:3 },
-  { id:157, name:'Buffalo Bills',       team:'BUF',pos:'DST', rank:8, ppg:8.5,  tier:3 },
-  { id:158, name:'Miami Dolphins',      team:'MIA',pos:'DST', rank:9, ppg:8.2,  tier:3 },
-  { id:159, name:'Green Bay Packers',   team:'GB', pos:'DST', rank:10,ppg:8.0,  tier:3 },
-];
-
-// ══════════════════════════════════════════════════════
-//  ROSTER FORMAT (12-team PPR standard)
-// ══════════════════════════════════════════════════════
-const ROSTER_SLOTS = [
-  { slot:'QB',   pos:['QB'],           label:'QB' },
-  { slot:'RB1',  pos:['RB'],           label:'RB' },
-  { slot:'RB2',  pos:['RB'],           label:'RB' },
-  { slot:'WR1',  pos:['WR'],           label:'WR' },
-  { slot:'WR2',  pos:['WR'],           label:'WR' },
-  { slot:'TE',   pos:['TE'],           label:'TE' },
-  { slot:'FLEX', pos:['RB','WR','TE'], label:'FLX' },
-  { slot:'K',    pos:['K'],            label:'K' },
-  { slot:'DST',  pos:['DST'],          label:'D/ST' },
-  { slot:'BN1',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-  { slot:'BN2',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-  { slot:'BN3',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-  { slot:'BN4',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-  { slot:'BN5',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-  { slot:'BN6',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
-];
-
-// ══════════════════════════════════════════════════════
-//  DRAFT STATE
-// ══════════════════════════════════════════════════════
-let league = {
-  teamName: 'My Team',
-  size: 12,
-  myPick: 1,
-  picks: [],      // all draft picks in order [{team, player}]
-  teams: [],      // array of {name, roster:[player]}
-  availablePlayers: [],
-  pickNum: 0,     // 0-based overall pick number
-  totalPicks: 0,
-  draftDone: false,
+/* ── FIREBASE CONFIG ──────────────────────────────────────
+   Replace these values with your own Firebase project config.
+   Get it from: Firebase Console → Project Settings → Your Apps
+   ─────────────────────────────────────────────────────── */
+const FIREBASE_CONFIG = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT.firebaseapp.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID",
 };
 
-let poolFilter = 'ALL';
+const NEEDS_SETUP = FIREBASE_CONFIG.apiKey === "YOUR_API_KEY";
 
+/* ── PLAYER DATABASE ──────────────────────────────────────
+   PPR-optimized 2025 rankings. Replace ppg values with
+   live projections from FantasyPros / Sleeper API.
+   ─────────────────────────────────────────────────────── */
+const PLAYERS = [
+  // QB
+  {id:1,  name:'Josh Allen',          team:'BUF',pos:'QB', rank:1,  ppg:28.5,tier:1},
+  {id:2,  name:'Lamar Jackson',       team:'BAL',pos:'QB', rank:2,  ppg:27.8,tier:1},
+  {id:3,  name:'Jalen Hurts',         team:'PHI',pos:'QB', rank:3,  ppg:26.4,tier:1},
+  {id:4,  name:'CJ Stroud',           team:'HOU',pos:'QB', rank:4,  ppg:24.9,tier:2},
+  {id:5,  name:'Patrick Mahomes',     team:'KC', pos:'QB', rank:5,  ppg:24.2,tier:2},
+  {id:6,  name:'Dak Prescott',        team:'DAL',pos:'QB', rank:6,  ppg:23.8,tier:2},
+  {id:7,  name:'Joe Burrow',          team:'CIN',pos:'QB', rank:7,  ppg:23.1,tier:3},
+  {id:8,  name:'Jordan Love',         team:'GB', pos:'QB', rank:8,  ppg:22.5,tier:3},
+  {id:9,  name:'Anthony Richardson',  team:'IND',pos:'QB', rank:9,  ppg:22.0,tier:3},
+  {id:10, name:'Sam Darnold',         team:'MIN',pos:'QB', rank:10, ppg:21.4,tier:4},
+  {id:11, name:'Brock Purdy',         team:'SF', pos:'QB', rank:11, ppg:21.0,tier:4},
+  {id:12, name:'Tua Tagovailoa',      team:'MIA',pos:'QB', rank:12, ppg:20.6,tier:4},
+  // RB
+  {id:20, name:'Christian McCaffrey', team:'SF', pos:'RB', rank:1,  ppg:26.2,tier:1},
+  {id:21, name:'Breece Hall',         team:'NYJ',pos:'RB', rank:2,  ppg:22.8,tier:1},
+  {id:22, name:'Bijan Robinson',      team:'ATL',pos:'RB', rank:3,  ppg:22.1,tier:1},
+  {id:23, name:'Derrick Henry',       team:'BAL',pos:'RB', rank:4,  ppg:21.5,tier:1},
+  {id:24, name:'Saquon Barkley',      team:'PHI',pos:'RB', rank:5,  ppg:20.9,tier:2},
+  {id:25, name:'Jonathan Taylor',     team:'IND',pos:'RB', rank:6,  ppg:20.3,tier:2},
+  {id:26, name:'Josh Jacobs',         team:'GB', pos:'RB', rank:7,  ppg:19.6,tier:2},
+  {id:27, name:'James Cook',          team:'BUF',pos:'RB', rank:8,  ppg:18.9,tier:2},
+  {id:28, name:'Jahmyr Gibbs',        team:'DET',pos:'RB', rank:9,  ppg:18.5,tier:3},
+  {id:29, name:'Tony Pollard',        team:'TEN',pos:'RB', rank:10, ppg:17.8,tier:3},
+  {id:30, name:'Rhamondre Stevenson', team:'NE', pos:'RB', rank:11, ppg:17.2,tier:3},
+  {id:31, name:'Kyren Williams',      team:'LAR',pos:'RB', rank:12, ppg:16.8,tier:3},
+  {id:32, name:'David Montgomery',    team:'DET',pos:'RB', rank:13, ppg:16.2,tier:4},
+  {id:33, name:'Zack Moss',           team:'IND',pos:'RB', rank:14, ppg:15.8,tier:4},
+  {id:34, name:'Aaron Jones',         team:'MIN',pos:'RB', rank:15, ppg:15.5,tier:4},
+  {id:35, name:'Chuba Hubbard',       team:'CAR',pos:'RB', rank:16, ppg:15.0,tier:4},
+  {id:36, name:'Rachaad White',       team:'TB', pos:'RB', rank:17, ppg:14.6,tier:5},
+  {id:37, name:'Najee Harris',        team:'PIT',pos:'RB', rank:18, ppg:14.2,tier:5},
+  {id:38, name:'Kenneth Walker',      team:'SEA',pos:'RB', rank:19, ppg:13.8,tier:5},
+  {id:39, name:'Travis Etienne',      team:'JAX',pos:'RB', rank:20, ppg:13.5,tier:5},
+  {id:40, name:"De'Von Achane",       team:'MIA',pos:'RB', rank:21, ppg:13.2,tier:6},
+  {id:41, name:'Gus Edwards',         team:'LAC',pos:'RB', rank:22, ppg:12.8,tier:6},
+  {id:42, name:'Jerome Ford',         team:'CLE',pos:'RB', rank:23, ppg:12.5,tier:6},
+  {id:43, name:'AJ Dillon',           team:'GB', pos:'RB', rank:24, ppg:11.9,tier:6},
+  {id:44, name:'Tank Bigsby',         team:'JAX',pos:'RB', rank:25, ppg:11.5,tier:7},
+  {id:45, name:'Isiah Pacheco',       team:'KC', pos:'RB', rank:26, ppg:11.2,tier:7},
+  // WR
+  {id:60, name:'Tyreek Hill',         team:'MIA',pos:'WR', rank:1,  ppg:24.5,tier:1},
+  {id:61, name:"Ja'Marr Chase",       team:'CIN',pos:'WR', rank:2,  ppg:23.2,tier:1},
+  {id:62, name:'Justin Jefferson',    team:'MIN',pos:'WR', rank:3,  ppg:22.8,tier:1},
+  {id:63, name:'CeeDee Lamb',         team:'DAL',pos:'WR', rank:4,  ppg:22.1,tier:1},
+  {id:64, name:'Davante Adams',       team:'LV', pos:'WR', rank:5,  ppg:20.5,tier:2},
+  {id:65, name:'Stefon Diggs',        team:'BUF',pos:'WR', rank:6,  ppg:19.8,tier:2},
+  {id:66, name:"Amon-Ra St. Brown",   team:'DET',pos:'WR', rank:7,  ppg:19.2,tier:2},
+  {id:67, name:'Puka Nacua',          team:'LAR',pos:'WR', rank:8,  ppg:18.5,tier:2},
+  {id:68, name:'Jordan Addison',      team:'MIN',pos:'WR', rank:9,  ppg:17.9,tier:3},
+  {id:69, name:'Jaylen Waddle',       team:'MIA',pos:'WR', rank:10, ppg:17.4,tier:3},
+  {id:70, name:'Drake London',        team:'ATL',pos:'WR', rank:11, ppg:16.8,tier:3},
+  {id:71, name:'DeVonta Smith',       team:'PHI',pos:'WR', rank:12, ppg:16.5,tier:3},
+  {id:72, name:'Tank Dell',           team:'HOU',pos:'WR', rank:13, ppg:16.0,tier:4},
+  {id:73, name:'Garrett Wilson',      team:'NYJ',pos:'WR', rank:14, ppg:15.6,tier:4},
+  {id:74, name:'Diontae Johnson',     team:'CAR',pos:'WR', rank:15, ppg:15.2,tier:4},
+  {id:75, name:'Michael Pittman',     team:'IND',pos:'WR', rank:16, ppg:14.8,tier:4},
+  {id:76, name:'DJ Moore',            team:'CHI',pos:'WR', rank:17, ppg:14.5,tier:4},
+  {id:77, name:'Tee Higgins',         team:'CIN',pos:'WR', rank:18, ppg:14.2,tier:5},
+  {id:78, name:'Christian Watson',    team:'GB', pos:'WR', rank:19, ppg:13.8,tier:5},
+  {id:79, name:'Rashid Shaheed',      team:'NO', pos:'WR', rank:20, ppg:13.5,tier:5},
+  {id:80, name:'Keenan Allen',        team:'CHI',pos:'WR', rank:21, ppg:13.2,tier:5},
+  {id:81, name:'Curtis Samuel',       team:'BUF',pos:'WR', rank:22, ppg:12.8,tier:5},
+  {id:82, name:'Josh Downs',          team:'IND',pos:'WR', rank:23, ppg:12.5,tier:6},
+  {id:83, name:'Quentin Johnston',    team:'LAC',pos:'WR', rank:24, ppg:12.2,tier:6},
+  {id:84, name:'Zay Flowers',         team:'BAL',pos:'WR', rank:25, ppg:12.0,tier:6},
+  {id:85, name:'Ashton Jeanty',       team:'LV', pos:'WR', rank:26, ppg:11.8,tier:6},
+  // TE
+  {id:100,name:'Sam LaPorta',         team:'DET',pos:'TE', rank:1,  ppg:16.5,tier:1},
+  {id:101,name:'Travis Kelce',        team:'KC', pos:'TE', rank:2,  ppg:15.8,tier:1},
+  {id:102,name:'Mark Andrews',        team:'BAL',pos:'TE', rank:3,  ppg:15.2,tier:1},
+  {id:103,name:'Evan Engram',         team:'JAX',pos:'TE', rank:4,  ppg:14.5,tier:2},
+  {id:104,name:'Dallas Goedert',      team:'PHI',pos:'TE', rank:5,  ppg:13.8,tier:2},
+  {id:105,name:'TJ Hockenson',        team:'MIN',pos:'TE', rank:6,  ppg:13.2,tier:2},
+  {id:106,name:'Kyle Pitts',          team:'ATL',pos:'TE', rank:7,  ppg:12.5,tier:3},
+  {id:107,name:'Jake Ferguson',       team:'DAL',pos:'TE', rank:8,  ppg:12.0,tier:3},
+  {id:108,name:'Pat Freiermuth',      team:'PIT',pos:'TE', rank:9,  ppg:11.5,tier:3},
+  {id:109,name:'Isaiah Likely',       team:'BAL',pos:'TE', rank:10, ppg:11.0,tier:4},
+  {id:110,name:'Tyler Higbee',        team:'LAR',pos:'TE', rank:11, ppg:10.5,tier:4},
+  // K
+  {id:130,name:'Justin Tucker',       team:'BAL',pos:'K',  rank:1,  ppg:10.2,tier:1},
+  {id:131,name:'Harrison Butker',     team:'KC', pos:'K',  rank:2,  ppg:9.8, tier:1},
+  {id:132,name:'Evan McPherson',      team:'CIN',pos:'K',  rank:3,  ppg:9.5, tier:1},
+  {id:133,name:'Tyler Bass',          team:'BUF',pos:'K',  rank:4,  ppg:9.2, tier:2},
+  {id:134,name:'Jake Elliott',        team:'PHI',pos:'K',  rank:5,  ppg:8.8, tier:2},
+  {id:135,name:'Brandon McManus',     team:'GB', pos:'K',  rank:6,  ppg:8.5, tier:2},
+  {id:136,name:'Chris Boswell',       team:'PIT',pos:'K',  rank:7,  ppg:8.2, tier:3},
+  {id:137,name:'Cairo Santos',        team:'CHI',pos:'K',  rank:8,  ppg:8.0, tier:3},
+  // DST
+  {id:150,name:'San Francisco 49ers', team:'SF', pos:'DST',rank:1,  ppg:11.5,tier:1},
+  {id:151,name:'Dallas Cowboys',      team:'DAL',pos:'DST',rank:2,  ppg:11.0,tier:1},
+  {id:152,name:'Baltimore Ravens',    team:'BAL',pos:'DST',rank:3,  ppg:10.5,tier:1},
+  {id:153,name:'New York Jets',       team:'NYJ',pos:'DST',rank:4,  ppg:10.0,tier:2},
+  {id:154,name:'Philadelphia Eagles', team:'PHI',pos:'DST',rank:5,  ppg:9.5, tier:2},
+  {id:155,name:'Pittsburgh Steelers', team:'PIT',pos:'DST',rank:6,  ppg:9.2, tier:2},
+  {id:156,name:'Cleveland Browns',    team:'CLE',pos:'DST',rank:7,  ppg:8.8, tier:3},
+  {id:157,name:'Buffalo Bills',       team:'BUF',pos:'DST',rank:8,  ppg:8.5, tier:3},
+  {id:158,name:'Miami Dolphins',      team:'MIA',pos:'DST',rank:9,  ppg:8.2, tier:3},
+  {id:159,name:'Green Bay Packers',   team:'GB', pos:'DST',rank:10, ppg:8.0, tier:3},
+];
+
+const ROSTER_SLOTS = [
+  {slot:'QB',  pos:['QB'],             label:'QB'},
+  {slot:'RB1', pos:['RB'],             label:'RB'},
+  {slot:'RB2', pos:['RB'],             label:'RB'},
+  {slot:'WR1', pos:['WR'],             label:'WR'},
+  {slot:'WR2', pos:['WR'],             label:'WR'},
+  {slot:'TE',  pos:['TE'],             label:'TE'},
+  {slot:'FLX', pos:['RB','WR','TE'],   label:'FLX'},
+  {slot:'K',   pos:['K'],              label:'K'},
+  {slot:'DST', pos:['DST'],            label:'D/ST'},
+  {slot:'BN1', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+  {slot:'BN2', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+  {slot:'BN3', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+  {slot:'BN4', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+  {slot:'BN5', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+  {slot:'BN6', pos:['QB','RB','WR','TE','K','DST'],label:'BN'},
+];
+const ROUNDS = ROSTER_SLOTS.length; // 15
+
+/* ── APP STATE ────────────────────────────────────────── */
+const S = {
+  uid: null, username: null, teamName: null,
+  leagueId: null, league: null,
+  teams: {},       // uid → team data {teamName,username,roster:[]}
+  myRoster: [],
+  draftedIds: new Set(),
+  poolFilter: 'ALL',
+  seasonTab: 'team',
+  // Unsub handles
+  _leagueUnsub: null, _picksUnsub: null,
+  _chatUnsub: null,   _tradesUnsub: null,
+  // Timer
+  _timerInterval: null,
+  // Trade UI
+  tradeGive: new Set(),  // player ids I'm giving
+  tradeGet:  new Set(),  // player ids I'm getting
+};
+
+/* ── FIREBASE INIT ────────────────────────────────────── */
+let auth, db;
+
+if (NEEDS_SETUP) {
+  hide('loading');
+  showView('setup');
+} else {
+  const app = initializeApp(FIREBASE_CONFIG);
+  auth = getAuth(app);
+  db   = getFirestore(app);
+
+  onAuthStateChanged(auth, async user => {
+    if (!user) {
+      setLoading('Signing in…');
+      await signInAnonymously(auth);
+      return;
+    }
+    S.uid = user.uid;
+    await bootstrap();
+  });
+}
+
+/* ── BOOTSTRAP ────────────────────────────────────────── */
+async function bootstrap() {
+  setLoading('Loading your profile…');
+  const userSnap = await getDoc(doc(db,'users',S.uid));
+  if (!userSnap.exists()) { hide('loading'); showView('auth'); return; }
+
+  const u = userSnap.data();
+  S.username = u.username;
+  S.teamName = u.teamName;
+  setTopbar();
+
+  if (!u.leagueId) { hide('loading'); showView('home'); return; }
+
+  S.leagueId = u.leagueId;
+  const leagueSnap = await getDoc(doc(db,'leagues',S.leagueId));
+  if (!leagueSnap.exists()) {
+    await updateDoc(doc(db,'users',S.uid),{leagueId:null});
+    S.leagueId = null;
+    hide('loading'); showView('home'); return;
+  }
+  S.league = leagueSnap.data();
+  routeToLeagueView(S.league.status);
+}
+
+function routeToLeagueView(status) {
+  hide('loading');
+  if (status === 'lobby')    { loadLobby();  showView('lobby'); }
+  else if (status === 'drafting') { loadDraft(); showView('draft'); }
+  else if (status === 'active')   { loadSeason();showView('season'); }
+}
+
+/* ── VIEW ROUTING ─────────────────────────────────────── */
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  const view = document.getElementById('view-' + name);
-  const tab  = [...document.querySelectorAll('.nav-tab')].find(t => t.textContent.toLowerCase().includes(name === 'draft' ? 'draft' : name === 'team' ? 'team' : 'trade'));
-  if (view) view.classList.add('active');
-  if (tab)  tab.classList.add('active');
-
-  if (name === 'team')   renderTeamView();
-  if (name === 'trades') renderTradesView();
-  if (name === 'draft')  { if (!league.draftDone) renderPool(); }
+  const el = document.getElementById('view-'+name);
+  if (el) el.classList.add('active');
 }
 
-// ══════════════════════════════════════════════════════
-//  SETUP → START DRAFT
-// ══════════════════════════════════════════════════════
-function startDraft() {
-  const nameVal = document.getElementById('team-name-input').value.trim();
-  league.teamName = nameVal || 'My Team';
-  league.size = parseInt(document.getElementById('league-size-select').value);
-  const posVal = document.getElementById('draft-pos-select').value;
-  league.myPick = posVal === 'random'
-    ? Math.ceil(Math.random() * league.size)
-    : parseInt(posVal);
-  league.totalPicks = league.size * ROSTER_SLOTS.length;
+/* ── AUTH ─────────────────────────────────────────────── */
+window.submitAuth = async function() {
+  const username = eid('auth-username').value.trim();
+  const teamName = eid('auth-teamname').value.trim();
+  if (!username || !teamName) { toast('Enter a username and team name','error'); return; }
+  setLoading('Setting up your profile…');
+  await setDoc(doc(db,'users',S.uid),{
+    username, teamName, leagueId:null, createdAt:serverTimestamp(),
+  });
+  S.username = username; S.teamName = teamName;
+  setTopbar();
+  hide('loading'); showView('home');
+  eid('home-greeting-name').textContent = `Welcome, ${username}!`;
+};
 
-  // Build teams
-  const teamNames = [
-    league.teamName, 'Gridiron Gurus','Touchdown Bandits','Blitz Kings',
-    'Red Zone Raiders','Fantasy Freaks','Hail Mary Heroes','Sleeper Agents',
-    'PPR Professors','Snap Count Squad','End Zone Elite','Draft Day Champs',
-    'Pigskin Prophets','Bye Week Busters',
-  ];
-  league.teams = Array.from({length: league.size}, (_, i) => ({
-    name: teamNames[i] || `Team ${i+1}`,
-    roster: [],
-    isMine: i + 1 === league.myPick,
-  }));
+/* ── HOME TABS ────────────────────────────────────────── */
+window.switchHomeTab = function(tab, btn) {
+  document.querySelectorAll('.home-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.home-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  eid('home-panel-'+tab).classList.add('active');
+};
 
-  league.availablePlayers = PLAYERS.map(p => ({...p, drafted: false}));
-  league.picks = [];
-  league.pickNum = 0;
-  league.draftDone = false;
+/* ── CREATE LEAGUE ────────────────────────────────────── */
+window.createLeague = async function() {
+  const name  = eid('league-name-input').value.trim() || `${S.username}'s League`;
+  const size  = parseInt(eid('league-size-input').value);
+  const timer = parseInt(eid('league-timer-input').value);
+  const code  = genCode();
+  setLoading('Creating league…');
+  const leagueRef = doc(collection(db,'leagues'));
+  await setDoc(leagueRef,{
+    name, code, commissionerId:S.uid,
+    status:'lobby',
+    settings:{size, ppr:true, rounds:ROUNDS, timerSecs:timer},
+    draftPick:0, draftOrder:[], draftedPlayerIds:[], week:1,
+    createdAt:serverTimestamp(),
+  });
+  await setDoc(doc(db,'leagues',leagueRef.id,'teams',S.uid),{
+    username:S.username, teamName:S.teamName, roster:[], joinedAt:serverTimestamp(),
+  });
+  await updateDoc(doc(db,'users',S.uid),{leagueId:leagueRef.id});
+  S.leagueId = leagueRef.id;
+  S.league   = (await getDoc(leagueRef)).data();
+  hide('loading'); loadLobby(); showView('lobby');
+};
 
-  // Switch to draft view
-  document.getElementById('view-setup').classList.remove('active');
-  document.getElementById('view-draft').classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelector('.nav-tab').classList.add('active');
+/* ── JOIN LEAGUE ──────────────────────────────────────── */
+window.joinLeague = async function() {
+  const code = eid('join-code-input').value.trim().toUpperCase();
+  if (code.length !== 6) { toast('Enter a 6-character invite code','error'); return; }
+  setLoading('Finding league…');
+  const q    = query(collection(db,'leagues'),where('code','==',code));
+  const snap = await getDocs(q);
+  if (snap.empty) { hide('loading'); toast('Invalid invite code','error'); return; }
+  const leagueDoc  = snap.docs[0];
+  const leagueData = leagueDoc.data();
+  if (leagueData.status !== 'lobby') { hide('loading'); toast('That league has already started','error'); return; }
+  const teamsSnap = await getDocs(collection(db,'leagues',leagueDoc.id,'teams'));
+  if (teamsSnap.size >= leagueData.settings.size) { hide('loading'); toast('League is full','error'); return; }
+  // Already in?
+  const alreadyIn = teamsSnap.docs.some(d=>d.id===S.uid);
+  if (!alreadyIn) {
+    await setDoc(doc(db,'leagues',leagueDoc.id,'teams',S.uid),{
+      username:S.username, teamName:S.teamName, roster:[], joinedAt:serverTimestamp(),
+    });
+    await addDoc(collection(db,'leagues',leagueDoc.id,'chat'),{
+      type:'system', text:`🏈 ${S.username} joined the league!`, timestamp:serverTimestamp(),
+    });
+  }
+  await updateDoc(doc(db,'users',S.uid),{leagueId:leagueDoc.id});
+  S.leagueId = leagueDoc.id;
+  S.league   = leagueData;
+  hide('loading'); loadLobby(); showView('lobby');
+};
 
-  updateDraftHeader();
-  renderRosterSlots();
-  renderPool();
-  updateRecommendation();
+/* ── LOBBY ────────────────────────────────────────────── */
+function loadLobby() {
+  unsub('_leagueUnsub');
+  eid('lobby-code').textContent = S.league?.code || '——';
+  eid('lobby-timer-label').textContent = (S.league?.settings?.timerSecs || 90) + ' sec';
 
-  // If AI picks before user
-  if (!isMyTurn()) setTimeout(runAIPicks, 400);
+  // Listen to teams
+  S._leagueUnsub = onSnapshot(
+    collection(db,'leagues',S.leagueId,'teams'),
+    snap => {
+      const teams = snap.docs.map(d=>({uid:d.id,...d.data()}));
+      renderLobbyTeams(teams, S.league?.settings?.size || 12);
+    }
+  );
 }
 
-// ══════════════════════════════════════════════════════
-//  DRAFT TURN LOGIC
-// ══════════════════════════════════════════════════════
-function teamIdxForPick(pickNum) {
-  const size = league.size;
-  const round = Math.floor(pickNum / size);
-  const slot  = pickNum % size;
-  return round % 2 === 0 ? slot : (size - 1 - slot);
+function renderLobbyTeams(teams, size) {
+  eid('lobby-team-count').textContent = `${teams.length} / ${size}`;
+  const isComm = S.league?.commissionerId === S.uid;
+  const canStart = teams.length >= 2;
+
+  const btn = eid('start-draft-btn');
+  if (isComm) {
+    btn.disabled = !canStart;
+    btn.textContent = canStart
+      ? `Start Draft (${teams.length} teams) →`
+      : `Waiting for players… (${teams.length}/${size} joined)`;
+  } else {
+    btn.textContent = 'Waiting for commissioner to start…';
+    btn.disabled = true;
+  }
+
+  eid('lobby-teams-list').innerHTML = teams.map(t=>`
+    <div class="lobby-team-row">
+      <div class="lobby-avatar">${(t.username||'?')[0].toUpperCase()}</div>
+      <div class="lobby-team-info">
+        <div class="lobby-team-name">${esc(t.teamName)}</div>
+        <div class="lobby-team-user">@${esc(t.username)}</div>
+      </div>
+      ${t.uid===S.league?.commissionerId?'<span class="lobby-comm-badge">Commish</span>':''}
+      ${t.uid===S.uid?'<span style="font-size:.68rem;color:var(--blue);font-weight:700">(You)</span>':''}
+    </div>`).join('');
 }
 
-function isMyTurn() {
-  if (league.pickNum >= league.totalPicks) return false;
-  return teamIdxForPick(league.pickNum) === league.myPick - 1;
+window.copyInviteCode = function() {
+  navigator.clipboard.writeText(S.league?.code || '').then(()=>toast('Code copied!','success'));
+};
+
+window.leaveLeague = async function() {
+  if (!confirm('Leave the league?')) return;
+  setLoading('Leaving…');
+  await deleteDoc(doc(db,'leagues',S.leagueId,'teams',S.uid));
+  await updateDoc(doc(db,'users',S.uid),{leagueId:null});
+  S.leagueId = null; S.league = null;
+  unsub('_leagueUnsub');
+  hide('loading'); showView('home');
+};
+
+/* ── START DRAFT ──────────────────────────────────────── */
+window.startDraft = async function() {
+  setLoading('Starting draft…');
+  const teamsSnap = await getDocs(collection(db,'leagues',S.leagueId,'teams'));
+  const uids = shuffle(teamsSnap.docs.map(d=>d.id));
+  // Snake order for ROUNDS rounds
+  const draftOrder = [];
+  for (let r=0;r<ROUNDS;r++) {
+    draftOrder.push(...(r%2===0 ? uids : [...uids].reverse()));
+  }
+  await updateDoc(doc(db,'leagues',S.leagueId),{
+    status:'drafting', draftOrder, draftPick:0,
+    draftedPlayerIds:[], pickDeadlineMs:Date.now()+(S.league.settings.timerSecs*1000),
+  });
+  await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+    type:'system', text:'🏈 The draft has started! Good luck everyone!', timestamp:serverTimestamp(),
+  });
+  unsub('_leagueUnsub');
+  hide('loading'); loadDraft(); showView('draft');
+};
+
+/* ── DRAFT ────────────────────────────────────────────── */
+function loadDraft() {
+  unsub('_leagueUnsub'); unsub('_picksUnsub'); unsub('_chatUnsub');
+
+  // Listen to league doc (pick changes, draftedPlayerIds)
+  S._leagueUnsub = onSnapshot(doc(db,'leagues',S.leagueId), snap => {
+    if (!snap.exists()) return;
+    S.league = snap.data();
+    if (S.league.status === 'active') {
+      unsub('_leagueUnsub'); unsub('_picksUnsub'); unsub('_chatUnsub');
+      clearTimer();
+      loadSeason(); showView('season');
+      return;
+    }
+    S.draftedIds = new Set(S.league.draftedPlayerIds || []);
+    updateDraftHeader();
+    renderPool();
+    updateRec();
+    startTimer();
+  });
+
+  // Listen to picks (for roster sidebar)
+  S._picksUnsub = onSnapshot(
+    query(collection(db,'leagues',S.leagueId,'picks'),orderBy('pickNum','asc')),
+    snap => {
+      // Update my roster from picks
+      S.myRoster = snap.docs
+        .filter(d=>d.data().uid===S.uid)
+        .map(d=>d.data().player);
+      renderMyRosterSlots();
+    }
+  );
+
+  // Draft chat
+  S._chatUnsub = onSnapshot(
+    query(collection(db,'leagues',S.leagueId,'chat'),orderBy('timestamp','asc'),limit(80)),
+    snap => renderDraftChat(snap.docs.map(d=>d.data()))
+  );
 }
 
 function updateDraftHeader() {
-  const pick = league.pickNum;
-  const round = Math.floor(pick / league.size) + 1;
-  const slot  = (pick % league.size) + 1;
-  const teamIdx = teamIdxForPick(pick);
-  const team = league.teams[teamIdx];
+  const l = S.league;
+  if (!l) return;
+  const pick  = l.draftPick || 0;
+  const order = l.draftOrder || [];
+  const size  = l.settings?.size || 12;
+  const round = Math.floor(pick/size)+1;
+  const slot  = (pick%size)+1;
+  const onUid = order[pick];
 
-  document.getElementById('pick-badge').textContent =
-    `Pick ${round}.${String(slot).padStart(2,'0')}`;
-  document.getElementById('round-num').textContent = round;
-  document.getElementById('current-drafter').textContent = team ? team.name : '—';
+  eid('pick-badge').textContent = `Pick ${round}.${String(slot).padStart(2,'0')}`;
+  eid('pick-meta').textContent  = `Round ${round} of ${ROUNDS}`;
 
-  const statusEl = document.getElementById('pick-status');
-  if (league.draftDone) {
-    statusEl.className = 'ai-pick-banner';
-    statusEl.textContent = 'DRAFT COMPLETE';
-  } else if (isMyTurn()) {
-    statusEl.className = 'your-pick-banner';
-    statusEl.textContent = 'YOUR PICK — SELECT A PLAYER';
+  const isMe = onUid === S.uid;
+  const banner = eid('clock-banner');
+  if (isMe) {
+    banner.className = 'on-clock-banner';
+    banner.textContent = '⚡ YOUR PICK';
   } else {
-    statusEl.className = 'ai-pick-banner';
-    statusEl.textContent = `${team ? team.name : 'AI'} is picking…`;
+    // Find team name for on-clock player
+    const onTeam = S.teams[onUid]?.teamName || 'Opponent';
+    banner.className = 'ai-drafting-banner';
+    banner.textContent = `${onTeam} is picking…`;
   }
 }
 
-// ══════════════════════════════════════════════════════
-//  AI PICKS
-// ══════════════════════════════════════════════════════
-function runAIPicks() {
-  function pickNext() {
-    if (league.pickNum >= league.totalPicks || isMyTurn()) {
-      updateDraftHeader();
-      renderPool();
-      updateRecommendation();
-      return;
+/* ── TIMER ────────────────────────────────────────────── */
+function startTimer() {
+  clearTimer();
+  const l = S.league;
+  if (!l || l.status !== 'drafting') return;
+  const deadline  = l.pickDeadlineMs || 0;
+  const timerSecs = l.settings?.timerSecs || 90;
+
+  S._timerInterval = setInterval(async () => {
+    const rem = Math.max(0, Math.ceil((deadline - Date.now())/1000));
+    const pct = (rem / timerSecs) * 100;
+    const numEl = eid('timer-num');
+    const barEl = eid('timer-bar');
+    if (!numEl) { clearTimer(); return; }
+    numEl.textContent = rem;
+    numEl.className   = 'timer-num' + (rem<=15?' urgent':'');
+    barEl.style.width = pct+'%';
+    barEl.className   = 'timer-bar-fill' + (rem<=15?' urgent':'');
+
+    if (rem === 0) {
+      clearTimer();
+      // Auto-pick — any client may attempt, transaction prevents double-pick
+      const onUid = (S.league?.draftOrder||[])[S.league?.draftPick||0];
+      if (onUid === S.uid || Math.random() < 0.3) {
+        await autoPick();
+      }
     }
-    const teamIdx = teamIdxForPick(league.pickNum);
-    const team = league.teams[teamIdx];
-    const pick = chooseBestForTeam(team);
-    if (!pick) { league.pickNum++; pickNext(); return; }
-
-    markDrafted(pick, team, false);
-    setTimeout(pickNext, 80);
-  }
-  pickNext();
+  },1000);
 }
 
-function chooseBestForTeam(team) {
-  const available = league.availablePlayers.filter(p => !p.drafted);
-  if (!available.length) return null;
-
-  const round = Math.floor(league.pickNum / league.size) + 1;
-  const rosterCounts = countPositions(team.roster);
-
-  // Need-based logic
-  const needs = getPositionNeeds(rosterCounts, round);
-  for (const pos of needs) {
-    const candidate = available.find(p => p.pos === pos);
-    if (candidate) return candidate;
-  }
-  // Fallback: best available + small random noise
-  const top5 = available.slice(0, 5);
-  return top5[Math.floor(Math.random() * Math.min(3, top5.length))];
+function clearTimer() {
+  if (S._timerInterval) { clearInterval(S._timerInterval); S._timerInterval=null; }
 }
 
-function countPositions(roster) {
-  const c = { QB:0, RB:0, WR:0, TE:0, K:0, DST:0 };
-  roster.forEach(p => { if (c[p.pos] !== undefined) c[p.pos]++; });
-  return c;
+async function autoPick() {
+  const rec = getRecommended();
+  if (rec) await doPick(rec);
 }
 
-function getPositionNeeds(counts, round) {
-  const order = [];
-  if (counts.RB < 2) order.push('RB');
-  if (counts.WR < 2) order.push('WR');
-  if (counts.QB < 1 && round >= 5) order.push('QB');
-  if (counts.TE < 1 && round >= 4) order.push('TE');
-  if (counts.RB < 4) order.push('RB');
-  if (counts.WR < 4) order.push('WR');
-  if (counts.QB < 1) order.push('QB');
-  if (counts.TE < 1) order.push('TE');
-  if (counts.K < 1 && round >= 13) order.push('K');
-  if (counts.DST < 1 && round >= 12) order.push('DST');
-  order.push('RB','WR','TE','QB','DST','K');
-  return order;
-}
-
-// ══════════════════════════════════════════════════════
-//  MARK DRAFTED
-// ══════════════════════════════════════════════════════
-function markDrafted(player, team, isUser) {
-  player.drafted = true;
-  team.roster.push(player);
-  league.picks.push({ team, player });
-  league.pickNum++;
-
-  // Log
-  const log = document.getElementById('draft-log');
-  const entry = document.createElement('div');
-  const pickLabel = `${Math.floor((league.pickNum-1)/league.size)+1}.${String(((league.pickNum-1)%league.size)+1).padStart(2,'0')}`;
-  entry.className = 'log-entry' + (isUser ? ' mine' : '');
-  entry.textContent = `${pickLabel} ${team.name}: ${player.name} (${player.pos})`;
-  log.prepend(entry);
-
-  if (isUser) {
-    renderRosterSlots();
-    updateRecommendation();
-  }
-
-  if (league.pickNum >= league.totalPicks) {
-    league.draftDone = true;
-    updateDraftHeader();
-    renderPool();
-    showToast(`Draft complete! Check "My Team" →`, 'success');
-  } else {
-    updateDraftHeader();
-  }
-}
-
-// ══════════════════════════════════════════════════════
-//  USER PICKS
-// ══════════════════════════════════════════════════════
-function userPickPlayer(playerId) {
-  if (!isMyTurn()) return;
-  const player = league.availablePlayers.find(p => p.id === playerId && !p.drafted);
-  if (!player) return;
-  const myTeam = league.teams[league.myPick - 1];
-  markDrafted(player, myTeam, true);
-
-  if (!league.draftDone) {
-    renderPool();
-    setTimeout(runAIPicks, 200);
-  } else {
-    renderPool();
-  }
-}
-
-// ══════════════════════════════════════════════════════
-//  RENDER POOL
-// ══════════════════════════════════════════════════════
-function filterPool(pos, btn) {
-  poolFilter = pos;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+/* ── POOL FILTER & RENDER ─────────────────────────────── */
+window.setPoolFilter = function(f, btn) {
+  S.poolFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   renderPool();
-}
+};
 
 function renderPool() {
-  const search = (document.getElementById('player-search')?.value || '').toLowerCase();
-  const myTeam = league.teams[league.myPick - 1];
-  const rec = getRecommendedPlayer(myTeam);
-  const isTurn = isMyTurn() && !league.draftDone;
+  const search = (eid('pool-search')?.value||'').toLowerCase();
+  const isMyTurn = (S.league?.draftOrder||[])[S.league?.draftPick||0] === S.uid
+                   && S.league?.status === 'drafting';
 
-  let players = league.availablePlayers.filter(p => {
-    if (poolFilter !== 'ALL' && p.pos !== poolFilter) return false;
+  const available = PLAYERS.filter(p => {
+    if (S.draftedIds.has(p.id)) return false;
+    if (S.poolFilter !== 'ALL' && p.pos !== S.poolFilter) return false;
     if (search && !p.name.toLowerCase().includes(search) && !p.team.toLowerCase().includes(search)) return false;
     return true;
   });
 
-  // Sort: available first, then drafted
-  players.sort((a,b) => {
-    if (a.drafted !== b.drafted) return a.drafted ? 1 : -1;
-    return a.pos === b.pos ? a.rank - b.rank : a.ppg > b.ppg ? -1 : 1;
-  });
-
-  const pool = document.getElementById('player-pool');
-  if (!pool) return;
-
-  if (league.draftDone && !players.filter(p=>!p.drafted).length) {
-    pool.innerHTML = `<div class="draft-complete">
-      <div class="complete-title">Draft Complete!</div>
-      <p style="color:rgba(255,255,255,.5);margin-bottom:24px;">Your roster is set. View your team and get trade suggestions.</p>
-      <button class="btn-primary" style="width:auto;padding:14px 32px;" onclick="showView('team')">View My Team →</button>
-    </div>`;
-    return;
-  }
-
-  let html = '';
+  const tierLabels = {1:'Elite',2:'Starter',3:'Solid Starter',4:'Depth',5:'Late Round',6:'Streamer',7:'Flier'};
+  const rec = getRecommended();
   let lastTier = null;
-  const available = players.filter(p => !p.drafted);
+  let html = '';
 
   available.forEach(p => {
     if (p.tier !== lastTier) {
-      const tierLabels = ['','Elite','Starter','Solid Starter','Depth','Late Round','Streamer'];
-      html += `<div class="tier-divider">— Tier ${p.tier}: ${tierLabels[p.tier] || 'Value'} —</div>`;
       lastTier = p.tier;
+      html += `<div class="tier-header">Tier ${p.tier} — ${tierLabels[p.tier]||''}</div>`;
     }
     const isRec = rec && rec.id === p.id;
-    html += `<div class="player-row ${isRec ? 'recommended' : ''}">
-      <div class="player-rank">${p.pos === 'DST' ? '' : p.rank}</div>
-      <div class="pos-badge ${p.pos}">${p.pos}</div>
-      <div style="flex:1">
-        <div class="player-name">${p.name}</div>
-        <div class="player-team">${p.team} · ~${p.ppg} PPR pts/gm</div>
+    html += `<div class="player-row ${isRec?'is-rec':''}">
+      <div class="pr-rank">${p.pos==='DST'?'':p.rank}</div>
+      <div class="pos-chip pos-${p.pos}">${p.pos}</div>
+      <div class="pr-info">
+        <div class="pr-name">${esc(p.name)}</div>
+        <div class="pr-team">${p.team} · ${p.ppg} PPR/gm</div>
       </div>
-      ${isRec ? '<div class="rec-star">⭐ REC</div>' : ''}
-      <button class="draft-btn" ${!isTurn ? 'disabled' : ''} onclick="userPickPlayer(${p.id})">
-        ${isTurn ? 'Draft' : 'On Clock…'}
+      ${isRec?'<div class="pr-rec-star">⭐ REC</div>':''}
+      <button class="draft-btn" ${!isMyTurn?'disabled':''} onclick="pickPlayer(${p.id})">
+        ${isMyTurn?'Draft':'—'}
       </button>
     </div>`;
   });
 
-  // Show drafted players faded at bottom
-  const drafted = players.filter(p => p.drafted);
-  if (drafted.length && poolFilter !== 'ALL') {
-    html += `<div class="tier-divider">— Already Drafted —</div>`;
-    drafted.forEach(p => {
-      html += `<div class="player-row drafted">
-        <div class="player-rank">${p.rank}</div>
-        <div class="pos-badge ${p.pos}">${p.pos}</div>
-        <div style="flex:1">
-          <div class="player-name">${p.name}</div>
-          <div class="player-team">${p.team}</div>
-        </div>
-      </div>`;
-    });
-  }
-
-  pool.innerHTML = html || '<div style="padding:30px;text-align:center;color:rgba(255,255,255,.3)">No players match filter</div>';
+  if (!html) html = '<div style="padding:30px;text-align:center;color:var(--t3);font-size:.82rem">No players available</div>';
+  eid('player-list').innerHTML = html;
 }
 
-// ══════════════════════════════════════════════════════
-//  RECOMMENDATION ENGINE
-// ══════════════════════════════════════════════════════
-function getRecommendedPlayer(team) {
-  if (!team) return null;
-  const available = league.availablePlayers.filter(p => !p.drafted);
+/* ── RECOMMENDATION ───────────────────────────────────── */
+function getRecommended() {
+  const available = PLAYERS.filter(p=>!S.draftedIds.has(p.id));
   if (!available.length) return null;
-
-  const round = Math.floor(league.pickNum / league.size) + 1;
-  const counts = countPositions(team.roster);
-  const needs  = getPositionNeeds(counts, round);
-
-  // Try to match top need
-  for (const pos of needs) {
-    const candidate = available.find(p => p.pos === pos);
-    if (candidate) return candidate;
+  const counts = posCounts(S.myRoster);
+  const round  = Math.floor((S.league?.draftPick||0)/(S.league?.settings?.size||12))+1;
+  for (const pos of needOrder(counts,round)) {
+    const p = available.find(a=>a.pos===pos);
+    if (p) return p;
   }
   return available[0];
 }
 
-function updateRecommendation() {
-  const myTeam = league.teams[league.myPick - 1];
-  const rec = getRecommendedPlayer(myTeam);
-  if (!rec) return;
-
-  const counts = countPositions(myTeam ? myTeam.roster : []);
-  const round = Math.floor(league.pickNum / league.size) + 1;
-
-  document.getElementById('rec-player-name').textContent = `${rec.name} (${rec.pos}) — ${rec.team}`;
-
-  let reason = '';
-  if (rec.pos === 'RB' && counts.RB < 2) reason = 'You need RBs — they score big receptions in PPR. Lock in starter value early.';
-  else if (rec.pos === 'WR' && counts.WR < 2) reason = 'Secure a WR1/WR2. PPR adds huge value to pass-catchers.';
-  else if (rec.pos === 'QB') reason = `Round ${round} — good QB window. ${rec.name} is a dual-threat who inflates in PPR leagues.`;
-  else if (rec.pos === 'TE') reason = 'Elite TEs are scarce. Grab one while value remains.';
-  else if (rec.pos === 'K') reason = 'Late rounds — fill your kicker spot with a reliable foot.';
-  else if (rec.pos === 'DST') reason = 'Solid D/ST rounds out your roster. Stream if needed later.';
-  else reason = `Best available at ~${rec.ppg} PPR pts/game. Great value at this pick.`;
-
-  document.getElementById('rec-reason').textContent = reason;
+function updateRec() {
+  const p = getRecommended();
+  if (!p) return;
+  eid('rec-player').textContent = `${p.name} (${p.pos}) · ${p.team}`;
+  const counts = posCounts(S.myRoster);
+  const round  = Math.floor((S.league?.draftPick||0)/(S.league?.settings?.size||12))+1;
+  const tips = {
+    RB:`Your RBs score big through receptions in PPR — grab starter value early.`,
+    WR:`Pass-catchers are gold in PPR. Lock in a reliable WR now.`,
+    QB:`Good QB window at round ${round}. Dual-threat QBs especially inflate in PPR.`,
+    TE:`Elite TEs are scarce. Grab one before the tier breaks.`,
+    K:`Late-round slot filler. Any reliable kicker works.`,
+    DST:`Good streaming option. Easy to swap weekly based on matchup.`,
+  };
+  eid('rec-reason').textContent = tips[p.pos]||`Best available at ~${p.ppg} PPR pts/gm.`;
 }
 
-// ══════════════════════════════════════════════════════
-//  RENDER ROSTER SIDEBAR
-// ══════════════════════════════════════════════════════
-function renderRosterSlots() {
-  const myTeam = league.teams[league.myPick - 1];
-  const el = document.getElementById('my-roster-slots');
-  if (!el || !myTeam) return;
+function posCounts(roster) {
+  const c={QB:0,RB:0,WR:0,TE:0,K:0,DST:0};
+  (roster||[]).forEach(p=>{ if(c[p.pos]!==undefined)c[p.pos]++; });
+  return c;
+}
 
-  const filledSlots = assignSlotsToRoster(myTeam.roster);
-  el.innerHTML = filledSlots.map(s => {
-    const p = s.player;
-    return `<div class="roster-slot">
-      <div class="slot-label">${s.label}</div>
-      ${p
-        ? `<div class="slot-player">${p.name}<span style="font-size:.65rem;color:rgba(255,255,255,.35);margin-left:4px;">${p.pos}·${p.team}</span></div>
-           <div class="slot-ppg">${p.ppg}</div>`
+function needOrder(counts, round) {
+  const o=[];
+  if(counts.RB<2) o.push('RB');
+  if(counts.WR<2) o.push('WR');
+  if(counts.QB<1&&round>=5) o.push('QB');
+  if(counts.TE<1&&round>=4) o.push('TE');
+  if(counts.RB<4) o.push('RB');
+  if(counts.WR<4) o.push('WR');
+  if(counts.QB<1) o.push('QB');
+  if(counts.TE<1) o.push('TE');
+  if(counts.K<1&&round>=13) o.push('K');
+  if(counts.DST<1&&round>=12) o.push('DST');
+  o.push('RB','WR','TE','QB','DST','K');
+  return o;
+}
+
+/* ── PICK PLAYER ──────────────────────────────────────── */
+window.pickPlayer = async function(playerId) {
+  const player = PLAYERS.find(p=>p.id===playerId);
+  if (!player) return;
+  await doPick(player);
+};
+
+async function doPick(player) {
+  const leagueRef = doc(db,'leagues',S.leagueId);
+  const teamRef   = doc(db,'leagues',S.leagueId,'teams',S.uid);
+
+  try {
+    let pickNum;
+    await runTransaction(db, async tx => {
+      const lSnap = await tx.get(leagueRef);
+      const l     = lSnap.data();
+      const onUid = (l.draftOrder||[])[l.draftPick];
+      if (onUid !== S.uid) throw new Error('not_your_turn');
+      if ((l.draftedPlayerIds||[]).includes(player.id)) throw new Error('already_drafted');
+      pickNum = l.draftPick;
+      const newPick = pickNum+1;
+      const done    = newPick >= (l.draftOrder||[]).length;
+      const deadline= Date.now()+(l.settings.timerSecs*1000);
+
+      tx.update(leagueRef,{
+        draftPick: newPick,
+        draftedPlayerIds: arrayUnion(player.id),
+        pickDeadlineMs: deadline,
+        ...(done ? {status:'active'} : {}),
+      });
+
+      const pickRef = doc(collection(db,'leagues',S.leagueId,'picks'));
+      tx.set(pickRef,{
+        pickNum, uid:S.uid, teamName:S.teamName,
+        player:{id:player.id,name:player.name,pos:player.pos,team:player.team,ppg:player.ppg},
+        timestamp:serverTimestamp(),
+      });
+
+      tx.update(teamRef,{roster:arrayUnion(
+        {id:player.id,name:player.name,pos:player.pos,team:player.team,ppg:player.ppg,rank:player.rank,tier:player.tier}
+      )});
+    });
+
+    // System chat for the pick
+    const size  = S.league?.settings?.size||12;
+    const round = Math.floor(pickNum/size)+1;
+    await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+      type:'system',
+      text:`📋 ${S.username} selected ${player.name} (${player.pos}${player.team?', '+player.team:''}) · Round ${round}`,
+      timestamp:serverTimestamp(),
+    });
+  } catch(e) {
+    if (e.message==='not_your_turn') toast('Wait for your turn','error');
+    else if(e.message==='already_drafted') toast('Already drafted','error');
+    // else silently ignore (race condition resolved by transaction)
+  }
+}
+
+/* ── DRAFT SIDEBAR ────────────────────────────────────── */
+function renderMyRosterSlots() {
+  const roster = S.myRoster;
+  const used   = new Set();
+  const filled = ROSTER_SLOTS.map(slotDef=>{
+    const p = roster.find(r=>!used.has(r.id)&&slotDef.pos.includes(r.pos));
+    if(p) used.add(p.id);
+    return {label:slotDef.label, player:p||null};
+  });
+  eid('my-picks-list').innerHTML = filled.map(s=>`
+    <div class="pick-slot">
+      <div class="slot-tag">${s.label}</div>
+      ${s.player
+        ? `<div class="slot-player">${esc(s.player.name)}<span style="font-size:.6rem;color:var(--t3);margin-left:3px">${s.player.pos}</span></div>
+           <div class="slot-ppg">${s.player.ppg}</div>`
         : `<div class="slot-player slot-empty">—</div>`
       }
+    </div>`).join('');
+}
+
+/* ── DRAFT CHAT ───────────────────────────────────────── */
+function renderDraftChat(messages) {
+  const el = eid('draft-chat-messages');
+  if (!el) return;
+  el.innerHTML = messages.map(m=>`
+    <div class="chat-message ${m.type==='system'?'system':''} ${m.uid===S.uid?'mine':''}">
+      ${m.type!=='system'?`<span class="cm-user">${esc(m.username||'?')}:</span>`:''} ${esc(m.text||'')}
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+window.sendDraftChat = async function() {
+  const input = eid('draft-chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+    uid:S.uid, username:S.username, text, type:'user', timestamp:serverTimestamp(),
+  });
+};
+
+/* ── SEASON ───────────────────────────────────────────── */
+function loadSeason() {
+  unsub('_leagueUnsub'); unsub('_chatUnsub'); unsub('_tradesUnsub');
+
+  // Update topbar week
+  eid('tb-week').textContent = `Week ${S.league?.week||1}`;
+
+  // Load all teams once
+  getDocs(collection(db,'leagues',S.leagueId,'teams')).then(snap=>{
+    snap.docs.forEach(d=>{ S.teams[d.id]={uid:d.id,...d.data()}; });
+    // My roster from my team doc
+    if (S.teams[S.uid]) S.myRoster = S.teams[S.uid].roster||[];
+    renderSeasonTeam();
+    renderStandings();
+    populateTradeTargetDropdown();
+  });
+
+  // Chat listener
+  S._chatUnsub = onSnapshot(
+    query(collection(db,'leagues',S.leagueId,'chat'),orderBy('timestamp','asc'),limit(100)),
+    snap=>renderSeasonChat(snap.docs.map(d=>d.data()))
+  );
+
+  // Trades listener
+  S._tradesUnsub = onSnapshot(
+    collection(db,'leagues',S.leagueId,'trades'),
+    snap=>renderPendingTrades(snap.docs.map(d=>({id:d.id,...d.data()})))
+  );
+}
+
+window.switchSeasonTab = function(tab, btn) {
+  document.querySelectorAll('.season-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.season-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  eid('season-panel-'+tab).classList.add('active');
+  S.seasonTab = tab;
+};
+
+/* My Team */
+function renderSeasonTeam() {
+  const roster = S.myRoster;
+  const used   = new Set();
+  const team   = S.teams[S.uid];
+  eid('season-team-name').textContent = team?.teamName || S.teamName;
+  const projTotal = roster.reduce((s,p)=>s+p.ppg,0).toFixed(1);
+  eid('season-team-sub').textContent = `${roster.length} players · ${projTotal} proj PPR pts/wk`;
+
+  const filled = ROSTER_SLOTS.map(slotDef=>{
+    const p = roster.find(r=>!used.has(r.id)&&slotDef.pos.includes(r.pos));
+    if(p) used.add(p.id);
+    return {label:slotDef.label, player:p||null, isBench:slotDef.slot.startsWith('BN')};
+  });
+
+  eid('season-roster').innerHTML = filled.map(s=>`
+    <div class="roster-card ${!s.isBench&&s.player?'starter':''}">
+      <div class="rc-slot">${s.label}</div>
+      ${s.player?`
+        <div class="pos-chip pos-${s.player.pos}" style="width:32px;height:20px;font-size:.65rem">${s.player.pos}</div>
+        <div class="rc-info">
+          <div class="rc-name">${esc(s.player.name)}</div>
+          <div class="rc-meta">${s.player.team} · Rank ${s.player.pos}${s.player.rank}</div>
+        </div>
+        <span class="${s.isBench?'bench-tag':'starter-tag'}">${s.isBench?'BN':'START'}</span>
+        <div class="rc-ppg">${s.player.ppg}</div>
+      `:
+        `<div style="flex:1;font-size:.78rem;color:var(--t3);font-style:italic">Empty slot</div>`
+      }
+    </div>`).join('');
+}
+
+/* Standings */
+function renderStandings() {
+  eid('standings-week').textContent = S.league?.week||1;
+  const teams = Object.values(S.teams).map(t=>({
+    ...t,
+    projPts: (t.roster||[]).reduce((s,p)=>s+p.ppg,0).toFixed(1),
+  })).sort((a,b)=>b.projPts-a.projPts);
+
+  eid('standings-list').innerHTML = teams.map((t,i)=>`
+    <div class="standings-row">
+      <div class="standings-rank">${i+1}</div>
+      <div class="lobby-avatar" style="width:28px;height:28px;font-size:.72rem;flex-shrink:0">${(t.username||'?')[0].toUpperCase()}</div>
+      <div style="flex:1">
+        <div class="standings-name">${esc(t.teamName)} ${t.uid===S.uid?'<span style="font-size:.65rem;color:var(--blue)">(You)</span>':''}</div>
+        <div style="font-size:.7rem;color:var(--t2)">@${esc(t.username)}</div>
+      </div>
+      <div class="standings-pts">${t.projPts} pts/wk</div>
+    </div>`).join('');
+}
+
+/* Season Chat */
+function renderSeasonChat(messages) {
+  const el = eid('season-chat-messages');
+  if (!el) return;
+  el.innerHTML = messages.map(m=>{
+    const time = m.timestamp?.toDate ? m.timestamp.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+    return `<div class="fcm ${m.type==='system'?'system':''} ${m.uid===S.uid?'mine':''}">
+      ${m.type!=='system'?`<div class="fcm-header"><span class="fcm-user">${esc(m.username||'?')}</span><span class="fcm-time">${time}</span></div>`:''}
+      <div class="fcm-text">${esc(m.text||'')}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+window.sendSeasonChat = async function() {
+  const input = eid('season-chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+    uid:S.uid, username:S.username, text, type:'user', timestamp:serverTimestamp(),
+  });
+};
+
+/* ── TRADES ───────────────────────────────────────────── */
+function populateTradeTargetDropdown() {
+  const sel = eid('trade-target-select');
+  sel.innerHTML = '<option value="">Select a team…</option>' +
+    Object.values(S.teams)
+      .filter(t=>t.uid!==S.uid)
+      .map(t=>`<option value="${t.uid}">${esc(t.teamName)} (@${esc(t.username)})</option>`)
+      .join('');
+}
+
+window.updateTradeForm = function() {
+  const targetUid = eid('trade-target-select').value;
+  const grid      = eid('trade-select-grid');
+  const msgField  = eid('trade-message-field');
+  const sendBtn   = eid('send-trade-btn');
+  S.tradeGive = new Set();
+  S.tradeGet  = new Set();
+
+  if (!targetUid) { grid.style.display='none'; msgField.style.display='none'; sendBtn.style.display='none'; return; }
+
+  const theirTeam = S.teams[targetUid];
+  const myRoster  = S.myRoster;
+  const theirRoster= theirTeam?.roster||[];
+
+  function makeList(roster, set, divId) {
+    eid(divId).innerHTML = roster.map(p=>`
+      <button class="trade-player-toggle" id="tpt-${divId}-${p.id}" onclick="toggleTradePick('${divId}',${p.id},'${set}')">
+        <div class="pos-chip pos-${p.pos}" style="width:26px;height:16px;font-size:.55rem">${p.pos}</div>
+        ${esc(p.name)} <span style="color:var(--t2);font-size:.72rem">${p.ppg}pts</span>
+      </button>`).join('');
+  }
+  makeList(myRoster,   'give', 'trade-give-players');
+  makeList(theirRoster,'get',  'trade-get-players');
+  grid.style.display='grid'; msgField.style.display='block'; sendBtn.style.display='flex';
+};
+
+window.toggleTradePick = function(panel, playerId, setKey) {
+  const set = setKey==='give' ? S.tradeGive : S.tradeGet;
+  const btn = eid(`tpt-${panel}-${playerId}`);
+  if (set.has(playerId)) { set.delete(playerId); btn.classList.remove('selected'); }
+  else { set.add(playerId); btn.classList.add('selected'); }
+};
+
+window.sendTradeOffer = async function() {
+  const targetUid = eid('trade-target-select').value;
+  if (!targetUid) { toast('Select a team','error'); return; }
+  if (!S.tradeGive.size||!S.tradeGet.size) { toast('Select at least one player on each side','error'); return; }
+
+  const theirTeam  = S.teams[targetUid];
+  const myRoster   = S.myRoster;
+  const theirRoster= theirTeam?.roster||[];
+  const give = myRoster.filter(p=>S.tradeGive.has(p.id));
+  const get  = theirRoster.filter(p=>S.tradeGet.has(p.id));
+  const msg  = eid('trade-message-input').value.trim();
+
+  await addDoc(collection(db,'leagues',S.leagueId,'trades'),{
+    fromUid:S.uid, fromUsername:S.username, fromTeamName:S.teamName,
+    toUid:targetUid, toUsername:theirTeam?.username, toTeamName:theirTeam?.teamName,
+    give, get, message:msg, status:'pending', createdAt:serverTimestamp(),
+  });
+  await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+    type:'system',
+    text:`🔄 ${S.username} sent a trade offer to ${theirTeam?.username}`,
+    timestamp:serverTimestamp(),
+  });
+  toast('Trade offer sent!','success');
+  eid('trade-target-select').value='';
+  updateTradeForm();
+};
+
+function renderPendingTrades(trades) {
+  const el = eid('pending-trades');
+  const relevant = trades.filter(t=>t.status==='pending'&&(t.fromUid===S.uid||t.toUid===S.uid));
+  if (!relevant.length) {
+    el.innerHTML='<div class="empty-state"><div class="big">🤝</div><h4>No pending trades</h4><p>Send an offer using the form below.</p></div>';
+    return;
+  }
+  el.innerHTML = relevant.map(t=>{
+    const isReceiver = t.toUid===S.uid;
+    return `<div class="trade-card">
+      <div class="trade-header">
+        <strong>${isReceiver?`Offer from ${esc(t.fromTeamName)}`:`Your offer to ${esc(t.toTeamName)}`}</strong>
+        <span class="badge badge-yellow">Pending</span>
+      </div>
+      <div class="trade-body">
+        <div>
+          <div class="trade-side-label give-label">${isReceiver?'They give':'You give'}</div>
+          ${(t.give||[]).map(p=>`<div class="trade-player-chip">
+            <div class="tpc-name">${esc(p.name)}</div>
+            <div class="tpc-meta">${p.pos} · ${p.team} · ${p.ppg} pts/gm</div>
+          </div>`).join('')}
+        </div>
+        <div class="trade-arrow">⇄</div>
+        <div>
+          <div class="trade-side-label get-label">${isReceiver?'You give':'They give'}</div>
+          ${(t.get||[]).map(p=>`<div class="trade-player-chip">
+            <div class="tpc-name">${esc(p.name)}</div>
+            <div class="tpc-meta">${p.pos} · ${p.team} · ${p.ppg} pts/gm</div>
+          </div>`).join('')}
+        </div>
+      </div>
+      ${t.message?`<div style="padding:0 14px 10px;font-size:.78rem;color:var(--t2)">💬 ${esc(t.message)}</div>`:''}
+      ${isReceiver?`<div class="trade-footer">
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="respondTrade('${t.id}',true)">Accept</button>
+        <button class="btn btn-red btn-sm"   style="flex:1" onclick="respondTrade('${t.id}',false)">Decline</button>
+      </div>`:''}
     </div>`;
   }).join('');
 }
 
-function assignSlotsToRoster(roster) {
-  const used = new Set();
-  const result = [];
+window.respondTrade = async function(tradeId, accept) {
+  const tradeRef = doc(db,'leagues',S.leagueId,'trades',tradeId);
+  const tradeSnap= await getDoc(tradeRef);
+  const trade    = tradeSnap.data();
+  if (!trade||trade.status!=='pending') return;
 
-  ROSTER_SLOTS.forEach(slotDef => {
-    const player = roster.find(p => !used.has(p.id) && slotDef.pos.includes(p.pos));
-    if (player) used.add(player.id);
-    result.push({ label: slotDef.label, player: player || null });
-  });
-  return result;
-}
-
-// ══════════════════════════════════════════════════════
-//  MY TEAM VIEW
-// ══════════════════════════════════════════════════════
-function renderTeamView() {
-  const el = document.getElementById('team-content');
-  const myTeam = league.teams[league.myPick - 1];
-
-  if (!myTeam || !myTeam.roster.length) {
-    el.innerHTML = `<div class="empty-state">
-      <h3>No team yet</h3>
-      <p>Complete the draft first to see your roster.</p>
-      <br><button class="btn-primary" style="width:auto;padding:14px 28px;" onclick="showView('draft')">Go to Draft →</button>
-    </div>`;
-    return;
-  }
-
-  const slots = assignSlotsToRoster(myTeam.roster);
-  const starters = slots.filter(s => !s.label.startsWith('BN'));
-  const bench    = slots.filter(s => s.label.startsWith('BN'));
-  const projTotal = myTeam.roster.reduce((s,p) => s + p.ppg, 0).toFixed(1);
-  const projStarter = starters.reduce((s,sl) => s + (sl.player ? sl.player.ppg : 0), 0).toFixed(1);
-
-  const posOrder = ['QB','RB','WR','TE','K','DST'];
-  const byPos = {};
-  posOrder.forEach(pos => {
-    byPos[pos] = myTeam.roster.filter(p => p.pos === pos).sort((a,b) => a.rank - b.rank);
-  });
-
-  el.innerHTML = `
-    <div class="team-header-card">
-      <div>
-        <div class="team-name-big">${myTeam.name}</div>
-        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">PPR Scoring · ${myTeam.roster.length} players</div>
-      </div>
-      <div class="team-stats">
-        <div class="team-stat">
-          <div class="team-stat-val">${projStarter}</div>
-          <div class="team-stat-label">Proj Pts/Wk</div>
-        </div>
-        <div class="team-stat">
-          <div class="team-stat-val">${myTeam.roster.length}</div>
-          <div class="team-stat-label">Players</div>
-        </div>
-        <div class="team-stat">
-          <div class="team-stat-val">${league.myPick}</div>
-          <div class="team-stat-label">Draft Pos</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="position-section">
-      <div class="position-section-title" style="color:var(--green)">Starters</div>
-      ${starters.map(s => {
-        if (!s.player) return `<div class="roster-card" style="opacity:.3">
-          <div class="pos-badge ${s.label}">${s.label}</div>
-          <div class="player-info"><h4 style="color:rgba(255,255,255,.3)">Empty Slot</h4></div>
-        </div>`;
-        const p = s.player;
-        return `<div class="roster-card">
-          <div class="pos-badge ${p.pos}">${p.pos}</div>
-          <div class="player-info">
-            <h4>${p.name}</h4>
-            <p>${p.team} · Rank: ${p.pos} ${p.rank} overall</p>
-          </div>
-          <div style="margin-right:8px;"><span class="starter-tag">STARTER</span></div>
-          <div class="proj-pts">
-            <div class="pts-val">${p.ppg}</div>
-            <div class="pts-label">PPR pts/gm</div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-
-    <div class="position-section">
-      <div class="position-section-title" style="color:rgba(255,255,255,.4)">Bench</div>
-      ${bench.filter(s => s.player).map(s => {
-        const p = s.player;
-        return `<div class="roster-card">
-          <div class="pos-badge ${p.pos}">${p.pos}</div>
-          <div class="player-info">
-            <h4>${p.name}</h4>
-            <p>${p.team} · Rank: ${p.pos} ${p.rank} overall</p>
-          </div>
-          <div style="margin-right:8px;"><span class="bench-tag">BENCH</span></div>
-          <div class="proj-pts">
-            <div class="pts-val" style="color:rgba(255,255,255,.5)">${p.ppg}</div>
-            <div class="pts-label">PPR pts/gm</div>
-          </div>
-        </div>`;
-      }).join('')}
-    </div>
-  `;
-}
-
-// ══════════════════════════════════════════════════════
-//  TRADE ADVISOR
-// ══════════════════════════════════════════════════════
-function renderTradesView() {
-  const el = document.getElementById('trades-content');
-  const myTeam = league.teams[league.myPick - 1];
-
-  if (!myTeam || !myTeam.roster.length) {
-    el.innerHTML = `<div class="empty-state">
-      <h3>Complete your draft first</h3>
-      <p>Trade suggestions are generated after the draft based on your roster needs.</p>
-      <br><button class="btn-primary" style="width:auto;padding:14px 28px;" onclick="showView('draft')">Go to Draft →</button>
-    </div>`;
-    return;
-  }
-
-  const grades = gradeRoster(myTeam);
-  const suggestions = generateTrades(myTeam, grades);
-
-  el.innerHTML = `
-    <div class="trade-page-title">Trade Advisor</div>
-    <div class="trade-sub">PPR-optimized trade suggestions based on your roster strengths & weaknesses</div>
-
-    <div style="font-size:.7rem;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:10px;">Your Roster Grades</div>
-    <div class="strength-meter">
-      ${Object.entries(grades).map(([pos, data]) => `
-        <div class="strength-item">
-          <div class="strength-pos" style="color:${posColor(pos)}">${pos}</div>
-          <div class="strength-bar"><div class="strength-fill" style="width:${data.score}%;background:${gradeColor(data.grade)}"></div></div>
-          <div class="strength-grade grade-${data.grade}">${data.grade}</div>
-        </div>
-      `).join('')}
-    </div>
-
-    <div style="font-size:.7rem;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.4);text-transform:uppercase;margin:20px 0 12px;">Suggested Trades</div>
-
-    ${suggestions.length ? suggestions.map(t => `
-      <div class="trade-card">
-        <div class="trade-card-header">
-          <div style="font-weight:700;font-size:.95rem">${t.targetTeam}</div>
-          <div class="trade-value-badge ${t.valueClass}">${t.valueLabel}</div>
-        </div>
-        <div class="trade-players">
-          <div class="trade-side">
-            <div class="trade-side-label" style="color:var(--red)">You Give</div>
-            ${t.give.map(p => `
-              <div class="trade-player-chip">
-                <div class="pos-badge ${p.pos}" style="width:30px;height:18px;font-size:.6rem">${p.pos}</div>
-                <div>
-                  <div style="font-size:.82rem;font-weight:700">${p.name}</div>
-                  <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${p.team} · ${p.ppg} pts/gm</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-          <div class="trade-arrow">⇄</div>
-          <div class="trade-side">
-            <div class="trade-side-label" style="color:var(--green)">You Get</div>
-            ${t.get.map(p => `
-              <div class="trade-player-chip">
-                <div class="pos-badge ${p.pos}" style="width:30px;height:18px;font-size:.6rem">${p.pos}</div>
-                <div>
-                  <div style="font-size:.82rem;font-weight:700">${p.name}</div>
-                  <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${p.team} · ${p.ppg} pts/gm</div>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div class="trade-rationale">${t.rationale}</div>
-      </div>
-    `).join('') : '<div class="empty-state"><h3>Your roster is balanced!</h3><p>No lopsided trades recommended right now.</p></div>'}
-  `;
-}
-
-function posColor(pos) {
-  const c = { QB:'#e74c3c', RB:'#27ae60', WR:'#3498db', TE:'#f39c12', K:'#95a5a6', DST:'#9b59b6' };
-  return c[pos] || '#fff';
-}
-function gradeColor(g) {
-  const c = { A:'#00C853', B:'#7ddd9c', C:'#FFD700', D:'#f39c12', F:'#FF3D3D' };
-  return c[g] || '#fff';
-}
-
-function gradeRoster(team) {
-  const positions = ['QB','RB','WR','TE','K','DST'];
-  const maxRanks  = { QB:12, RB:28, WR:28, TE:12, K:8, DST:10 };
-  const grades = {};
-
-  positions.forEach(pos => {
-    const players = team.roster.filter(p => p.pos === pos).sort((a,b) => a.rank - b.rank);
-    if (!players.length) {
-      grades[pos] = { grade:'F', score:0, players:[] };
-      return;
-    }
-    const top = players[0];
-    const pct = 1 - (top.rank - 1) / maxRanks[pos];
-    const score = Math.round(pct * 100);
-    let grade = 'F';
-    if (score >= 85) grade = 'A';
-    else if (score >= 70) grade = 'B';
-    else if (score >= 50) grade = 'C';
-    else if (score >= 30) grade = 'D';
-    grades[pos] = { grade, score, players };
-  });
-  return grades;
-}
-
-function generateTrades(myTeam, grades) {
-  const suggestions = [];
-  const positions = ['QB','RB','WR','TE'];
-
-  // Find my strengths and weaknesses
-  const sorted = positions.sort((a,b) => grades[b]?.score - grades[a]?.score);
-  const strengths = sorted.slice(0, 2);
-  const weaknesses = sorted.slice(-2).filter(p => (grades[p]?.score || 0) < 70);
-
-  weaknesses.forEach(weakPos => {
-    strengths.forEach(strongPos => {
-      if (weakPos === strongPos) return;
-
-      const myStrong = (grades[strongPos]?.players || []).slice(1); // not my starter
-      const myWeak   = (grades[weakPos]?.players   || []).slice(0, 1);
-
-      if (!myStrong.length) return;
-
-      // Find an opponent who has a good player at weak position and might want strong
-      const opponent = league.teams.find(t => !t.isMine && t.roster.some(p => p.pos === weakPos && p.rank <= 8));
-      if (!opponent) return;
-
-      const theirPlayer = opponent.roster.filter(p => p.pos === weakPos).sort((a,b) => a.rank-b.rank)[0];
-      const myGivePlayer = myStrong[0];
-      if (!theirPlayer || !myGivePlayer) return;
-
-      const myGetPPG  = theirPlayer.ppg;
-      const myGivePPG = myGivePlayer.ppg;
-      const netPPG    = myGetPPG - myGivePPG;
-
-      let valueLabel, valueClass;
-      if (netPPG >= 2)        { valueLabel = 'WIN'; valueClass = 'value-win'; }
-      else if (netPPG >= -1)  { valueLabel = 'FAIR'; valueClass = 'value-fair'; }
-      else                    { valueLabel = 'SELL HIGH'; valueClass = 'value-fair'; }
-
-      const gradeFrom = grades[strongPos]?.grade;
-      const gradeTo   = grades[weakPos]?.grade || 'F';
-
-      suggestions.push({
-        targetTeam: opponent.name,
-        give: [myGivePlayer],
-        get:  [theirPlayer],
-        valueLabel,
-        valueClass,
-        rationale: `Your <strong>${strongPos}</strong> depth (grade ${gradeFrom}) is strong — you can afford to deal ${myGivePlayer.name}. Their <strong>${theirPlayer.name}</strong> upgrades your ${weakPos} from grade ${gradeTo} to a starter, adding ~${Math.abs(netPPG).toFixed(1)} projected PPR pts/week to your lineup.`,
-      });
+  if (accept) {
+    // Swap players via transaction
+    const fromRef = doc(db,'leagues',S.leagueId,'teams',trade.fromUid);
+    const toRef   = doc(db,'leagues',S.leagueId,'teams',trade.toUid);
+    await runTransaction(db, async tx=>{
+      const fSnap = await tx.get(fromRef);
+      const tSnap = await tx.get(toRef);
+      const giveIds = (trade.give||[]).map(p=>p.id);
+      const getIds  = (trade.get||[]).map(p=>p.id);
+      const fRoster = (fSnap.data()?.roster||[]).filter(p=>!giveIds.includes(p.id)).concat(trade.get||[]);
+      const tRoster = (tSnap.data()?.roster||[]).filter(p=>!getIds.includes(p.id)).concat(trade.give||[]);
+      tx.update(fromRef,{roster:fRoster});
+      tx.update(toRef,  {roster:tRoster});
+      tx.update(tradeRef,{status:'accepted'});
     });
-  });
-
-  // Add a "sell high" suggestion if user has an early-round RB
-  const eliteRBs = myTeam.roster.filter(p => p.pos === 'RB' && p.rank <= 3);
-  if (eliteRBs.length >= 2) {
-    const sellRB = eliteRBs[1];
-    const wantWR = league.teams.find(t => !t.isMine && t.roster.some(p => p.pos === 'WR' && p.rank <= 5));
-    if (wantWR) {
-      const theirWR = wantWR.roster.filter(p => p.pos === 'WR').sort((a,b)=>a.rank-b.rank)[0];
-      if (theirWR && !suggestions.find(s => s.give.includes(sellRB))) {
-        suggestions.push({
-          targetTeam: wantWR.name,
-          give: [sellRB],
-          get:  [theirWR],
-          valueLabel: 'WIN',
-          valueClass: 'value-win',
-          rationale: `You have two elite RBs — <strong>sell from RB depth</strong> to add a WR1. In PPR, having a balanced attack beats a one-position surplus. Trading ${sellRB.name} for ${theirWR.name} improves your WR corps while their team gets the RB2 they need.`,
-        });
-      }
-    }
+    // Refresh my roster
+    S.myRoster = (await getDoc(doc(db,'leagues',S.leagueId,'teams',S.uid))).data()?.roster||[];
+    await addDoc(collection(db,'leagues',S.leagueId,'chat'),{
+      type:'system',
+      text:`✅ Trade accepted: ${trade.fromUsername} ⇄ ${trade.toUsername}`,
+      timestamp:serverTimestamp(),
+    });
+    toast('Trade accepted!','success');
+  } else {
+    await updateDoc(tradeRef,{status:'rejected'});
+    toast('Trade declined.');
   }
+};
 
-  return suggestions.slice(0, 4);
+/* ── UTILITIES ────────────────────────────────────────── */
+function setTopbar() {
+  const right = eid('topbar-right');
+  right.style.display='flex';
+  eid('tb-username').textContent = `@${S.username}`;
+  if (S.league?.week) eid('tb-week').textContent=`Week ${S.league.week}`;
 }
 
-// ══════════════════════════════════════════════════════
-//  TOAST
-// ══════════════════════════════════════════════════════
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 3000);
+function setLoading(msg='Loading…') {
+  eid('loading-msg').textContent=msg;
+  eid('loading').classList.remove('hidden');
 }
+function hide(id) { eid(id).classList.add('hidden'); }
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
-// Set setup view active
-document.getElementById('view-setup').classList.add('active');
-document.getElementById('view-draft').classList.remove('active');
+let toastTimer;
+function toast(msg,type='') {
+  const el=eid('toast');
+  el.textContent=msg;
+  el.className=`toast show${type?' '+type:''}`;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),3000);
+}
+window.showToast = toast; // expose globally
+
+function eid(id) { return document.getElementById(id); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function genCode() {
+  return Array.from({length:6},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+}
+function shuffle(a) { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function unsub(key) { if(S[key]) { S[key](); S[key]=null; } }
+
+/* expose to HTML onclick handlers */
+window.pickPlayer    = window.pickPlayer;
+window.setPoolFilter = window.setPoolFilter;
+window.sendDraftChat = window.sendDraftChat;
+window.sendSeasonChat= window.sendSeasonChat;
+window.sendTradeOffer= window.sendTradeOffer;
+window.respondTrade  = window.respondTrade;
+window.updateTradeForm=window.updateTradeForm;
+window.toggleTradePick=window.toggleTradePick;
+window.switchSeasonTab=window.switchSeasonTab;
+window.switchHomeTab =window.switchHomeTab;
+window.submitAuth    =window.submitAuth;
+window.createLeague  =window.createLeague;
+window.joinLeague    =window.joinLeague;
+window.startDraft    =window.startDraft;
+window.copyInviteCode=window.copyInviteCode;
+window.leaveLeague   =window.leaveLeague;
+
 </script>
 </body>
 </html>
