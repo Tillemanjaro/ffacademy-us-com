@@ -607,23 +607,41 @@ button { cursor:pointer; border:none; background:none; }
 }
 #view-landing.active { display:flex; }
 
+.land-signin-bar {
+  display:flex; align-items:center; justify-content:flex-end;
+  padding:16px 24px; gap:8px; font-size:.82rem; color:var(--t3);
+}
+.land-signin-link {
+  color:var(--blue); font-weight:700; cursor:pointer;
+  background:none; border:none; font-size:.82rem; padding:0;
+}
+.land-signin-link:hover { text-decoration:underline; }
+
+/* Hero */
 .land-hero {
-  flex:1; display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  padding:60px 24px 40px; text-align:center;
-  background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,142,247,.18) 0%, transparent 70%);
+  display:flex; flex-direction:column; align-items:center;
+  padding:16px 24px 64px; text-align:center;
+  background:radial-gradient(ellipse 90% 55% at 50% 0%, rgba(79,142,247,.16) 0%, transparent 68%);
 }
-.land-wordmark {
-  font-size:3.8rem; font-weight:900; letter-spacing:-2px;
-  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.7) 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-  margin-bottom:6px; line-height:1;
+.land-eyebrow {
+  font-size:.68rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+  color:var(--blue); background:rgba(79,142,247,.12);
+  border:1px solid rgba(79,142,247,.25); padding:5px 14px;
+  border-radius:20px; margin-bottom:20px;
 }
-.land-wordmark span { color:var(--blue); -webkit-text-fill-color:var(--blue); }
-.land-tagline {
-  font-size:1.05rem; color:var(--t2); font-weight:500; margin-bottom:36px; line-height:1.5;
+.land-h1 {
+  font-size:clamp(1.9rem, 6vw, 3.2rem); font-weight:900;
+  letter-spacing:-1.5px; line-height:1.1; margin-bottom:20px; max-width:640px;
 }
-.land-ctas { display:flex; flex-direction:column; gap:10px; width:100%; max-width:320px; margin-bottom:48px; }
+.land-h1-dim { color:rgba(255,255,255,.38); }
+.land-hero-sub {
+  font-size:1rem; color:var(--t2); max-width:500px;
+  line-height:1.7; margin-bottom:36px;
+}
+.land-hero-cta {
+  display:flex; flex-direction:column; gap:10px;
+  width:100%; max-width:300px; margin-bottom:0;
+}
 .land-cta-primary {
   padding:16px; background:var(--blue); color:#fff;
   border-radius:14px; font-size:1rem; font-weight:800;
@@ -638,9 +656,59 @@ button { cursor:pointer; border:none; background:none; }
 }
 .land-cta-secondary:hover { background:rgba(255,255,255,.12); }
 
+/* Pain section */
+.land-section {
+  padding:64px 24px; max-width:780px; margin:0 auto; width:100%;
+  box-sizing:border-box;
+}
+.land-section-eyebrow {
+  font-size:.68rem; font-weight:800; letter-spacing:2px; text-transform:uppercase;
+  color:var(--t3); text-align:center; margin-bottom:10px;
+}
+.land-section-title {
+  font-size:clamp(1.4rem, 4vw, 2rem); font-weight:900;
+  letter-spacing:-.5px; text-align:center; line-height:1.2; margin-bottom:32px;
+}
+.land-pain-grid { display:grid; gap:12px; }
+.land-pain-card {
+  background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.18);
+  border-radius:16px; padding:20px 20px 20px 18px;
+  display:flex; gap:14px; align-items:flex-start;
+}
+.pain-icon { font-size:1.6rem; flex-shrink:0; line-height:1; margin-top:2px; }
+.pain-quote {
+  font-size:.9rem; color:rgba(255,255,255,.72);
+  line-height:1.6; font-style:italic;
+}
+.pain-source {
+  font-size:.72rem; color:var(--t3); margin-top:6px;
+  font-style:normal; font-weight:600;
+}
+
+/* Solution section */
+.land-sol-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+}
+@media(max-width:500px){ .land-sol-grid { grid-template-columns:1fr; } }
+.land-sol-card {
+  background:var(--card); border:1px solid var(--border2);
+  border-radius:16px; padding:22px;
+}
+.land-sol-icon { font-size:1.6rem; margin-bottom:10px; }
+.land-sol-title { font-size:.95rem; font-weight:800; margin-bottom:6px; }
+.land-sol-text { font-size:.82rem; color:var(--t2); line-height:1.6; }
+
 /* Mock draft preview */
+.land-preview-wrap {
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+}
+.land-preview-tag {
+  font-size:.68rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--t3); background:var(--surface); border:1px solid var(--border);
+  padding:5px 14px; border-radius:20px;
+}
 .land-preview {
-  width:100%; max-width:340px; margin:0 auto;
+  width:100%; max-width:340px;
   background:var(--card); border:1px solid var(--border2);
   border-radius:20px; overflow:hidden;
   box-shadow:0 24px 60px rgba(0,0,0,.6);
@@ -672,34 +740,31 @@ button { cursor:pointer; border:none; background:none; }
 }
 .lp-other-row:last-child { border-bottom:none; }
 
-/* Features strip */
-.land-features {
-  display:flex; gap:0;
-  border-top:1px solid var(--border);
-  background:var(--surface);
+/* Final CTA */
+.land-final {
+  padding:64px 24px 80px; text-align:center;
+  background:radial-gradient(ellipse 80% 80% at 50% 100%, rgba(79,142,247,.1) 0%, transparent 70%);
+  display:flex; flex-direction:column; align-items:center;
 }
-.land-feature {
-  flex:1; padding:20px 16px; text-align:center;
-  border-right:1px solid var(--border);
+.land-final h2 {
+  font-size:clamp(1.4rem,4vw,2rem); font-weight:900;
+  letter-spacing:-.5px; margin-bottom:10px;
 }
-.land-feature:last-child { border-right:none; }
-.lf-icon { font-size:1.4rem; margin-bottom:6px; }
-.lf-title { font-size:.72rem; font-weight:800; letter-spacing:.3px; margin-bottom:3px; }
-.lf-sub { font-size:.65rem; color:var(--t2); line-height:1.4; }
-
-/* Join via link input */
-.land-join-row {
-  display:flex; gap:8px; width:100%; max-width:320px; margin-top:-30px;
+.land-final p { color:var(--t2); font-size:.9rem; margin-bottom:28px; line-height:1.5; }
+.land-ctas {
+  display:flex; flex-direction:column; gap:10px;
+  width:100%; max-width:300px; margin-bottom:16px;
 }
+#land-join-section { display:none; }
 .land-join-input {
-  flex:1; padding:13px 14px; background:rgba(255,255,255,.06);
+  width:100%; max-width:300px; padding:14px; background:rgba(255,255,255,.06);
   border:1px solid var(--border2); border-radius:12px;
   color:var(--t1); font-size:.95rem; text-align:center;
   letter-spacing:3px; text-transform:uppercase; font-weight:700;
+  box-sizing:border-box; margin-bottom:10px;
 }
 .land-join-input::placeholder { letter-spacing:0; font-weight:400; text-transform:none; color:var(--t3); }
 .land-join-input:focus { outline:none; border-color:var(--blue); }
-#land-join-section { display:none; }
 
 /* ── ONBOARDING TOUR ─────────────────────────────────── */
 #tour-overlay {
@@ -795,76 +860,142 @@ button { cursor:pointer; border:none; background:none; }
 
 <!-- ══ VIEW: LANDING ══ -->
 <div id="view-landing" class="view">
-  <div class="land-hero">
-    <div class="land-wordmark">Snap<span>⚡</span></div>
-    <div class="land-tagline">Fantasy football, the fast way.<br>Draft live. Trade anytime. Win together.</div>
 
+  <!-- Top bar: returning users -->
+  <div class="land-signin-bar">
+    <span>Already have an account?</span>
+    <button class="land-signin-link" onclick="showView('login')">Sign In →</button>
+  </div>
+
+  <!-- Hero -->
+  <div class="land-hero">
+    <div class="land-eyebrow">⚡ Snap — Fantasy Football</div>
+    <h1 class="land-h1">
+      <span class="land-h1-dim">Other apps just drop you in.</span><br>
+      Snap walks you through it.
+    </h1>
+    <p class="land-hero-sub">
+      ESPN, Yahoo, and Sleeper are built for people who've been playing for years.
+      Snap explains the jargon, guides your picks, and helps you make smart decisions
+      from the very first draft pick.
+    </p>
+    <div class="land-hero-cta">
+      <button class="land-cta-primary" onclick="showView('login')">Get Started Free →</button>
+    </div>
+  </div>
+
+  <!-- Pain section -->
+  <div class="land-section">
+    <div class="land-section-eyebrow">Sound familiar?</div>
+    <div class="land-section-title">Fantasy football has a learning curve.<br>Other apps don't care.</div>
+    <div class="land-pain-grid">
+      <div class="land-pain-card">
+        <div class="pain-icon">😤</div>
+        <div>
+          <div class="pain-quote">"I panicked during the draft and took three quarterbacks. Nobody told me you only start one."</div>
+          <div class="pain-source">— Every first-year player, ever</div>
+        </div>
+      </div>
+      <div class="land-pain-card">
+        <div class="pain-icon">🤝</div>
+        <div>
+          <div class="pain-quote">"Someone offered me a trade and I had no idea if it was fair or if they were completely scamming me. I just accepted."</div>
+          <div class="pain-source">— Week 3, every season</div>
+        </div>
+      </div>
+      <div class="land-pain-card">
+        <div class="pain-icon">📖</div>
+        <div>
+          <div class="pain-quote">"PPR. FAAB. Waiver wire. Bye weeks. I was Googling every term while my draft timer counted down to zero."</div>
+          <div class="pain-source">— The draft room, every year</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Solution section -->
+  <div class="land-section" style="padding-top:0">
+    <div class="land-section-eyebrow">How Snap is different</div>
+    <div class="land-section-title">Built to guide you,<br>not overwhelm you.</div>
+    <div class="land-sol-grid">
+      <div class="land-sol-card">
+        <div class="land-sol-icon">⚡</div>
+        <div class="land-sol-title">Guided Live Draft</div>
+        <div class="land-sol-text">Snap highlights the best pick for your roster and tells you why — before your clock runs out. No more staring at 200 players wondering who to take.</div>
+      </div>
+      <div class="land-sol-card">
+        <div class="land-sol-icon">📖</div>
+        <div class="land-sol-title">Jargon, Explained</div>
+        <div class="land-sol-text">PPR, waiver wire, bye week, snap count — every term is explained in plain English right where you see it. Stop Googling mid-draft.</div>
+      </div>
+      <div class="land-sol-card">
+        <div class="land-sol-icon">🔄</div>
+        <div class="land-sol-title">Fair Trade Tool</div>
+        <div class="land-sol-text">Before you accept any trade, see exactly what you're giving up and getting. Know if you're winning the deal or getting taken advantage of.</div>
+      </div>
+      <div class="land-sol-card">
+        <div class="land-sol-icon">💬</div>
+        <div class="land-sol-title">League Chat</div>
+        <div class="land-sol-text">Talk trades, celebrate wins, and trash talk — all in one place with your whole league. No group texts required.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="land-section" style="padding-top:0">
+    <div class="land-preview-wrap">
+      <div class="land-preview-tag">Your live draft room</div>
+      <div class="land-preview">
+        <div class="lp-bar">
+          <div class="lp-pick">Pick 2.03 · Round 2</div>
+          <div class="lp-clock">⚡ On the Clock</div>
+        </div>
+        <div class="lp-player">
+          <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
+          <div class="lp-player-info">
+            <div class="name">Breece Hall</div>
+            <div class="meta">NYJ · 22.8 PPR pts/gm</div>
+            <div class="lp-rec">⭐ Recommended Pick — RB2 scarcity in rounds 3–5</div>
+          </div>
+          <div class="lp-pts">22.8</div>
+        </div>
+        <div class="lp-others">
+          <div class="lp-other-row">
+            <div class="pos-chip pos-WR" style="width:28px;height:16px;font-size:.55rem">WR</div>
+            <span>Ja'Marr Chase</span><span style="margin-left:auto;color:var(--green);font-weight:700">23.2</span>
+          </div>
+          <div class="lp-other-row">
+            <div class="pos-chip pos-RB" style="width:28px;height:16px;font-size:.55rem">RB</div>
+            <span>Bijan Robinson</span><span style="margin-left:auto;color:var(--green);font-weight:700">22.1</span>
+          </div>
+          <div class="lp-other-row">
+            <div class="pos-chip pos-TE" style="width:28px;height:16px;font-size:.55rem">TE</div>
+            <span>Sam LaPorta</span><span style="margin-left:auto;color:var(--green);font-weight:700">16.5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Final CTA -->
+  <div class="land-final">
+    <h2>Ready to actually enjoy fantasy football?</h2>
+    <p>Free to play. No experience required. Takes 2 minutes to start.</p>
     <div class="land-ctas" id="land-main-ctas">
       <button class="land-cta-primary" onclick="landCreate()">Create a League →</button>
       <button class="land-cta-secondary" onclick="landShowJoin()">Join with Invite Code</button>
     </div>
-
-    <div id="land-join-section">
-      <div class="land-join-row" style="width:100%;max-width:320px;margin:0 auto 16px;">
-        <input class="land-join-input" id="land-code-input" type="text"
-          placeholder="Enter code e.g. XK4F2M" maxlength="6"
-          oninput="this.value=this.value.toUpperCase()">
-      </div>
-      <button class="land-cta-primary" style="width:100%;max-width:320px;" onclick="landJoin()">Join League →</button>
+    <div id="land-join-section" style="width:100%;max-width:300px;display:none">
+      <input class="land-join-input" id="land-code-input" type="text"
+        placeholder="Enter code e.g. XK4F2M" maxlength="6"
+        oninput="this.value=this.value.toUpperCase()">
+      <button class="land-cta-primary" style="width:100%" onclick="landJoin()">Join League →</button>
       <div style="margin-top:10px;text-align:center">
         <span class="tour-skip" onclick="landHideJoin()">← Back</span>
       </div>
     </div>
-
-    <!-- Mock draft preview -->
-    <div class="land-preview">
-      <div class="lp-bar">
-        <div class="lp-pick">Pick 2.03 · Round 2</div>
-        <div class="lp-clock">⚡ On the Clock</div>
-      </div>
-      <div class="lp-player">
-        <div class="pos-chip pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
-        <div class="lp-player-info">
-          <div class="name">Breece Hall</div>
-          <div class="meta">NYJ · 22.8 PPR pts/gm</div>
-          <div class="lp-rec">⭐ Recommended Pick</div>
-        </div>
-        <div class="lp-pts">22.8</div>
-      </div>
-      <div class="lp-others">
-        <div class="lp-other-row">
-          <div class="pos-chip pos-WR" style="width:28px;height:16px;font-size:.55rem">WR</div>
-          <span>Ja'Marr Chase</span><span style="margin-left:auto;color:var(--green);font-weight:700">23.2</span>
-        </div>
-        <div class="lp-other-row">
-          <div class="pos-chip pos-RB" style="width:28px;height:16px;font-size:.55rem">RB</div>
-          <span>Bijan Robinson</span><span style="margin-left:auto;color:var(--green);font-weight:700">22.1</span>
-        </div>
-        <div class="lp-other-row">
-          <div class="pos-chip pos-TE" style="width:28px;height:16px;font-size:.55rem">TE</div>
-          <span>Sam LaPorta</span><span style="margin-left:auto;color:var(--green);font-weight:700">16.5</span>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <div class="land-features">
-    <div class="land-feature">
-      <div class="lf-icon">⚡</div>
-      <div class="lf-title">Live Draft</div>
-      <div class="lf-sub">Real-time picks with a timer. Everyone on the clock together.</div>
-    </div>
-    <div class="land-feature">
-      <div class="lf-icon">🔄</div>
-      <div class="lf-title">Trade Anytime</div>
-      <div class="lf-sub">Send offers, negotiate deals all season long.</div>
-    </div>
-    <div class="land-feature">
-      <div class="lf-icon">💬</div>
-      <div class="lf-title">League Chat</div>
-      <div class="lf-sub">Talk trash and celebrate every week.</div>
-    </div>
-  </div>
 </div>
 
 <!-- TOPBAR -->
