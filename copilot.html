@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Fantasy Copilot</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ──────────────────────────────────── */
+:root {
+  --bg:       #070c18;
+  --surface:  #0e1525;
+  --card:     #141d30;
+  --card2:    #1a2540;
+  --border:   rgba(255,255,255,.07);
+  --border2:  rgba(255,255,255,.12);
+
+  --blue:     #4f8ef7;
+  --blue-dim: rgba(79,142,247,.15);
+  --green:    #22d47f;
+  --green-dim:rgba(34,212,127,.15);
+  --yellow:   #fbbf24;
+  --yel-dim:  rgba(251,191,36,.15);
+  --red:      #f87171;
+  --red-dim:  rgba(248,113,113,.15);
+  --purple:   #a78bfa;
+  --pur-dim:  rgba(167,139,250,.15);
+
+  --t1: #ffffff;
+  --t2: rgba(255,255,255,.65);
+  --t3: rgba(255,255,255,.38);
+
+  --r-card: 16px;
+  --r-pill: 100px;
+  --nav-h:  64px;
+  --top-h:  56px;
+}
+
+/* ─── RESET & BASE ──────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { font-size:16px; }
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── TOP BAR ───────────────────────────────────────── */
+.topbar {
+  position: fixed; top:0; left:0; right:0; height: var(--top-h);
+  background: rgba(7,12,24,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  z-index: 100;
+}
+.topbar-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 800; font-size: 1rem; letter-spacing: -.3px;
+}
+.topbar-logo .icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem;
+}
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.week-badge {
+  background: var(--blue-dim); border: 1px solid rgba(79,142,247,.3);
+  color: var(--blue); font-size: .72rem; font-weight: 700;
+  padding: 4px 10px; border-radius: var(--r-pill); letter-spacing: .3px;
+}
+.avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; font-weight: 700;
+}
+
+/* ─── BOTTOM NAV ────────────────────────────────────── */
+.bottom-nav {
+  position: fixed; bottom:0; left:0; right:0;
+  height: var(--nav-h);
+  background: rgba(14,21,37,.96);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 3px; cursor: pointer; padding: 8px 4px;
+  transition: color .2s;
+  color: var(--t3); font-size: .6rem; font-weight: 600;
+  letter-spacing: .3px; text-transform: uppercase;
+  border: none; background: none;
+}
+.nav-item .nav-icon { font-size: 1.2rem; transition: transform .2s; }
+.nav-item.active { color: var(--blue); }
+.nav-item.active .nav-icon { transform: translateY(-2px); }
+.nav-item:hover { color: var(--t2); }
+
+/* ─── SCROLL AREA ───────────────────────────────────── */
+.scroll-area {
+  padding-top: calc(var(--top-h) + 16px);
+  padding-bottom: calc(var(--nav-h) + 16px);
+  padding-left: 16px; padding-right: 16px;
+  max-width: 520px; margin: 0 auto;
+}
+
+/* ─── VIEW SYSTEM ───────────────────────────────────── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ─── SECTION TITLE ─────────────────────────────────── */
+.section-title {
+  font-size: 1.35rem; font-weight: 800; letter-spacing: -.4px;
+  margin-bottom: 4px;
+}
+.section-sub {
+  font-size: .82rem; color: var(--t2); margin-bottom: 20px; line-height: 1.5;
+}
+
+/* ─── BASE CARD ─────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-sm { padding: 12px 14px; }
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.card-title { font-size: .7rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--t3); }
+
+/* ─── STATUS DOTS ───────────────────────────────────── */
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot-yellow { background: var(--yellow); }
+.dot-red { background: var(--red); }
+.dot-blue { background: var(--blue); }
+
+/* ─── CONFIDENCE METER ──────────────────────────────── */
+.conf-wrap { }
+.conf-bar-track {
+  height: 6px; border-radius: var(--r-pill);
+  background: rgba(255,255,255,.08); overflow: hidden;
+  margin: 6px 0 4px;
+}
+.conf-bar-fill {
+  height: 100%; border-radius: var(--r-pill);
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.conf-pct { font-size: .72rem; font-weight: 700; }
+
+/* ─── ACTION CARDS ──────────────────────────────────── */
+.action-card {
+  border-radius: var(--r-card);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.action-card.urgent {
+  background: var(--red-dim); border-color: rgba(248,113,113,.25);
+}
+.action-card.consider {
+  background: var(--yel-dim); border-color: rgba(251,191,36,.25);
+}
+.action-card.good {
+  background: var(--green-dim); border-color: rgba(34,212,127,.25);
+}
+.action-card.learn {
+  background: var(--pur-dim); border-color: rgba(167,139,250,.25);
+}
+.action-icon { font-size: 1.4rem; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.action-label {
+  font-size: .65rem; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 4px;
+}
+.action-card.urgent .action-label   { color: var(--red); }
+.action-card.consider .action-label { color: var(--yellow); }
+.action-card.good .action-label     { color: var(--green); }
+.action-card.learn .action-label    { color: var(--purple); }
+.action-text { font-size: .88rem; font-weight: 500; line-height: 1.4; color: var(--t1); }
+.action-sub  { font-size: .75rem; color: var(--t2); margin-top: 3px; }
+
+/* ─── BADGE ─────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: var(--r-pill);
+  font-size: .65rem; font-weight: 700; letter-spacing: .4px;
+  text-transform: uppercase;
+}
+.badge-blue   { background: var(--blue-dim);  color: var(--blue); }
+.badge-green  { background: var(--green-dim); color: var(--green); }
+.badge-yellow { background: var(--yel-dim);   color: var(--yellow); }
+.badge-red    { background: var(--red-dim);   color: var(--red); }
+.badge-purple { background: var(--pur-dim);   color: var(--purple); }
+.badge-gray   { background: rgba(255,255,255,.08); color: var(--t2); }
+
+/* ─── GRADE BADGE ───────────────────────────────────── */
+.grade {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 900; flex-shrink: 0;
+}
+.grade-a  { background: var(--green-dim); color: var(--green); }
+.grade-b  { background: var(--blue-dim);  color: var(--blue); }
+.grade-b+ { background: var(--blue-dim);  color: var(--blue); }
+.grade-c  { background: var(--yel-dim);   color: var(--yellow); }
+.grade-d  { background: var(--red-dim);   color: var(--red); }
+
+/* ─── PLAYER CARD ───────────────────────────────────── */
+.player-card {
+  background: var(--card2); border-radius: 12px;
+  padding: 14px; margin-bottom: 8px;
+  border: 1px solid var(--border);
+}
+.player-card.primary { border-color: rgba(79,142,247,.3); background: rgba(79,142,247,.07); }
+.player-card.secondary { opacity: .75; }
+.player-row-top {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.pos-pill {
+  width: 36px; height: 22px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 800; flex-shrink: 0;
+}
+.pos-QB  { background: rgba(248,113,113,.2); color: var(--red); }
+.pos-RB  { background: rgba(34,212,127,.2);  color: var(--green); }
+.pos-WR  { background: rgba(79,142,247,.2);  color: var(--blue); }
+.pos-TE  { background: rgba(251,191,36,.2);  color: var(--yellow); }
+.pos-K   { background: rgba(255,255,255,.1); color: var(--t2); }
+.pos-DST { background: rgba(167,139,250,.2); color: var(--purple); }
+.pos-FLEX{ background: rgba(79,142,247,.2);  color: var(--blue); }
+
+.player-name { font-size: 1rem; font-weight: 700; letter-spacing: -.3px; }
+.player-meta { font-size: .72rem; color: var(--t2); margin-top: 1px; }
+.player-proj { text-align: right; }
+.player-proj .pts { font-size: 1.1rem; font-weight: 900; color: var(--t1); }
+.player-proj .pts-label { font-size: .62rem; color: var(--t3); }
+
+.reasons-list { list-style: none; }
+.reasons-list li {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: .8rem; color: var(--t2); padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  line-height: 1.4;
+}
+.reasons-list li:last-child { border-bottom: none; }
+.reasons-list li::before { content: '·'; color: var(--green); font-weight: 900; flex-shrink: 0; }
+
+/* ─── STARS ─────────────────────────────────────────── */
+.stars { display: flex; gap: 2px; }
+.star { font-size: .85rem; }
+.star-on  { filter: brightness(1.2); }
+.star-off { opacity: .2; }
+
+/* ─── MATCHUP BAR ───────────────────────────────────── */
+.matchup-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px 0;
+}
+.matchup-score {
+  font-size: 1.6rem; font-weight: 900; letter-spacing: -1px;
+  flex-shrink: 0;
+}
+.matchup-track {
+  flex: 1; height: 10px; border-radius: var(--r-pill);
+  background: rgba(255,255,255,.08); overflow: hidden; position: relative;
+}
+.matchup-mine {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, var(--blue), var(--purple));
+  border-radius: var(--r-pill);
+}
+.matchup-opp {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  background: var(--red-dim);
+  border-radius: var(--r-pill);
+}
+.matchup-label { font-size: .7rem; color: var(--t2); font-weight: 600; }
+
+/* ─── DAILY BRIEF ───────────────────────────────────── */
+.brief-card {
+  background: linear-gradient(135deg, rgba(79,142,247,.12), rgba(167,139,250,.08));
+  border: 1px solid rgba(79,142,247,.25);
+  border-radius: var(--r-card); padding: 16px; margin-bottom: 12px;
+}
+.brief-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.copilot-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.brief-from { font-size: .65rem; font-weight: 700; color: var(--blue); letter-spacing: .5px; text-transform: uppercase; }
+.brief-text {
+  font-size: .9rem; line-height: 1.6; color: var(--t1);
+  border-top: 1px solid rgba(255,255,255,.07); padding-top: 12px;
+}
+.brief-text strong { color: var(--blue); }
+.brief-conf {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  font-size: .78rem; color: var(--t2);
+}
+
+/* ─── CHECKLIST ─────────────────────────────────────── */
+.check-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 0; border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.check-item:last-child { border-bottom: none; }
+.check-box {
+  width: 22px; height: 22px; border-radius: 7px;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .2s;
+}
+.check-box.done {
+  background: var(--green); border-color: var(--green);
+}
+.check-label { font-size: .9rem; font-weight: 500; flex: 1; }
+.check-label.done { color: var(--t2); text-decoration: line-through; }
+.check-sub { font-size: .72rem; color: var(--t2); margin-top: 2px; }
+
+/* ─── LEARN CARDS ───────────────────────────────────── */
+.learn-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-card); margin-bottom: 8px; overflow: hidden;
+}
+.learn-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; cursor: pointer;
+}
+.learn-title-row { display: flex; align-items: center; gap: 10px; }
+.learn-emoji { font-size: 1.2rem; }
+.learn-title { font-size: .92rem; font-weight: 700; }
+.learn-time { font-size: .68rem; color: var(--t3); margin-top: 2px; }
+.learn-toggle {
+  font-size: .8rem; color: var(--t3); transition: transform .2s;
+  flex-shrink: 0;
+}
+.learn-toggle.open { transform: rotate(180deg); }
+.learn-body {
+  display: none; padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.learn-body.open { display: block; }
+.learn-def {
+  font-size: .85rem; line-height: 1.65; color: var(--t2); margin-bottom: 12px;
+}
+.learn-example {
+  background: var(--card2); border-radius: 10px; padding: 12px 14px;
+  border-left: 3px solid var(--blue);
+  font-size: .8rem; line-height: 1.5; color: var(--t2);
+  margin-bottom: 12px;
+}
+.learn-example strong { color: var(--t1); }
+.learn-takeaway {
+  background: var(--green-dim); border-radius: 8px;
+  padding: 10px 12px; font-size: .8rem; color: var(--green);
+  font-weight: 600;
+}
+
+/* ─── WAIVER CARDS ──────────────────────────────────── */
+.waiver-card {
+  background: var(--card2); border-radius: 12px;
+  padding: 14px; margin-bottom: 8px;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.waiver-priority {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .75rem; font-weight: 800; flex-shrink: 0;
+}
+.pri-1 { background: var(--green-dim); color: var(--green); }
+.pri-2 { background: var(--blue-dim);  color: var(--blue); }
+.pri-3 { background: var(--yel-dim);   color: var(--yellow); }
+.waiver-info { flex: 1; }
+.waiver-name { font-size: .92rem; font-weight: 700; margin-bottom: 3px; }
+.waiver-reason { font-size: .76rem; color: var(--t2); line-height: 1.4; }
+
+/* ─── TRADE REVIEW ──────────────────────────────────── */
+.trade-review {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-card); overflow: hidden; margin-bottom: 12px;
+}
+.trade-sides {
+  display: grid; grid-template-columns: 1fr 40px 1fr;
+  align-items: center; gap: 0; padding: 16px;
+}
+.trade-side-label {
+  font-size: .65rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 8px;
+}
+.give-label { color: var(--red); }
+.get-label  { color: var(--green); }
+.trade-arrow-icon {
+  text-align: center; font-size: 1.2rem; color: var(--t3);
+}
+.trade-player {
+  background: var(--card2); border-radius: 10px;
+  padding: 10px 12px; margin-bottom: 6px;
+}
+.trade-player:last-child { margin-bottom: 0; }
+.trade-player-name { font-size: .85rem; font-weight: 700; }
+.trade-player-meta { font-size: .68rem; color: var(--t2); }
+.trade-verdict {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px;
+}
+.trade-verdict-text { flex: 1; }
+.trade-verdict-title { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+.trade-verdict-sub { font-size: .78rem; color: var(--t2); line-height: 1.45; }
+.trade-reasons {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── STAT ROW ──────────────────────────────────────── */
+.stat-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  font-size: .83rem;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { color: var(--t2); }
+.stat-value { font-weight: 700; }
+.stat-value.positive { color: var(--green); }
+.stat-value.negative { color: var(--red); }
+.stat-value.neutral  { color: var(--yellow); }
+
+/* ─── TABS ──────────────────────────────────────────── */
+.tab-row {
+  display: flex; gap: 6px; margin-bottom: 16px;
+  overflow-x: auto; padding-bottom: 2px;
+}
+.tab-row::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 7px 14px; border-radius: var(--r-pill);
+  font-size: .76rem; font-weight: 700; white-space: nowrap;
+  cursor: pointer; border: 1px solid var(--border2);
+  background: none; color: var(--t2); transition: all .2s;
+}
+.tab-btn.active {
+  background: var(--blue); border-color: var(--blue); color: #fff;
+}
+
+/* ─── ROSTER LIST (Start/Sit) ───────────────────────── */
+.roster-list { }
+.roster-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px; border-radius: 12px;
+  margin-bottom: 6px; background: var(--card2);
+  border: 1px solid var(--border);
+  position: relative;
+}
+.roster-item.start-rec {
+  border-color: rgba(34,212,127,.3);
+  background: rgba(34,212,127,.05);
+}
+.roster-item.bench-rec {
+  border-color: rgba(248,113,113,.2);
+  background: rgba(248,113,113,.03);
+  opacity: .75;
+}
+.roster-slot-tag {
+  font-size: .6rem; font-weight: 800; letter-spacing: .5px;
+  color: var(--t3); text-transform: uppercase; width: 28px; flex-shrink: 0;
+}
+.ri-name { font-size: .88rem; font-weight: 700; flex: 1; }
+.ri-sub  { font-size: .68rem; color: var(--t2); }
+.ri-pts  { font-size: .92rem; font-weight: 800; text-align: right; }
+
+/* ─── BYE / INJURY tags ─────────────────────────────── */
+.tag {
+  font-size: .6rem; font-weight: 800; letter-spacing: .4px;
+  padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
+  flex-shrink: 0;
+}
+.tag-bye  { background: var(--red-dim); color: var(--red); }
+.tag-q    { background: var(--yel-dim); color: var(--yellow); }
+.tag-ok   { background: var(--green-dim); color: var(--green); }
+.tag-out  { background: var(--red-dim); color: var(--red); }
+
+/* ─── SCORE CARD ─────────────────────────────────────── */
+.score-hero {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+.score-num {
+  font-size: 2.4rem; font-weight: 900; letter-spacing: -1.5px;
+}
+.score-opp { text-align: right; }
+.score-dash {
+  font-size: 1.4rem; color: var(--t3); font-weight: 300;
+}
+.proj-line {
+  text-align: center; font-size: .72rem; color: var(--t2);
+  margin-bottom: 8px;
+}
+
+/* ─── BUTTON ─────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 20px; border-radius: 12px;
+  font-size: .88rem; font-weight: 700; cursor: pointer;
+  border: none; transition: all .2s; font-family: 'Inter', sans-serif;
+}
+.btn-primary { background: var(--blue); color: #fff; width: 100%; }
+.btn-primary:hover { background: #6fa1f8; transform: translateY(-1px); }
+.btn-ghost {
+  background: rgba(255,255,255,.06); color: var(--t1);
+  border: 1px solid var(--border2); width: 100%;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.1); }
+.btn-green { background: var(--green); color: #000; }
+.btn-sm { padding: 8px 14px; font-size: .8rem; border-radius: 8px; }
+
+/* ─── DIVIDER ────────────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ─── RECAP ──────────────────────────────────────────── */
+.final-score {
+  text-align: center; padding: 20px 0;
+}
+.final-score .winner { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; color: var(--green); }
+.final-score .loser  { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; color: var(--t2); }
+.final-score .dash   { font-size: 2rem; color: var(--t3); margin: 0 8px; }
+.final-score .result-label { font-size: .8rem; color: var(--t2); margin-top: 4px; }
+
+.reason-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.reason-item:last-child { border-bottom: none; }
+.reason-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+.reason-text { font-size: .85rem; line-height: 1.45; color: var(--t2); }
+.reason-text strong { color: var(--t1); }
+
+/* ─── EMPTY / COMPLETE STATE ─────────────────────────── */
+.complete-card {
+  background: var(--green-dim); border: 1px solid rgba(34,212,127,.3);
+  border-radius: var(--r-card); padding: 20px;
+  text-align: center; margin-bottom: 12px;
+}
+.complete-card .emoji { font-size: 2.4rem; margin-bottom: 10px; }
+.complete-card h3 { font-size: 1.1rem; font-weight: 800; color: var(--green); margin-bottom: 6px; }
+.complete-card p  { font-size: .84rem; color: var(--t2); line-height: 1.45; }
+
+/* ─── PROGRESS RING (optional) ───────────────────────── */
+.ring-wrap { position: relative; display: inline-flex; }
+.ring-pct {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-weight: 900; font-size: 1.1rem;
+}
+.ring-pct .ring-label { font-size: .6rem; color: var(--t2); font-weight: 600; }
+
+/* ─── TOAST ──────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--card2); border: 1px solid var(--border2);
+  color: var(--t1); padding: 10px 18px; border-radius: var(--r-pill);
+  font-size: .84rem; font-weight: 600;
+  opacity: 0; transition: all .3s; z-index: 999; white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.green { border-color: var(--green); color: var(--green); }
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media (min-width: 520px) {
+  .scroll-area { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ TOP BAR ══════════════ -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="icon">🤖</div>
+    Fantasy Copilot
+  </div>
+  <div class="topbar-right">
+    <span class="week-badge">Week 7</span>
+    <div class="avatar">N</div>
+  </div>
+</header>
+
+<!-- ══════════════ VIEWS ══════════════ -->
+
+<!-- ── 1. HOME ── -->
+<div id="view-home" class="view active">
+  <div class="scroll-area">
+
+    <!-- Daily Brief -->
+    <div class="brief-card">
+      <div class="brief-header">
+        <div class="copilot-icon">🤖</div>
+        <div>
+          <div class="brief-from">Your Copilot · Good morning</div>
+          <div style="font-size:.92rem;font-weight:700;margin-top:1px">Nick's Renegades</div>
+        </div>
+      </div>
+      <div class="brief-text">
+        Good morning, <strong>Nick</strong>. Your team is projected to win by <strong>17.8 points</strong> this week — solid position. One thing to handle: <strong>Josh Allen is on bye</strong>, so Patrick Mahomes is your starter. Your lineup looks set after that swap. One move I'd consider: pick up <strong>Tyler Allgeier</strong> as Bijan Robinson insurance — he's a low-risk, free add.
+      </div>
+      <div class="brief-conf">
+        <div class="dot dot-green"></div>
+        Lineup Confidence: <strong style="color:var(--green);margin-left:4px">88%</strong>
+        <span style="margin-left:auto;font-size:.7rem;color:var(--t3)">Updated 2h ago</span>
+      </div>
+    </div>
+
+    <!-- Projected Matchup -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Week 7 Matchup</span>
+        <span class="badge badge-blue">Projected Win</span>
+      </div>
+      <div class="score-hero">
+        <div>
+          <div class="score-num" style="color:var(--blue)">134.6</div>
+          <div style="font-size:.72rem;color:var(--t2);font-weight:600">Nick's Renegades</div>
+        </div>
+        <div class="score-dash">–</div>
+        <div class="score-opp">
+          <div class="score-num" style="color:var(--t2)">116.8</div>
+          <div style="font-size:.72rem;color:var(--t2);font-weight:600">Gridiron Gurus</div>
+        </div>
+      </div>
+      <div class="matchup-bar">
+        <div class="matchup-track" style="flex:1; position:relative; height:10px; border-radius:100px; background:rgba(255,255,255,.08); overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:54%;background:linear-gradient(90deg,var(--blue),var(--purple));border-radius:100px;"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--t2);margin-top:-6px;">
+        <span>Your projected pts</span>
+        <span>Opponent projected pts</span>
+      </div>
+      <!-- current live score -->
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--t2);">
+        <span>Live score (4 players left)</span>
+        <span style="font-weight:700;color:var(--t1)">89.4 – 71.2</span>
+      </div>
+    </div>
+
+    <!-- Lineup Confidence -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Lineup Confidence</span>
+        <span style="font-size:.9rem;font-weight:800;color:var(--green)">88%</span>
+      </div>
+      <div class="conf-bar-track">
+        <div class="conf-bar-fill" style="width:88%;background:linear-gradient(90deg,var(--green),#6ee7a7);"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--t2);margin-top:4px">
+        One issue flagged — see actions below.
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:1px;color:var(--t3);text-transform:uppercase;margin-bottom:8px">Actions This Week</div>
+
+    <div class="action-card urgent">
+      <div class="action-icon">🚨</div>
+      <div>
+        <div class="action-label">Action Needed</div>
+        <div class="action-text">Bench Josh Allen — he has a bye week.</div>
+        <div class="action-sub">Start Patrick Mahomes (KC) instead. Projected 24.1 pts.</div>
+      </div>
+    </div>
+
+    <div class="action-card consider">
+      <div class="action-icon">💡</div>
+      <div>
+        <div class="action-label">Consider</div>
+        <div class="action-text">Add Tyler Allgeier off waivers.</div>
+        <div class="action-sub">Backup for Bijan Robinson. Free add, very low risk.</div>
+      </div>
+    </div>
+
+    <div class="action-card good">
+      <div class="action-icon">✅</div>
+      <div>
+        <div class="action-label">Looking Good</div>
+        <div class="action-text">Amon-Ra St. Brown is your best bet — 95% confidence.</div>
+        <div class="action-sub">Elite matchup vs Bears secondary this week.</div>
+      </div>
+    </div>
+
+    <div class="action-card learn">
+      <div class="action-icon">📖</div>
+      <div>
+        <div class="action-label">Learn</div>
+        <div class="action-text">What is a handcuff RB?</div>
+        <div class="action-sub">Tap to open a 60-second lesson.</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+
+  </div>
+</div>
+
+<!-- ── 2. START / SIT ── -->
+<div id="view-startsit" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Start / Sit Coach</div>
+    <div class="section-sub">I'll tell you who to start. No stats overload — just a clear call and the reason why.</div>
+
+    <!-- Big recommendation -->
+    <div class="player-card primary">
+      <div class="player-row-top">
+        <div class="pos-pill pos-WR">WR</div>
+        <div style="flex:1">
+          <div class="player-name">Amon-Ra St. Brown</div>
+          <div class="player-meta">DET · Week 7 vs CHI</div>
+        </div>
+        <div class="player-proj">
+          <div class="pts">21.3</div>
+          <div class="pts-label">proj pts</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="conf-wrap" style="flex:1;margin-right:12px">
+          <div style="font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Confidence</div>
+          <div class="conf-bar-track">
+            <div class="conf-bar-fill" style="width:95%;background:linear-gradient(90deg,var(--green),#6ee7a7);"></div>
+          </div>
+        </div>
+        <span class="badge badge-green">95%</span>
+      </div>
+      <ul class="reasons-list">
+        <li>Elite matchup vs Bears — 26th-ranked pass defense</li>
+        <li>Leads the team in targets every week (8.4 avg)</li>
+        <li>Safe weekly floor — very unlikely to disappoint</li>
+      </ul>
+    </div>
+
+    <div style="text-align:center;font-size:.75rem;color:var(--t2);margin:6px 0 10px;font-weight:600">▲ START HIM · Also consider ▼</div>
+
+    <div class="player-card secondary">
+      <div class="player-row-top">
+        <div class="pos-pill pos-WR">WR</div>
+        <div style="flex:1">
+          <div class="player-name">Puka Nacua</div>
+          <div class="player-meta">LAR · Week 7 vs SEA</div>
+        </div>
+        <div class="player-proj">
+          <div class="pts" style="color:var(--t2)">15.8</div>
+          <div class="pts-label">proj pts</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="conf-wrap" style="flex:1;margin-right:12px">
+          <div style="font-size:.68rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">Confidence</div>
+          <div class="conf-bar-track">
+            <div class="conf-bar-fill" style="width:82%;background:var(--blue);"></div>
+          </div>
+        </div>
+        <span class="badge badge-blue">82%</span>
+      </div>
+      <ul class="reasons-list">
+        <li>Tougher matchup — Seahawks have solid corner play</li>
+        <li>Good volume but higher variance this week</li>
+        <li>Start if you need a ceiling play</li>
+      </ul>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Full Roster Snapshot -->
+    <div class="card-title" style="margin-bottom:10px">Your Full Lineup</div>
+
+    <div class="roster-list">
+      <!-- QB -->
+      <div class="roster-item" style="border-color:rgba(248,113,113,.3)">
+        <span class="roster-slot-tag">QB</span>
+        <div class="pos-pill pos-QB">QB</div>
+        <div style="flex:1">
+          <div class="ri-name">Josh Allen</div>
+          <div class="ri-sub">BUF — Week 7</div>
+        </div>
+        <span class="tag tag-bye">BYE</span>
+        <div class="ri-pts" style="color:var(--red)">0.0</div>
+      </div>
+
+      <div style="background:rgba(34,212,127,.07);border:1px dashed rgba(34,212,127,.3);border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:.7rem;color:var(--green);font-weight:700">→ SWAP IN:</span>
+        <div class="pos-pill pos-QB" style="width:32px;height:19px;font-size:.62rem">QB</div>
+        <div style="flex:1;font-size:.85rem;font-weight:700">Patrick Mahomes <span style="color:var(--t2);font-weight:400;font-size:.72rem">KC</span></div>
+        <div class="ri-pts" style="color:var(--green)">24.1</div>
+      </div>
+
+      <div class="roster-item start-rec">
+        <span class="roster-slot-tag">RB</span>
+        <div class="pos-pill pos-RB">RB</div>
+        <div style="flex:1">
+          <div class="ri-name">Breece Hall</div>
+          <div class="ri-sub">NYJ · 22.1 proj</div>
+        </div>
+        <span class="tag tag-ok">OK</span>
+        <div class="ri-pts" style="color:var(--green)">22.1</div>
+      </div>
+
+      <div class="roster-item">
+        <span class="roster-slot-tag">RB</span>
+        <div class="pos-pill pos-RB">RB</div>
+        <div style="flex:1">
+          <div class="ri-name">Bijan Robinson</div>
+          <div class="ri-sub">ATL · 18.6 proj</div>
+        </div>
+        <span class="tag tag-q">Q</span>
+        <div class="ri-pts" style="color:var(--yellow)">18.6</div>
+      </div>
+
+      <div class="roster-item start-rec">
+        <span class="roster-slot-tag">WR</span>
+        <div class="pos-pill pos-WR">WR</div>
+        <div style="flex:1">
+          <div class="ri-name">Amon-Ra St. Brown</div>
+          <div class="ri-sub">DET · 21.3 proj</div>
+        </div>
+        <span class="tag tag-ok">OK</span>
+        <div class="ri-pts" style="color:var(--green)">21.3</div>
+      </div>
+
+      <div class="roster-item start-rec">
+        <span class="roster-slot-tag">WR</span>
+        <div class="pos-pill pos-WR">WR</div>
+        <div style="flex:1">
+          <div class="ri-name">Puka Nacua</div>
+          <div class="ri-sub">LAR · 15.8 proj</div>
+        </div>
+        <span class="tag tag-ok">OK</span>
+        <div class="ri-pts" style="color:var(--blue)">15.8</div>
+      </div>
+
+      <div class="roster-item start-rec">
+        <span class="roster-slot-tag">TE</span>
+        <div class="pos-pill pos-TE">TE</div>
+        <div style="flex:1">
+          <div class="ri-name">Sam LaPorta</div>
+          <div class="ri-sub">DET · 14.2 proj</div>
+        </div>
+        <span class="tag tag-ok">OK</span>
+        <div class="ri-pts" style="color:var(--green)">14.2</div>
+      </div>
+
+      <div class="roster-item start-rec">
+        <span class="roster-slot-tag">FLX</span>
+        <div class="pos-pill pos-RB">RB</div>
+        <div style="flex:1">
+          <div class="ri-name">James Cook</div>
+          <div class="ri-sub">BUF · 16.9 proj</div>
+        </div>
+        <span class="tag tag-ok">OK</span>
+        <div class="ri-pts" style="color:var(--green)">16.9</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 3. DRAFT COACH ── -->
+<div id="view-draft" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Draft Coach</div>
+    <div class="section-sub">On the clock? Tell me where you're picking and I'll tell you exactly who to take and why.</div>
+
+    <!-- Big CTA -->
+    <button class="btn btn-primary" style="margin-bottom:16px;font-size:1rem;padding:16px;border-radius:14px;" onclick="showToast('Getting your recommendation…')">
+      🎯 &nbsp; Who Should I Draft?
+    </button>
+
+    <!-- Round context -->
+    <div class="card card-sm" style="margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1">
+        <div style="font-size:.72rem;color:var(--t2);margin-bottom:2px">You're on the clock</div>
+        <div style="font-size:.9rem;font-weight:700">Round 2 · Pick 3.02</div>
+      </div>
+      <span class="badge badge-yellow">⏱ 45s</span>
+    </div>
+
+    <!-- Recommended Pick -->
+    <div class="player-card primary">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span class="badge badge-green">⭐ Recommended Pick</span>
+        <div class="stars">
+          <span class="star star-on">★</span><span class="star star-on">★</span>
+          <span class="star star-on">★</span><span class="star star-on">★</span><span class="star star-on">★</span>
+        </div>
+      </div>
+      <div class="player-row-top">
+        <div class="pos-pill pos-RB">RB</div>
+        <div style="flex:1">
+          <div class="player-name">Breece Hall</div>
+          <div class="player-meta">NYJ · Age 23 · Tier 1 RB</div>
+        </div>
+        <div class="player-proj">
+          <div class="pts">22.1</div>
+          <div class="pts-label">PPR pts/gm</div>
+        </div>
+      </div>
+      <ul class="reasons-list">
+        <li>High volume — leads NYJ in carries and targets out of the backfield</li>
+        <li>Strong offense — Jets' offense runs through him</li>
+        <li>Very few injury concerns — played near every snap last season</li>
+      </ul>
+    </div>
+
+    <!-- Why this pick? -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:8px">Why this over others?</div>
+      <div style="font-size:.84rem;color:var(--t2);line-height:1.6">
+        At pick 3.02 in Round 2 of a PPR league, you already have a WR1. The next best RB at this spot is Breece Hall. Running backs who catch passes <strong style="color:var(--t1)">score far more in PPR</strong> than pure rushers — that's exactly what Hall is.
+      </div>
+    </div>
+
+    <!-- Alternatives -->
+    <div class="card-title" style="margin-bottom:8px">Alternatives if Breece is gone</div>
+
+    <div class="player-card" style="margin-bottom:8px">
+      <div class="player-row-top">
+        <div class="pos-pill pos-RB">RB</div>
+        <div style="flex:1">
+          <div class="player-name">Ashton Jeanty</div>
+          <div class="player-meta">LV · Rookie RB · High upside</div>
+        </div>
+        <div>
+          <div class="stars">
+            <span class="star star-on">★</span><span class="star star-on">★</span>
+            <span class="star star-on">★</span><span class="star star-on">★</span>
+            <span class="star star-off">★</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:.78rem;color:var(--t2)">Great athlete, more uncertainty as a rookie. High ceiling pick.</div>
+    </div>
+
+    <div class="player-card" style="margin-bottom:8px">
+      <div class="player-row-top">
+        <div class="pos-pill pos-WR">WR</div>
+        <div style="flex:1">
+          <div class="player-name">Garrett Wilson</div>
+          <div class="player-meta">NYJ · WR2 range · Safe floor</div>
+        </div>
+        <div>
+          <div class="stars">
+            <span class="star star-on">★</span><span class="star star-on">★</span>
+            <span class="star star-on">★</span><span class="star star-on">★</span>
+            <span class="star star-off">★</span>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:.78rem;color:var(--t2)">If you want to double-up on WRs. Good target volume, safe weekly floor.</div>
+    </div>
+
+    <!-- Beginner tip -->
+    <div class="action-card learn" style="margin-top:4px">
+      <div class="action-icon">💡</div>
+      <div>
+        <div class="action-label">Beginner Tip</div>
+        <div class="action-text">In PPR, always favor players who catch lots of passes. Each catch = 1 bonus point.</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 4. WAIVER HELPER ── -->
+<div id="view-waiver" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Waiver Helper</div>
+    <div class="section-sub">Picking up free agents doesn't have to be confusing. Here's everything you need.</div>
+
+    <!-- What are waivers? -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title" style="margin-bottom:10px">What are waivers?</div>
+      <div style="font-size:.88rem;line-height:1.65;color:var(--t2)">
+        Waivers are like a line at a store. When a player becomes available, everyone in your league puts in a request. The person with the <strong style="color:var(--t1)">highest priority</strong> gets the player first. You lose your spot in line when you use it — so save it for important pickups.
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:.8rem;color:var(--t3);display:flex;align-items:center;gap:6px">
+        <span>📅</span> Waivers process every Wednesday morning. Until then, unclaimed players are free to pick up.
+      </div>
+    </div>
+
+    <!-- My waiver priority -->
+    <div class="card card-sm" style="margin-bottom:12px;display:flex;align-items:center;gap:12px">
+      <div class="waiver-priority pri-2" style="width:40px;height:40px;font-size:1.1rem">4</div>
+      <div>
+        <div style="font-size:.72rem;color:var(--t2)">Your waiver priority</div>
+        <div style="font-size:.92rem;font-weight:700">4th of 12 teams</div>
+      </div>
+      <div style="margin-left:auto">
+        <span class="badge badge-blue">Good Position</span>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="card-title" style="margin-bottom:10px">Recommended Pickups This Week</div>
+
+    <div class="waiver-card">
+      <div class="waiver-priority pri-1">1</div>
+      <div class="waiver-info">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div class="waiver-name">Tyler Allgeier</div>
+          <div class="pos-pill pos-RB" style="width:30px;height:18px;font-size:.6rem">RB</div>
+          <span class="badge badge-green">Do It</span>
+        </div>
+        <div class="waiver-reason">Bijan Robinson insurance. If Bijan misses a game, Allgeier steps in as the starter. Free pickup, zero risk.</div>
+      </div>
+    </div>
+
+    <div class="waiver-card">
+      <div class="waiver-priority pri-2">2</div>
+      <div class="waiver-info">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div class="waiver-name">Chargers D/ST</div>
+          <div class="pos-pill pos-DST" style="width:30px;height:18px;font-size:.55rem">DST</div>
+          <span class="badge badge-blue">Consider</span>
+        </div>
+        <div class="waiver-reason">Facing the worst offense in the league (Raiders). Great streaming option for Week 7 only.</div>
+      </div>
+    </div>
+
+    <div class="waiver-card">
+      <div class="waiver-priority pri-3">3</div>
+      <div class="waiver-info">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <div class="waiver-name">Dontayvion Wicks</div>
+          <div class="pos-pill pos-WR" style="width:30px;height:18px;font-size:.6rem">WR</div>
+          <span class="badge badge-yellow">Stash</span>
+        </div>
+        <div class="waiver-reason">Target share rising in Green Bay. Bench him now, watch his role expand. Low priority spend.</div>
+      </div>
+    </div>
+
+    <!-- What is streaming? -->
+    <div class="action-card learn" style="margin-top:8px">
+      <div class="action-icon">📖</div>
+      <div>
+        <div class="action-label">New to this?</div>
+        <div class="action-text">"Streaming" means picking up a player for one week based on matchup, then dropping them. Go to Learn Mode to see how it works.</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 5. TRADE ADVISOR ── -->
+<div id="view-trade" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Trade Advisor</div>
+    <div class="section-sub">Got an offer? Paste it in and I'll tell you if it's worth doing — no jargon, just a clear grade and reason.</div>
+
+    <!-- Pending trade offer -->
+    <div class="card-title" style="margin-bottom:10px">Incoming Offer from Gridiron Gurus</div>
+
+    <div class="trade-review">
+      <div class="trade-sides">
+        <div>
+          <div class="trade-side-label give-label">You Give</div>
+          <div class="trade-player">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <div class="pos-pill pos-RB" style="width:30px;height:18px;font-size:.62rem">RB</div>
+            </div>
+            <div class="trade-player-name">James Cook</div>
+            <div class="trade-player-meta">BUF · RB12 · 16.9 PPR/gm</div>
+          </div>
+        </div>
+        <div class="trade-arrow-icon">⇄</div>
+        <div>
+          <div class="trade-side-label get-label">You Get</div>
+          <div class="trade-player">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <div class="pos-pill pos-WR" style="width:30px;height:18px;font-size:.62rem">WR</div>
+            </div>
+            <div class="trade-player-name">Tee Higgins</div>
+            <div class="trade-player-meta">CIN · WR14 · 14.2 PPR/gm</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="trade-verdict">
+        <div class="grade grade-b">B+</div>
+        <div class="trade-verdict-text">
+          <div class="trade-verdict-title">Lean Accept — Slight Upside</div>
+          <div class="trade-verdict-sub">You improve your WR depth without hurting your RB core. Higgins has ceiling weeks that Cook doesn't.</div>
+        </div>
+      </div>
+
+      <div class="trade-reasons">
+        <div class="divider" style="margin-top:0"></div>
+        <ul class="reasons-list">
+          <li>You already have Breece Hall and Bijan Robinson — your RBs are strong</li>
+          <li>Higgins adds WR depth and has boom-week potential with Burrow</li>
+          <li>Slight PPR downgrade per week, but better ceiling for playoffs</li>
+          <li>Only accept if your bench RB (White) feels reliable as RB3</li>
+        </ul>
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-green btn-sm" style="flex:1" onclick="showToast('Trade accepted! ✅', true)">Accept</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="showToast('Trade declined.')">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Second trade offer -->
+    <div class="card-title" style="margin-bottom:10px;margin-top:4px">Another Offer · Sleeper Agents</div>
+
+    <div class="trade-review" style="margin-bottom:12px">
+      <div class="trade-sides">
+        <div>
+          <div class="trade-side-label give-label">You Give</div>
+          <div class="trade-player">
+            <div class="trade-player-name">Sam LaPorta</div>
+            <div class="trade-player-meta">DET · TE · 14.2/gm</div>
+          </div>
+        </div>
+        <div class="trade-arrow-icon">⇄</div>
+        <div>
+          <div class="trade-side-label get-label">You Get</div>
+          <div class="trade-player">
+            <div class="trade-player-name">Dallas Goedert</div>
+            <div class="trade-player-meta">PHI · TE · 13.8/gm</div>
+          </div>
+        </div>
+      </div>
+      <div class="trade-verdict">
+        <div class="grade grade-d" style="font-size:.8rem">D</div>
+        <div class="trade-verdict-text">
+          <div class="trade-verdict-title">Decline — Lateral Move</div>
+          <div class="trade-verdict-sub">LaPorta is the better player. You'd be giving up value for essentially the same position.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How trades work tip -->
+    <div class="action-card learn">
+      <div class="action-icon">💡</div>
+      <div>
+        <div class="action-label">Trade Tip</div>
+        <div class="action-text">Always trade from your strength to fill a weakness. If you have 3 good RBs, that's trade capital.</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 6. RECAP ── -->
+<div id="view-recap" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Week 6 Recap</div>
+    <div class="section-sub">Here's what happened and what to take away.</div>
+
+    <!-- Final score -->
+    <div class="card" style="text-align:center;padding:24px 16px;">
+      <div style="font-size:.72rem;color:var(--t2);font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px">Final Score · Week 6</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px">
+        <div>
+          <div style="font-size:2.8rem;font-weight:900;letter-spacing:-1.5px;color:var(--green)">126</div>
+          <div style="font-size:.72rem;color:var(--t2)">Nick's Renegades</div>
+        </div>
+        <div style="font-size:1.8rem;color:var(--t3)">–</div>
+        <div>
+          <div style="font-size:2.8rem;font-weight:900;letter-spacing:-1.5px;color:var(--t2)">119</div>
+          <div style="font-size:.72rem;color:var(--t2)">Gridiron Gurus</div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green" style="font-size:.75rem;padding:5px 14px;">WIN · +7 pts</span>
+      </div>
+    </div>
+
+    <!-- What happened -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">Biggest Reasons You Won</div>
+      <div class="reason-item">
+        <div class="reason-icon">🏆</div>
+        <div class="reason-text"><strong>Amon-Ra St. Brown had a monster game</strong> — 32.4 pts. Best performance on your team all season.</div>
+      </div>
+      <div class="reason-item">
+        <div class="reason-icon">🏃</div>
+        <div class="reason-text"><strong>Breece Hall came through with 21.8 pts</strong> — he's been your most reliable player all season.</div>
+      </div>
+      <div class="reason-item">
+        <div class="reason-icon">🛡️</div>
+        <div class="reason-text"><strong>SF defense scored 16 pts</strong> against a weak offense. Smart streaming pick.</div>
+      </div>
+    </div>
+
+    <!-- What almost hurt you -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px">What Nearly Cost You</div>
+      <div class="reason-item">
+        <div class="reason-icon">😬</div>
+        <div class="reason-text"><strong>Your QB underperformed by 14 points</strong> — Josh Allen had a quiet week. Happens.</div>
+      </div>
+      <div class="reason-item">
+        <div class="reason-icon">📋</div>
+        <div class="reason-text"><strong>You left 22 points on your bench</strong> — Garrett Wilson (BN) outscored Puka Nacua (WR2). Tough call to predict.</div>
+      </div>
+    </div>
+
+    <!-- One thing to improve -->
+    <div class="action-card consider">
+      <div class="action-icon">📈</div>
+      <div>
+        <div class="action-label">One Thing to Improve</div>
+        <div class="action-text">Next week, start your highest-confidence RB — don't second-guess the algorithm.</div>
+        <div class="action-sub">You hesitated on Breece Hall. He was the right call all along.</div>
+      </div>
+    </div>
+
+    <!-- Player performances -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:10px">Your Player Scores</div>
+      <div class="stat-row">
+        <span class="stat-label">Amon-Ra St. Brown (WR)</span>
+        <span class="stat-value positive">32.4</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Breece Hall (RB)</span>
+        <span class="stat-value positive">21.8</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">SF 49ers (DST)</span>
+        <span class="stat-value positive">16.0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sam LaPorta (TE)</span>
+        <span class="stat-value neutral">14.2</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Puka Nacua (WR)</span>
+        <span class="stat-value neutral">13.1</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Bijan Robinson (RB)</span>
+        <span class="stat-value neutral">12.8</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">James Cook (FLEX)</span>
+        <span class="stat-value neutral">11.4</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Josh Allen (QB)</span>
+        <span class="stat-value negative">9.3</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Justin Tucker (K)</span>
+        <span class="stat-value neutral">5.0</span>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 7. CHECKLIST ── -->
+<div id="view-checklist" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Weekly Checklist</div>
+    <div class="section-sub">Your game-day prep list. Tap items as you complete them.</div>
+
+    <!-- Progress -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:.85rem;font-weight:700">Week 7 Readiness</span>
+        <span id="check-pct" style="font-size:.85rem;font-weight:800;color:var(--green)">20%</span>
+      </div>
+      <div class="conf-bar-track">
+        <div class="conf-bar-fill" id="check-fill" style="width:20%;background:linear-gradient(90deg,var(--blue),var(--green));"></div>
+      </div>
+    </div>
+
+    <!-- Checklist items -->
+    <div class="card" id="checklist-card">
+      <div class="check-item" onclick="toggleCheck(this,0)" data-checked="true">
+        <div class="check-box done">✓</div>
+        <div>
+          <div class="check-label done">Reviewed injury reports</div>
+          <div class="check-sub">Bijan Robinson: Questionable · Josh Allen: BYE</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this,1)" data-checked="false">
+        <div class="check-box"></div>
+        <div>
+          <div class="check-label">Set your lineup</div>
+          <div class="check-sub">Swap Josh Allen → Patrick Mahomes</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this,2)" data-checked="false">
+        <div class="check-box"></div>
+        <div>
+          <div class="check-label">Check bye weeks</div>
+          <div class="check-sub">Week 7 byes: BUF, CLE, LAC, PIT</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this,3)" data-checked="false">
+        <div class="check-box"></div>
+        <div>
+          <div class="check-label">Submit waiver claims</div>
+          <div class="check-sub">Recommend: Tyler Allgeier (RB, ATL)</div>
+        </div>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this,4)" data-checked="false">
+        <div class="check-box"></div>
+        <div>
+          <div class="check-label">Review trade offers</div>
+          <div class="check-sub">2 pending offers from opponents</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Complete state (hidden until done) -->
+    <div class="complete-card" id="checklist-complete" style="display:none">
+      <div class="emoji">🏆</div>
+      <h3>You're Ready for Week 7!</h3>
+      <p>Great prep. Your lineup is locked in. Copilot will check for any last-minute changes before kickoff.</p>
+    </div>
+
+    <!-- Tips -->
+    <div class="action-card good" style="margin-top:4px">
+      <div class="action-icon">🎯</div>
+      <div>
+        <div class="action-label">Pro Habit</div>
+        <div class="action-text">Check injury reports on Sundays at 11am ET. Starters are ruled out last-minute — always have a backup plan.</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ── 8. LEARN ── -->
+<div id="view-learn" class="view">
+  <div class="scroll-area">
+    <div class="section-title">Learn Mode</div>
+    <div class="section-sub">Short, plain-English lessons on everything fantasy football. No experience needed.</div>
+
+    <div id="learn-cards">
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">🏈</span>
+            <div>
+              <div class="learn-title">What is PPR?</div>
+              <div class="learn-time">60-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def">PPR stands for <strong>Points Per Reception</strong>. Every time a player catches a pass in the NFL, they get +1 bonus point in your fantasy score. This makes receivers and pass-catching running backs way more valuable.</p>
+          <div class="learn-example"><strong>Example:</strong> Tyreek Hill catches 12 passes for 90 yards. In standard scoring that's 9 points. In PPR it's 9 + 12 = <strong>21 points</strong> — more than double!</div>
+          <div class="learn-takeaway">✓ Takeaway: In PPR leagues, target players who catch a lot of passes — not just runners.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">📅</span>
+            <div>
+              <div class="learn-title">What is a Bye Week?</div>
+              <div class="learn-time">45-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def">Every NFL team gets one week off per season — called their <strong>bye week</strong>. During that week, none of their players score any fantasy points. If you start a player on bye, you get zero. This is one of the most common beginner mistakes.</p>
+          <div class="learn-example"><strong>Example:</strong> Josh Allen's Bills have a bye on Week 7. If you start Josh Allen that week, he plays no game and gets you 0 points — even though he's a great QB.</div>
+          <div class="learn-takeaway">✓ Takeaway: Check bye weeks before setting your lineup every week. Copilot will remind you automatically.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">🔄</span>
+            <div>
+              <div class="learn-title">What is FLEX?</div>
+              <div class="learn-time">45-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def">The <strong>FLEX spot</strong> is a wildcard roster slot. You can put any RB, WR, or TE in it — whoever you think will score the most that week. It gives you flexibility to play matchups.</p>
+          <div class="learn-example"><strong>Example:</strong> You have 3 good RBs but one is hurt. Normally your third RB goes to bench. With FLEX, you can start that third RB and still have your 2 WRs in the WR slots.</div>
+          <div class="learn-takeaway">✓ Takeaway: Use FLEX to start your best available RB/WR/TE that isn't already in a starter slot.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">💰</span>
+            <div>
+              <div class="learn-title">What is FAAB?</div>
+              <div class="learn-time">60-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def">FAAB stands for <strong>Free Agent Acquisition Budget</strong>. Instead of a priority order on waivers, everyone gets a $100 budget at the start of the season. You secretly bid on players — highest bid wins, and that money is gone for the season.</p>
+          <div class="learn-example"><strong>Example:</strong> Derrick Henry gets hurt and his backup is suddenly available. You bid $18. Someone else bids $25. They get the player. You keep your $18. Manage your budget all season.</div>
+          <div class="learn-takeaway">✓ Takeaway: Don't blow your FAAB early on risky pickups. Save $30–40 for the second half of the season when injuries pile up.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">🔀</span>
+            <div>
+              <div class="learn-title">What is Streaming?</div>
+              <div class="learn-time">45-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def"><strong>Streaming</strong> means picking up a player for one week based on a good matchup, starting them, then dropping them the following week to grab a new matchup play. You're not keeping them — just renting them for one game.</p>
+          <div class="learn-example"><strong>Example:</strong> The Browns defense plays the Raiders this week. Raiders are terrible. You drop your current mediocre defense, add Browns DST, start them for Week 7, score big, then drop them next week when they have a harder opponent.</div>
+          <div class="learn-takeaway">✓ Takeaway: Stream kickers and defenses every week. You don't need to keep these roster spots locked up.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">🤝</span>
+            <div>
+              <div class="learn-title">What is a Handcuff RB?</div>
+              <div class="learn-time">60-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def">A <strong>handcuff</strong> is the backup running back on the same NFL team as your starting RB. If your RB1 gets injured, the handcuff becomes the starter and is suddenly worth a lot. Owning them "handcuffs" opponents from getting them.</p>
+          <div class="learn-example"><strong>Example:</strong> You own Bijan Robinson (ATL). Tyler Allgeier is Atlanta's backup. If Bijan gets hurt for 3 weeks, Allgeier steps into a full workload. By already owning Allgeier, you don't lose as much production.</div>
+          <div class="learn-takeaway">✓ Takeaway: Always handcuff your RB1. It's insurance for your most important player.</div>
+        </div>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-header" onclick="toggleLesson(this)">
+          <div class="learn-title-row">
+            <span class="learn-emoji">📊</span>
+            <div>
+              <div class="learn-title">What is ADP?</div>
+              <div class="learn-time">45-second lesson</div>
+            </div>
+          </div>
+          <span class="learn-toggle">▼</span>
+        </div>
+        <div class="learn-body">
+          <p class="learn-def"><strong>ADP</strong> means Average Draft Position — the pick number where a player is typically selected across thousands of drafts. If a player's ADP is 24, most people draft them around pick 24.</p>
+          <div class="learn-example"><strong>Example:</strong> Justin Jefferson has an ADP of 7. That means most teams take him around the 7th overall pick. If you're picking 10th and he's still available, that's excellent value — you got a top-7 player at pick 10.</div>
+          <div class="learn-takeaway">✓ Takeaway: Getting players later than their ADP = good value. That's how you win drafts.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ══════════════ BOTTOM NAV ══════════════ -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="switchView('home',this)">
+    <span class="nav-icon">🏠</span>Home
+  </button>
+  <button class="nav-item" onclick="switchView('startsit',this)">
+    <span class="nav-icon">✋</span>Start/Sit
+  </button>
+  <button class="nav-item" onclick="switchView('draft',this)">
+    <span class="nav-icon">📋</span>Draft
+  </button>
+  <button class="nav-item" onclick="switchView('waiver',this)">
+    <span class="nav-icon">🏃</span>Waiver
+  </button>
+  <button class="nav-item" onclick="switchView('trade',this)">
+    <span class="nav-icon">🔄</span>Trade
+  </button>
+  <button class="nav-item" onclick="switchView('recap',this)">
+    <span class="nav-icon">📊</span>Recap
+  </button>
+  <button class="nav-item" onclick="switchView('checklist',this)">
+    <span class="nav-icon">✅</span>Checklist
+  </button>
+  <button class="nav-item" onclick="switchView('learn',this)">
+    <span class="nav-icon">📚</span>Learn
+  </button>
+</nav>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ JAVASCRIPT ══════════════ -->
+<script>
+// ─────────────────────────────────────────
+//  MOCK DATA
+//  Replace these objects with real API
+//  responses from your fantasy platform.
+//  Sleeper API: https://docs.sleeper.com
+//  ESPN: private API (reverse-engineered)
+// ─────────────────────────────────────────
+const MOCK = {
+  user: { name: 'Nick', teamName: "Nick's Renegades" },
+  week: 7,
+  season: 2025,
+
+  matchup: {
+    myScore: 89.4,
+    oppScore: 71.2,
+    projMe: 134.6,
+    projOpp: 116.8,
+    confidence: 88,
+    opponent: 'Gridiron Gurus',
+    lastWeekResult: 'win',
+    lastWeekScoreMine: 126,
+    lastWeekScoreOpp: 119,
+  },
+
+  // TODO: swap with live roster from Sleeper/ESPN API
+  roster: [
+    { name:'Josh Allen',         pos:'QB',  team:'BUF', slot:'QB',   proj:28.4, status:'BYE', conf:0  },
+    { name:'Patrick Mahomes',    pos:'QB',  team:'KC',  slot:'BN',   proj:24.1, status:'OK',  conf:89 },
+    { name:'Breece Hall',        pos:'RB',  team:'NYJ', slot:'RB1',  proj:22.1, status:'OK',  conf:92 },
+    { name:'Bijan Robinson',     pos:'RB',  team:'ATL', slot:'RB2',  proj:18.6, status:'Q',   conf:74 },
+    { name:'Amon-Ra St. Brown',  pos:'WR',  team:'DET', slot:'WR1',  proj:21.3, status:'OK',  conf:95 },
+    { name:'Puka Nacua',         pos:'WR',  team:'LAR', slot:'WR2',  proj:15.8, status:'OK',  conf:82 },
+    { name:'Sam LaPorta',        pos:'TE',  team:'DET', slot:'TE',   proj:14.2, status:'OK',  conf:88 },
+    { name:'James Cook',         pos:'RB',  team:'BUF', slot:'FLEX', proj:16.9, status:'OK',  conf:85 },
+    { name:'Justin Tucker',      pos:'K',   team:'BAL', slot:'K',    proj:9.2,  status:'OK',  conf:90 },
+    { name:'SF 49ers',           pos:'DST', team:'SF',  slot:'DST',  proj:11.5, status:'OK',  conf:78 },
+    { name:'Rachaad White',      pos:'RB',  team:'TB',  slot:'BN',   proj:12.3, status:'OK',  conf:68 },
+    { name:'Garrett Wilson',     pos:'WR',  team:'NYJ', slot:'BN',   proj:13.7, status:'OK',  conf:72 },
+  ],
+
+  // TODO: fetch from waiver wire endpoint
+  waivers: [
+    { name:'Tyler Allgeier', pos:'RB', team:'ATL', priority:1, reason:'Bijan Robinson insurance. Free add, low risk.' },
+    { name:'Chargers D/ST',  pos:'DST',team:'LAC', priority:2, reason:'Faces Raiders this week — great streaming spot.' },
+    { name:'Dontayvion Wicks',pos:'WR',team:'GB',  priority:3, reason:'Target share rising. Stash for upside.' },
+  ],
+
+  // TODO: pull from trade API
+  pendingTrades: [
+    {
+      from:'Gridiron Gurus',
+      give:[{ name:'James Cook', pos:'RB', team:'BUF', ppg:16.9 }],
+      get: [{ name:'Tee Higgins', pos:'WR', team:'CIN', ppg:14.2 }],
+      grade:'B+', verdict:'Lean Accept', gradeClass:'grade-b',
+    },
+  ],
+
+  // TODO: replace with actual scoring history
+  recap: {
+    week: 6,
+    myScore: 126, oppScore: 119,
+    result: 'win',
+    topScorer: 'Amon-Ra St. Brown',
+    topPts: 32.4,
+    leftOnBench: 22,
+    QBMiss: -14,
+  },
+
+  // TODO: pull live lesson completion from user profile
+  lessons: {
+    ppr: false, bye: false, flex: false,
+    faab: false, stream: false, handcuff: false, adp: false,
+  },
+};
+
+// ─────────────────────────────────────────
+//  VIEW ROUTING
+// ─────────────────────────────────────────
+function switchView(name, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const view = document.getElementById('view-' + name);
+  if (view) view.classList.add('active');
+  if (btn)  btn.classList.add('active');
+}
+
+// ─────────────────────────────────────────
+//  CHECKLIST LOGIC
+// ─────────────────────────────────────────
+const CHECK_STATE = [true, false, false, false, false];
+
+function toggleCheck(el, idx) {
+  CHECK_STATE[idx] = !CHECK_STATE[idx];
+  const box   = el.querySelector('.check-box');
+  const label = el.querySelector('.check-label');
+  if (CHECK_STATE[idx]) {
+    box.classList.add('done');
+    box.textContent = '✓';
+    label.classList.add('done');
+  } else {
+    box.classList.remove('done');
+    box.textContent = '';
+    label.classList.remove('done');
+  }
+  updateChecklistProgress();
+}
+
+function updateChecklistProgress() {
+  const done  = CHECK_STATE.filter(Boolean).length;
+  const total = CHECK_STATE.length;
+  const pct   = Math.round((done / total) * 100);
+  document.getElementById('check-pct').textContent  = pct + '%';
+  document.getElementById('check-fill').style.width = pct + '%';
+  const completeEl = document.getElementById('checklist-complete');
+  if (pct === 100) {
+    completeEl.style.display = 'block';
+    showToast('You\'re ready for Week 7! 🏆', true);
+  } else {
+    completeEl.style.display = 'none';
+  }
+}
+
+// ─────────────────────────────────────────
+//  LEARN MODE TOGGLE
+// ─────────────────────────────────────────
+function toggleLesson(header) {
+  const body   = header.nextElementSibling;
+  const toggle = header.querySelector('.learn-toggle');
+  const isOpen = body.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.learn-body').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.learn-toggle').forEach(t => t.classList.remove('open'));
+  // Open this one (unless it was already open)
+  if (!isOpen) {
+    body.classList.add('open');
+    toggle.classList.add('open');
+  }
+}
+
+// ─────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────
+let toastTimer;
+function showToast(msg, success = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = 'toast show' + (success ? ' green' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─────────────────────────────────────────
+//  CONFIDENCE BARS — animate on load
+// ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Trigger bar animations after a short delay
+  setTimeout(() => {
+    document.querySelectorAll('.conf-bar-fill').forEach(bar => {
+      const w = bar.style.width;
+      bar.style.width = '0';
+      requestAnimationFrame(() => {
+        setTimeout(() => { bar.style.width = w; }, 50);
+      });
+    });
+  }, 200);
+});
+
+// ─────────────────────────────────────────
+//  WHERE TO PLUG IN REAL DATA:
+//
+//  1. Draft rankings / ADP
+//     Sleeper: GET https://api.sleeper.app/v1/players/nfl
+//     or:      GET https://api.sleeper.app/v1/stats/nfl/{season}/{week}
+//
+//  2. Live roster
+//     Sleeper: GET https://api.sleeper.app/v1/league/{league_id}/rosters
+//
+//  3. Matchup data
+//     Sleeper: GET https://api.sleeper.app/v1/league/{league_id}/matchups/{week}
+//
+//  4. Waiver / free agents
+//     Sleeper: GET https://api.sleeper.app/v1/league/{league_id}/transactions/{week}
+//
+//  5. Player projections
+//     Use a third-party service like FantasyPros, numberFire, or FantasyCalc API.
+//
+//  Replace the MOCK object above with parsed API responses and
+//  re-render each section with the live data.
+// ─────────────────────────────────────────
+</script>
+</body>
+</html>
