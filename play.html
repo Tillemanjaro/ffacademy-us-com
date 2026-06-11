@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FF Academy – Draft & Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #FFD700;
+  --green: #00C853;
+  --dark: #0a0a0f;
+  --card: #12121a;
+  --accent: #1e1e2e;
+  --red: #FF3D3D;
+  --blue: #4FC3F7;
+  --purple: #9b59b6;
+  --orange: #ff8c00;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--dark); color: #fff; font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; width: 100%;
+  background: rgba(10,10,15,.95);
+  backdrop-filter: blur(12px);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 200; height: 58px;
+  border-bottom: 1px solid rgba(255,215,0,.15);
+}
+.nav-logo {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-decoration: none;
+}
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  padding: 6px 16px; border-radius: 20px; cursor: pointer;
+  font-size: .8rem; font-weight: 600; letter-spacing: .5px;
+  border: 1px solid transparent;
+  transition: all .2s;
+  background: none; color: rgba(255,255,255,.5);
+}
+.nav-tab:hover { color: #fff; border-color: rgba(255,255,255,.2); }
+.nav-tab.active { background: var(--gold); color: #000; border-color: var(--gold); }
+
+/* VIEWS */
+.view { display: none; padding-top: 70px; min-height: 100vh; }
+.view.active { display: block; }
+
+/* SETUP VIEW */
+.setup-wrap {
+  max-width: 540px; margin: 60px auto; padding: 0 20px;
+  text-align: center;
+}
+.setup-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 3.2rem; letter-spacing: 3px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.setup-sub { color: rgba(255,255,255,.55); font-size: .9rem; margin-bottom: 40px; }
+.setup-card {
+  background: var(--card); border-radius: 16px;
+  padding: 32px; border: 1px solid rgba(255,255,255,.08);
+  text-align: left; margin-bottom: 20px;
+}
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-size: .75rem; font-weight: 700; letter-spacing: 1px;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 8px; }
+.form-input {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px; color: #fff; font-size: .95rem; font-family: 'Inter', sans-serif;
+  transition: border-color .2s;
+}
+.form-input:focus { outline: none; border-color: var(--gold); }
+.form-select {
+  width: 100%; padding: 12px 16px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px; color: #fff; font-size: .95rem; font-family: 'Inter', sans-serif;
+  cursor: pointer;
+}
+.form-select option { background: #1e1e2e; }
+.scoring-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,200,83,.12); border: 1px solid var(--green);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: .82rem; color: var(--green); font-weight: 600;
+}
+.btn-primary {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #000; font-weight: 900; font-size: 1rem;
+  border: none; border-radius: 12px; cursor: pointer;
+  letter-spacing: 1px; text-transform: uppercase;
+  transition: transform .15s, box-shadow .15s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,215,0,.3); }
+.btn-secondary {
+  padding: 10px 20px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  color: #fff; font-weight: 600; font-size: .85rem;
+  border-radius: 10px; cursor: pointer; transition: all .2s;
+}
+.btn-secondary:hover { background: rgba(255,255,255,.15); }
+.btn-danger {
+  padding: 8px 16px;
+  background: rgba(255,61,61,.12); border: 1px solid var(--red);
+  color: var(--red); font-weight: 600; font-size: .8rem;
+  border-radius: 8px; cursor: pointer; transition: all .2s;
+}
+.btn-danger:hover { background: rgba(255,61,61,.25); }
+
+/* DRAFT VIEW */
+.draft-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+@media (max-width: 900px) {
+  .draft-layout { grid-template-columns: 1fr; }
+  .draft-sidebar { order: -1; }
+}
+
+/* Draft header */
+.draft-header {
+  background: var(--card); border-radius: 14px;
+  padding: 16px 20px; margin: 0 16px 16px;
+  max-width: 1248px; margin-left: auto; margin-right: auto;
+  border: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap;
+}
+.pick-info { display: flex; align-items: center; gap: 16px; }
+.pick-badge {
+  font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem;
+  color: var(--gold); letter-spacing: 1px; white-space: nowrap;
+}
+.pick-detail { font-size: .8rem; color: rgba(255,255,255,.5); }
+.pick-detail strong { color: #fff; }
+.your-pick-banner {
+  background: linear-gradient(135deg, rgba(255,215,0,.2), rgba(255,140,0,.1));
+  border: 1px solid var(--gold); border-radius: 10px;
+  padding: 8px 16px; font-size: .85rem; font-weight: 700; color: var(--gold);
+  animation: pulse 1.5s infinite;
+}
+.ai-pick-banner {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px; padding: 8px 16px;
+  font-size: .85rem; font-weight: 600; color: rgba(255,255,255,.6);
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
+
+/* Player pool */
+.pool-filters {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.filter-btn {
+  padding: 6px 14px; border-radius: 20px; cursor: pointer;
+  font-size: .75rem; font-weight: 700; letter-spacing: .5px;
+  border: 1px solid rgba(255,255,255,.15);
+  background: none; color: rgba(255,255,255,.5);
+  transition: all .2s;
+}
+.filter-btn:hover, .filter-btn.active { background: rgba(255,255,255,.1); color: #fff; }
+.filter-btn.pos-qb.active { background: rgba(231,76,60,.2); color: #e74c3c; border-color: #e74c3c; }
+.filter-btn.pos-rb.active { background: rgba(39,174,96,.2); color: #27ae60; border-color: #27ae60; }
+.filter-btn.pos-wr.active { background: rgba(52,152,219,.2); color: #3498db; border-color: #3498db; }
+.filter-btn.pos-te.active { background: rgba(243,156,18,.2); color: #f39c12; border-color: #f39c12; }
+.filter-btn.pos-k.active { background: rgba(149,165,166,.2); color: #95a5a6; border-color: #95a5a6; }
+.filter-btn.pos-dst.active { background: rgba(155,89,182,.2); color: #9b59b6; border-color: #9b59b6; }
+
+.search-input {
+  width: 100%; padding: 10px 14px; margin-bottom: 10px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; color: #fff; font-size: .88rem; font-family: 'Inter', sans-serif;
+}
+.search-input:focus { outline: none; border-color: var(--gold); }
+
+.player-pool {
+  max-height: calc(100vh - 280px); overflow-y: auto;
+  border-radius: 12px; background: var(--card);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.player-pool::-webkit-scrollbar { width: 4px; }
+.player-pool::-webkit-scrollbar-track { background: transparent; }
+.player-pool::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+.player-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  transition: background .15s; cursor: pointer;
+}
+.player-row:last-child { border-bottom: none; }
+.player-row:hover { background: rgba(255,255,255,.04); }
+.player-row.recommended { background: rgba(255,215,0,.06); border-left: 3px solid var(--gold); }
+.player-row.drafted { opacity: .3; pointer-events: none; }
+
+.player-rank {
+  font-size: .7rem; font-weight: 700; color: rgba(255,255,255,.35);
+  width: 26px; text-align: center; flex-shrink: 0;
+}
+.tier-divider {
+  padding: 6px 14px;
+  background: rgba(255,255,255,.03);
+  font-size: .65rem; font-weight: 700; letter-spacing: 1.5px;
+  color: rgba(255,255,255,.3); text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.pos-badge {
+  width: 32px; height: 20px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 800; flex-shrink: 0;
+}
+.pos-badge.QB { background: rgba(231,76,60,.25); color: #e74c3c; }
+.pos-badge.RB { background: rgba(39,174,96,.25); color: #27ae60; }
+.pos-badge.WR { background: rgba(52,152,219,.25); color: #3498db; }
+.pos-badge.TE { background: rgba(243,156,18,.25); color: #f39c12; }
+.pos-badge.K  { background: rgba(149,165,166,.25); color: #95a5a6; }
+.pos-badge.DST { background: rgba(155,89,182,.25); color: #9b59b6; font-size: .55rem; }
+
+.player-name { font-size: .88rem; font-weight: 600; flex: 1; }
+.player-team { font-size: .72rem; color: rgba(255,255,255,.4); }
+.player-ppg {
+  font-size: .8rem; font-weight: 700;
+  color: var(--green); white-space: nowrap;
+}
+.rec-star {
+  font-size: .7rem; color: var(--gold); white-space: nowrap;
+}
+.draft-btn {
+  padding: 6px 14px;
+  background: var(--green); color: #000;
+  font-weight: 800; font-size: .75rem; border: none;
+  border-radius: 8px; cursor: pointer; white-space: nowrap;
+  transition: transform .1s;
+}
+.draft-btn:hover { transform: scale(1.05); }
+.draft-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+/* Sidebar */
+.draft-sidebar { display: flex; flex-direction: column; gap: 12px; }
+.sidebar-card {
+  background: var(--card); border-radius: 14px;
+  padding: 16px; border: 1px solid rgba(255,255,255,.08);
+}
+.sidebar-title {
+  font-size: .7rem; font-weight: 700; letter-spacing: 1.5px;
+  color: rgba(255,255,255,.4); text-transform: uppercase; margin-bottom: 12px;
+}
+.roster-slot {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+  font-size: .8rem;
+}
+.roster-slot:last-child { border-bottom: none; }
+.slot-label {
+  width: 42px; font-size: .65rem; font-weight: 700;
+  color: rgba(255,255,255,.35); text-transform: uppercase; flex-shrink: 0;
+}
+.slot-player { font-weight: 600; flex: 1; }
+.slot-empty { color: rgba(255,255,255,.2); font-style: italic; font-weight: 400; }
+.slot-ppg { font-size: .72rem; color: var(--green); }
+
+.rec-box {
+  background: rgba(255,215,0,.07); border: 1px solid rgba(255,215,0,.25);
+  border-radius: 10px; padding: 12px;
+}
+.rec-label { font-size: .65rem; font-weight: 700; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.rec-player { font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+.rec-reason { font-size: .75rem; color: rgba(255,255,255,.55); line-height: 1.4; }
+
+.teams-mini { max-height: 200px; overflow-y: auto; }
+.team-mini-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 0; font-size: .78rem;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.team-mini-row:last-child { border-bottom: none; }
+.team-mini-name { font-weight: 600; }
+.team-mini-pick { color: rgba(255,255,255,.4); font-size: .72rem; }
+
+/* Draft complete */
+.draft-complete {
+  text-align: center; padding: 60px 20px;
+}
+.complete-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 3rem;
+  letter-spacing: 3px; color: var(--gold); margin-bottom: 12px;
+}
+
+/* MY TEAM VIEW */
+.team-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+.team-header-card {
+  background: var(--card); border-radius: 16px;
+  padding: 24px; margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,.08);
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  flex-wrap: wrap;
+}
+.team-name-big {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.2rem;
+  letter-spacing: 2px; color: var(--gold);
+}
+.team-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.team-stat { text-align: center; }
+.team-stat-val { font-size: 1.4rem; font-weight: 900; color: #fff; }
+.team-stat-label { font-size: .68rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; }
+
+.position-section { margin-bottom: 20px; }
+.position-section-title {
+  font-size: .7rem; font-weight: 700; letter-spacing: 2px;
+  text-transform: uppercase; margin-bottom: 10px;
+  padding-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.roster-card {
+  background: var(--card); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; gap: 14px;
+}
+.roster-card .pos-badge { width: 38px; height: 24px; font-size: .7rem; }
+.roster-card .player-info { flex: 1; }
+.roster-card .player-info h4 { font-size: .95rem; font-weight: 700; margin-bottom: 2px; }
+.roster-card .player-info p { font-size: .75rem; color: rgba(255,255,255,.45); }
+.roster-card .proj-pts {
+  text-align: right;
+}
+.roster-card .proj-pts .pts-val { font-size: 1.1rem; font-weight: 900; color: var(--green); }
+.roster-card .proj-pts .pts-label { font-size: .65rem; color: rgba(255,255,255,.35); }
+.starter-tag {
+  font-size: .6rem; font-weight: 800; letter-spacing: 1px;
+  background: rgba(0,200,83,.15); color: var(--green);
+  border-radius: 4px; padding: 2px 6px; text-transform: uppercase;
+}
+.bench-tag {
+  font-size: .6rem; font-weight: 800; letter-spacing: 1px;
+  background: rgba(255,255,255,.06); color: rgba(255,255,255,.35);
+  border-radius: 4px; padding: 2px 6px; text-transform: uppercase;
+}
+
+/* TRADE VIEW */
+.trade-wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+.trade-page-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem;
+  letter-spacing: 2px; color: var(--gold);
+  margin-bottom: 6px;
+}
+.trade-sub { font-size: .85rem; color: rgba(255,255,255,.45); margin-bottom: 24px; }
+
+.trade-card {
+  background: var(--card); border-radius: 16px;
+  padding: 20px; margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,.08);
+  transition: border-color .2s;
+}
+.trade-card:hover { border-color: rgba(255,215,0,.3); }
+.trade-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.trade-value-badge {
+  font-size: .7rem; font-weight: 800; letter-spacing: .5px;
+  padding: 4px 10px; border-radius: 6px; text-transform: uppercase;
+}
+.value-win { background: rgba(0,200,83,.15); color: var(--green); }
+.value-fair { background: rgba(255,215,0,.15); color: var(--gold); }
+.value-loss { background: rgba(255,61,61,.15); color: var(--red); }
+
+.trade-players {
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  gap: 12px; margin-bottom: 14px;
+}
+.trade-side { }
+.trade-side-label {
+  font-size: .65rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.trade-player-chip {
+  background: rgba(255,255,255,.06); border-radius: 8px;
+  padding: 8px 12px; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.trade-player-chip:last-child { margin-bottom: 0; }
+.trade-arrow { font-size: 1.4rem; text-align: center; color: rgba(255,255,255,.3); }
+.trade-rationale {
+  font-size: .8rem; color: rgba(255,255,255,.55); line-height: 1.5;
+  padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06);
+}
+.trade-rationale strong { color: #fff; }
+
+.strength-meter {
+  display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.strength-item {
+  flex: 1; min-width: 120px;
+  background: var(--card); border-radius: 10px;
+  padding: 12px; border: 1px solid rgba(255,255,255,.08);
+  text-align: center;
+}
+.strength-pos { font-size: .7rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.strength-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,.1); margin: 6px 0; }
+.strength-fill { height: 100%; border-radius: 2px; transition: width .5s; }
+.strength-grade { font-size: .85rem; font-weight: 900; }
+.grade-A { color: var(--green); }
+.grade-B { color: #7ddd9c; }
+.grade-C { color: var(--gold); }
+.grade-D { color: #f39c12; }
+.grade-F { color: var(--red); }
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: rgba(255,255,255,.35);
+}
+.empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; }
+.empty-state p { font-size: .85rem; }
+
+/* Draft log */
+.draft-log-entries { max-height: 180px; overflow-y: auto; }
+.log-entry {
+  padding: 5px 0; font-size: .75rem;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  color: rgba(255,255,255,.55);
+}
+.log-entry.mine { color: var(--gold); }
+.log-entry:last-child { border-bottom: none; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: #1e1e2e; border: 1px solid rgba(255,255,255,.15);
+  border-radius: 10px; padding: 12px 18px;
+  font-size: .85rem; font-weight: 600;
+  z-index: 9999; transform: translateY(100px); opacity: 0;
+  transition: all .3s;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { border-color: var(--green); color: var(--green); }
+.toast.error { border-color: var(--red); color: var(--red); }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .draft-layout { padding: 10px; }
+  .draft-header { margin: 0 10px 10px; padding: 12px; }
+  .team-wrap, .trade-wrap { padding: 12px; }
+  .trade-players { grid-template-columns: 1fr; }
+  .trade-arrow { transform: rotate(90deg); }
+  nav { padding: 0 14px; }
+  .nav-tab { padding: 5px 10px; font-size: .72rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">FF Academy</a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('draft')">Draft</button>
+    <button class="nav-tab" onclick="showView('team')">My Team</button>
+    <button class="nav-tab" onclick="showView('trades')">Trades</button>
+  </div>
+</nav>
+
+<!-- SETUP VIEW -->
+<div id="view-setup" class="view active">
+  <div class="setup-wrap">
+    <div class="setup-title">Build Your Team</div>
+    <div class="setup-sub">PPR scoring · Snake draft · Trade advisor included</div>
+
+    <div class="setup-card">
+      <div class="form-group">
+        <label class="form-label">Your Team Name</label>
+        <input class="form-input" id="team-name-input" type="text" placeholder="e.g. Touchdown Kings" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label class="form-label">League Size</label>
+        <select class="form-select" id="league-size-select">
+          <option value="10">10 Teams</option>
+          <option value="12" selected>12 Teams (Recommended)</option>
+          <option value="14">14 Teams</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Your Draft Position</label>
+        <select class="form-select" id="draft-pos-select">
+          <option value="random">Random</option>
+          <option value="1">Pick 1 (First Pick)</option>
+          <option value="2">Pick 2</option>
+          <option value="3">Pick 3</option>
+          <option value="6">Middle (6)</option>
+          <option value="12">Pick 12 (Last — Two Fast)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Scoring Format</label>
+        <div class="scoring-badge">
+          ✓ PPR — 1 point per reception (already locked in)
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="startDraft()">Start Draft →</button>
+  </div>
+</div>
+
+<!-- DRAFT VIEW -->
+<div id="view-draft" class="view">
+  <div id="draft-header" class="draft-header">
+    <div class="pick-info">
+      <div class="pick-badge" id="pick-badge">Pick 1.01</div>
+      <div>
+        <div class="pick-detail">Round <strong id="round-num">1</strong> of 15</div>
+        <div class="pick-detail">Drafting: <strong id="current-drafter">—</strong></div>
+      </div>
+    </div>
+    <div id="pick-status" class="your-pick-banner">YOUR PICK — SELECT A PLAYER</div>
+  </div>
+
+  <div class="draft-layout">
+    <!-- Left: player pool -->
+    <div>
+      <div class="pool-filters" id="pool-filters">
+        <button class="filter-btn active" data-pos="ALL" onclick="filterPool('ALL',this)">All</button>
+        <button class="filter-btn pos-qb" data-pos="QB" onclick="filterPool('QB',this)">QB</button>
+        <button class="filter-btn pos-rb" data-pos="RB" onclick="filterPool('RB',this)">RB</button>
+        <button class="filter-btn pos-wr" data-pos="WR" onclick="filterPool('WR',this)">WR</button>
+        <button class="filter-btn pos-te" data-pos="TE" onclick="filterPool('TE',this)">TE</button>
+        <button class="filter-btn pos-k"  data-pos="K"  onclick="filterPool('K',this)">K</button>
+        <button class="filter-btn pos-dst" data-pos="DST" onclick="filterPool('DST',this)">D/ST</button>
+      </div>
+      <input class="search-input" id="player-search" type="text" placeholder="Search players…" oninput="renderPool()">
+      <div class="player-pool" id="player-pool"></div>
+    </div>
+
+    <!-- Right: sidebar -->
+    <div class="draft-sidebar">
+      <!-- Recommendation -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">Recommendation</div>
+        <div id="rec-box" class="rec-box">
+          <div class="rec-label">⭐ Best Pick</div>
+          <div class="rec-player" id="rec-player-name">Loading…</div>
+          <div class="rec-reason" id="rec-reason">Analyzing your roster needs…</div>
+        </div>
+      </div>
+
+      <!-- My Roster -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">My Roster</div>
+        <div id="my-roster-slots"></div>
+      </div>
+
+      <!-- Draft Log -->
+      <div class="sidebar-card">
+        <div class="sidebar-title">Draft Log</div>
+        <div class="draft-log-entries" id="draft-log"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MY TEAM VIEW -->
+<div id="view-team" class="view">
+  <div class="team-wrap">
+    <div id="team-content"></div>
+  </div>
+</div>
+
+<!-- TRADES VIEW -->
+<div id="view-trades" class="view">
+  <div class="trade-wrap">
+    <div id="trades-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  PLAYER DATABASE  (PPR optimized, 2025 NFL season)
+// ══════════════════════════════════════════════════════
+const PLAYERS = [
+  // ── QB ──
+  { id:1,  name:'Josh Allen',        team:'BUF', pos:'QB',  rank:1,  ppg:28.5, tier:1 },
+  { id:2,  name:'Lamar Jackson',     team:'BAL', pos:'QB',  rank:2,  ppg:27.8, tier:1 },
+  { id:3,  name:'Jalen Hurts',       team:'PHI', pos:'QB',  rank:3,  ppg:26.4, tier:1 },
+  { id:4,  name:'CJ Stroud',         team:'HOU', pos:'QB',  rank:4,  ppg:24.9, tier:2 },
+  { id:5,  name:'Patrick Mahomes',   team:'KC',  pos:'QB',  rank:5,  ppg:24.2, tier:2 },
+  { id:6,  name:'Dak Prescott',      team:'DAL', pos:'QB',  rank:6,  ppg:23.8, tier:2 },
+  { id:7,  name:'Joe Burrow',        team:'CIN', pos:'QB',  rank:7,  ppg:23.1, tier:3 },
+  { id:8,  name:'Jordan Love',       team:'GB',  pos:'QB',  rank:8,  ppg:22.5, tier:3 },
+  { id:9,  name:'Anthony Richardson',team:'IND', pos:'QB',  rank:9,  ppg:22.0, tier:3 },
+  { id:10, name:'Sam Darnold',       team:'MIN', pos:'QB',  rank:10, ppg:21.4, tier:4 },
+  { id:11, name:'Brock Purdy',       team:'SF',  pos:'QB',  rank:11, ppg:21.0, tier:4 },
+  { id:12, name:'Tua Tagovailoa',    team:'MIA', pos:'QB',  rank:12, ppg:20.6, tier:4 },
+
+  // ── RB ──
+  { id:20, name:'Christian McCaffrey',team:'SF', pos:'RB', rank:1,  ppg:26.2, tier:1 },
+  { id:21, name:'Breece Hall',        team:'NYJ',pos:'RB', rank:2,  ppg:22.8, tier:1 },
+  { id:22, name:'Bijan Robinson',     team:'ATL',pos:'RB', rank:3,  ppg:22.1, tier:1 },
+  { id:23, name:'Derrick Henry',      team:'BAL',pos:'RB', rank:4,  ppg:21.5, tier:1 },
+  { id:24, name:'Saquon Barkley',     team:'PHI',pos:'RB', rank:5,  ppg:20.9, tier:2 },
+  { id:25, name:'Jonathan Taylor',    team:'IND',pos:'RB', rank:6,  ppg:20.3, tier:2 },
+  { id:26, name:'Josh Jacobs',        team:'GB', pos:'RB', rank:7,  ppg:19.6, tier:2 },
+  { id:27, name:'James Cook',         team:'BUF',pos:'RB', rank:8,  ppg:18.9, tier:2 },
+  { id:28, name:'Jahmyr Gibbs',       team:'DET',pos:'RB', rank:9,  ppg:18.5, tier:3 },
+  { id:29, name:'Tony Pollard',       team:'TEN',pos:'RB', rank:10, ppg:17.8, tier:3 },
+  { id:30, name:'Rhamondre Stevenson',team:'NE', pos:'RB', rank:11, ppg:17.2, tier:3 },
+  { id:31, name:'Kyren Williams',     team:'LAR',pos:'RB', rank:12, ppg:16.8, tier:3 },
+  { id:32, name:'David Montgomery',   team:'DET',pos:'RB', rank:13, ppg:16.2, tier:4 },
+  { id:33, name:'Zack Moss',          team:'IND',pos:'RB', rank:14, ppg:15.8, tier:4 },
+  { id:34, name:'Aaron Jones',        team:'MIN',pos:'RB', rank:15, ppg:15.5, tier:4 },
+  { id:35, name:'Chuba Hubbard',      team:'CAR',pos:'RB', rank:16, ppg:15.0, tier:4 },
+  { id:36, name:'Rachaad White',      team:'TB', pos:'RB', rank:17, ppg:14.6, tier:5 },
+  { id:37, name:'Najee Harris',       team:'PIT',pos:'RB', rank:18, ppg:14.2, tier:5 },
+  { id:38, name:'Kenneth Walker',     team:'SEA',pos:'RB', rank:19, ppg:13.8, tier:5 },
+  { id:39, name:'Travis Etienne',     team:'JAX',pos:'RB', rank:20, ppg:13.5, tier:5 },
+  { id:40, name:'De\'Von Achane',     team:'MIA',pos:'RB', rank:21, ppg:13.2, tier:6 },
+  { id:41, name:'Gus Edwards',        team:'LAC',pos:'RB', rank:22, ppg:12.8, tier:6 },
+  { id:42, name:'Jerome Ford',        team:'CLE',pos:'RB', rank:23, ppg:12.5, tier:6 },
+  { id:43, name:'AJ Dillon',          team:'GB', pos:'RB', rank:24, ppg:11.9, tier:6 },
+  { id:44, name:'Tank Bigsby',        team:'JAX',pos:'RB', rank:25, ppg:11.5, tier:7 },
+  { id:45, name:'Isiah Pacheco',      team:'KC', pos:'RB', rank:26, ppg:11.2, tier:7 },
+  { id:46, name:'Miles Sanders',      team:'CAR',pos:'RB', rank:27, ppg:10.8, tier:7 },
+  { id:47, name:'Roschon Johnson',    team:'CHI',pos:'RB', rank:28, ppg:10.5, tier:7 },
+
+  // ── WR ──
+  { id:60, name:'Tyreek Hill',        team:'MIA',pos:'WR', rank:1,  ppg:24.5, tier:1 },
+  { id:61, name:"Ja'Marr Chase",      team:'CIN',pos:'WR', rank:2,  ppg:23.2, tier:1 },
+  { id:62, name:'Justin Jefferson',   team:'MIN',pos:'WR', rank:3,  ppg:22.8, tier:1 },
+  { id:63, name:'CeeDee Lamb',        team:'DAL',pos:'WR', rank:4,  ppg:22.1, tier:1 },
+  { id:64, name:'Davante Adams',      team:'LV', pos:'WR', rank:5,  ppg:20.5, tier:2 },
+  { id:65, name:'Stefon Diggs',       team:'BUF',pos:'WR', rank:6,  ppg:19.8, tier:2 },
+  { id:66, name:"Amon-Ra St. Brown",  team:'DET',pos:'WR', rank:7,  ppg:19.2, tier:2 },
+  { id:67, name:'Puka Nacua',         team:'LAR',pos:'WR', rank:8,  ppg:18.5, tier:2 },
+  { id:68, name:'Jordan Addison',     team:'MIN',pos:'WR', rank:9,  ppg:17.9, tier:3 },
+  { id:69, name:'Jaylen Waddle',      team:'MIA',pos:'WR', rank:10, ppg:17.4, tier:3 },
+  { id:70, name:'Drake London',       team:'ATL',pos:'WR', rank:11, ppg:16.8, tier:3 },
+  { id:71, name:"DeVonta Smith",      team:'PHI',pos:'WR', rank:12, ppg:16.5, tier:3 },
+  { id:72, name:'Tank Dell',          team:'HOU',pos:'WR', rank:13, ppg:16.0, tier:4 },
+  { id:73, name:'Garrett Wilson',     team:'NYJ',pos:'WR', rank:14, ppg:15.6, tier:4 },
+  { id:74, name:'Diontae Johnson',    team:'CAR',pos:'WR', rank:15, ppg:15.2, tier:4 },
+  { id:75, name:'Michael Pittman',    team:'IND',pos:'WR', rank:16, ppg:14.8, tier:4 },
+  { id:76, name:'DJ Moore',           team:'CHI',pos:'WR', rank:17, ppg:14.5, tier:4 },
+  { id:77, name:'Tee Higgins',        team:'CIN',pos:'WR', rank:18, ppg:14.2, tier:5 },
+  { id:78, name:'Christian Watson',   team:'GB', pos:'WR', rank:19, ppg:13.8, tier:5 },
+  { id:79, name:'Rashid Shaheed',     team:'NO', pos:'WR', rank:20, ppg:13.5, tier:5 },
+  { id:80, name:'Keenan Allen',       team:'CHI',pos:'WR', rank:21, ppg:13.2, tier:5 },
+  { id:81, name:'Curtis Samuel',      team:'BUF',pos:'WR', rank:22, ppg:12.8, tier:5 },
+  { id:82, name:'Josh Downs',         team:'IND',pos:'WR', rank:23, ppg:12.5, tier:6 },
+  { id:83, name:'Quentin Johnston',   team:'LAC',pos:'WR', rank:24, ppg:12.2, tier:6 },
+  { id:84, name:'Zay Flowers',        team:'BAL',pos:'WR', rank:25, ppg:12.0, tier:6 },
+  { id:85, name:'Chris Olave',        team:'NO', pos:'WR', rank:26, ppg:11.8, tier:6 },
+  { id:86, name:'Kadarius Toney',     team:'KC', pos:'WR', rank:27, ppg:11.5, tier:6 },
+  { id:87, name:'Van Jefferson',      team:'LAR',pos:'WR', rank:28, ppg:11.0, tier:7 },
+
+  // ── TE ──
+  { id:100, name:'Sam LaPorta',       team:'DET',pos:'TE', rank:1,  ppg:16.5, tier:1 },
+  { id:101, name:'Travis Kelce',      team:'KC', pos:'TE', rank:2,  ppg:15.8, tier:1 },
+  { id:102, name:'Mark Andrews',      team:'BAL',pos:'TE', rank:3,  ppg:15.2, tier:1 },
+  { id:103, name:'Evan Engram',       team:'JAX',pos:'TE', rank:4,  ppg:14.5, tier:2 },
+  { id:104, name:'Dallas Goedert',    team:'PHI',pos:'TE', rank:5,  ppg:13.8, tier:2 },
+  { id:105, name:'TJ Hockenson',      team:'MIN',pos:'TE', rank:6,  ppg:13.2, tier:2 },
+  { id:106, name:'Kyle Pitts',        team:'ATL',pos:'TE', rank:7,  ppg:12.5, tier:3 },
+  { id:107, name:'Jake Ferguson',     team:'DAL',pos:'TE', rank:8,  ppg:12.0, tier:3 },
+  { id:108, name:'Pat Freiermuth',    team:'PIT',pos:'TE', rank:9,  ppg:11.5, tier:3 },
+  { id:109, name:'Isaiah Likely',     team:'BAL',pos:'TE', rank:10, ppg:11.0, tier:4 },
+  { id:110, name:'Tyler Higbee',      team:'LAR',pos:'TE', rank:11, ppg:10.5, tier:4 },
+  { id:111, name:'Chigoziem Okonkwo', team:'TEN',pos:'TE', rank:12, ppg:10.0, tier:4 },
+
+  // ── K ──
+  { id:130, name:'Justin Tucker',     team:'BAL',pos:'K', rank:1, ppg:10.2, tier:1 },
+  { id:131, name:'Harrison Butker',   team:'KC', pos:'K', rank:2, ppg:9.8,  tier:1 },
+  { id:132, name:'Evan McPherson',    team:'CIN',pos:'K', rank:3, ppg:9.5,  tier:1 },
+  { id:133, name:'Tyler Bass',        team:'BUF',pos:'K', rank:4, ppg:9.2,  tier:2 },
+  { id:134, name:'Brandon McManus',   team:'GB', pos:'K', rank:5, ppg:9.0,  tier:2 },
+  { id:135, name:'Jake Elliott',      team:'PHI',pos:'K', rank:6, ppg:8.8,  tier:2 },
+  { id:136, name:'Cairo Santos',      team:'CHI',pos:'K', rank:7, ppg:8.5,  tier:3 },
+  { id:137, name:'Chris Boswell',     team:'PIT',pos:'K', rank:8, ppg:8.2,  tier:3 },
+
+  // ── D/ST ──
+  { id:150, name:'San Francisco 49ers', team:'SF', pos:'DST', rank:1, ppg:11.5, tier:1 },
+  { id:151, name:'Dallas Cowboys',      team:'DAL',pos:'DST', rank:2, ppg:11.0, tier:1 },
+  { id:152, name:'Baltimore Ravens',    team:'BAL',pos:'DST', rank:3, ppg:10.5, tier:1 },
+  { id:153, name:'New York Jets',       team:'NYJ',pos:'DST', rank:4, ppg:10.0, tier:2 },
+  { id:154, name:'Philadelphia Eagles', team:'PHI',pos:'DST', rank:5, ppg:9.5,  tier:2 },
+  { id:155, name:'Pittsburgh Steelers', team:'PIT',pos:'DST', rank:6, ppg:9.2,  tier:2 },
+  { id:156, name:'Cleveland Browns',    team:'CLE',pos:'DST', rank:7, ppg:8.8,  tier:3 },
+  { id:157, name:'Buffalo Bills',       team:'BUF',pos:'DST', rank:8, ppg:8.5,  tier:3 },
+  { id:158, name:'Miami Dolphins',      team:'MIA',pos:'DST', rank:9, ppg:8.2,  tier:3 },
+  { id:159, name:'Green Bay Packers',   team:'GB', pos:'DST', rank:10,ppg:8.0,  tier:3 },
+];
+
+// ══════════════════════════════════════════════════════
+//  ROSTER FORMAT (12-team PPR standard)
+// ══════════════════════════════════════════════════════
+const ROSTER_SLOTS = [
+  { slot:'QB',   pos:['QB'],           label:'QB' },
+  { slot:'RB1',  pos:['RB'],           label:'RB' },
+  { slot:'RB2',  pos:['RB'],           label:'RB' },
+  { slot:'WR1',  pos:['WR'],           label:'WR' },
+  { slot:'WR2',  pos:['WR'],           label:'WR' },
+  { slot:'TE',   pos:['TE'],           label:'TE' },
+  { slot:'FLEX', pos:['RB','WR','TE'], label:'FLX' },
+  { slot:'K',    pos:['K'],            label:'K' },
+  { slot:'DST',  pos:['DST'],          label:'D/ST' },
+  { slot:'BN1',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+  { slot:'BN2',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+  { slot:'BN3',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+  { slot:'BN4',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+  { slot:'BN5',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+  { slot:'BN6',  pos:['QB','RB','WR','TE','K','DST'], label:'BN' },
+];
+
+// ══════════════════════════════════════════════════════
+//  DRAFT STATE
+// ══════════════════════════════════════════════════════
+let league = {
+  teamName: 'My Team',
+  size: 12,
+  myPick: 1,
+  picks: [],      // all draft picks in order [{team, player}]
+  teams: [],      // array of {name, roster:[player]}
+  availablePlayers: [],
+  pickNum: 0,     // 0-based overall pick number
+  totalPicks: 0,
+  draftDone: false,
+};
+
+let poolFilter = 'ALL';
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const view = document.getElementById('view-' + name);
+  const tab  = [...document.querySelectorAll('.nav-tab')].find(t => t.textContent.toLowerCase().includes(name === 'draft' ? 'draft' : name === 'team' ? 'team' : 'trade'));
+  if (view) view.classList.add('active');
+  if (tab)  tab.classList.add('active');
+
+  if (name === 'team')   renderTeamView();
+  if (name === 'trades') renderTradesView();
+  if (name === 'draft')  { if (!league.draftDone) renderPool(); }
+}
+
+// ══════════════════════════════════════════════════════
+//  SETUP → START DRAFT
+// ══════════════════════════════════════════════════════
+function startDraft() {
+  const nameVal = document.getElementById('team-name-input').value.trim();
+  league.teamName = nameVal || 'My Team';
+  league.size = parseInt(document.getElementById('league-size-select').value);
+  const posVal = document.getElementById('draft-pos-select').value;
+  league.myPick = posVal === 'random'
+    ? Math.ceil(Math.random() * league.size)
+    : parseInt(posVal);
+  league.totalPicks = league.size * ROSTER_SLOTS.length;
+
+  // Build teams
+  const teamNames = [
+    league.teamName, 'Gridiron Gurus','Touchdown Bandits','Blitz Kings',
+    'Red Zone Raiders','Fantasy Freaks','Hail Mary Heroes','Sleeper Agents',
+    'PPR Professors','Snap Count Squad','End Zone Elite','Draft Day Champs',
+    'Pigskin Prophets','Bye Week Busters',
+  ];
+  league.teams = Array.from({length: league.size}, (_, i) => ({
+    name: teamNames[i] || `Team ${i+1}`,
+    roster: [],
+    isMine: i + 1 === league.myPick,
+  }));
+
+  league.availablePlayers = PLAYERS.map(p => ({...p, drafted: false}));
+  league.picks = [];
+  league.pickNum = 0;
+  league.draftDone = false;
+
+  // Switch to draft view
+  document.getElementById('view-setup').classList.remove('active');
+  document.getElementById('view-draft').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.nav-tab').classList.add('active');
+
+  updateDraftHeader();
+  renderRosterSlots();
+  renderPool();
+  updateRecommendation();
+
+  // If AI picks before user
+  if (!isMyTurn()) setTimeout(runAIPicks, 400);
+}
+
+// ══════════════════════════════════════════════════════
+//  DRAFT TURN LOGIC
+// ══════════════════════════════════════════════════════
+function teamIdxForPick(pickNum) {
+  const size = league.size;
+  const round = Math.floor(pickNum / size);
+  const slot  = pickNum % size;
+  return round % 2 === 0 ? slot : (size - 1 - slot);
+}
+
+function isMyTurn() {
+  if (league.pickNum >= league.totalPicks) return false;
+  return teamIdxForPick(league.pickNum) === league.myPick - 1;
+}
+
+function updateDraftHeader() {
+  const pick = league.pickNum;
+  const round = Math.floor(pick / league.size) + 1;
+  const slot  = (pick % league.size) + 1;
+  const teamIdx = teamIdxForPick(pick);
+  const team = league.teams[teamIdx];
+
+  document.getElementById('pick-badge').textContent =
+    `Pick ${round}.${String(slot).padStart(2,'0')}`;
+  document.getElementById('round-num').textContent = round;
+  document.getElementById('current-drafter').textContent = team ? team.name : '—';
+
+  const statusEl = document.getElementById('pick-status');
+  if (league.draftDone) {
+    statusEl.className = 'ai-pick-banner';
+    statusEl.textContent = 'DRAFT COMPLETE';
+  } else if (isMyTurn()) {
+    statusEl.className = 'your-pick-banner';
+    statusEl.textContent = 'YOUR PICK — SELECT A PLAYER';
+  } else {
+    statusEl.className = 'ai-pick-banner';
+    statusEl.textContent = `${team ? team.name : 'AI'} is picking…`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  AI PICKS
+// ══════════════════════════════════════════════════════
+function runAIPicks() {
+  function pickNext() {
+    if (league.pickNum >= league.totalPicks || isMyTurn()) {
+      updateDraftHeader();
+      renderPool();
+      updateRecommendation();
+      return;
+    }
+    const teamIdx = teamIdxForPick(league.pickNum);
+    const team = league.teams[teamIdx];
+    const pick = chooseBestForTeam(team);
+    if (!pick) { league.pickNum++; pickNext(); return; }
+
+    markDrafted(pick, team, false);
+    setTimeout(pickNext, 80);
+  }
+  pickNext();
+}
+
+function chooseBestForTeam(team) {
+  const available = league.availablePlayers.filter(p => !p.drafted);
+  if (!available.length) return null;
+
+  const round = Math.floor(league.pickNum / league.size) + 1;
+  const rosterCounts = countPositions(team.roster);
+
+  // Need-based logic
+  const needs = getPositionNeeds(rosterCounts, round);
+  for (const pos of needs) {
+    const candidate = available.find(p => p.pos === pos);
+    if (candidate) return candidate;
+  }
+  // Fallback: best available + small random noise
+  const top5 = available.slice(0, 5);
+  return top5[Math.floor(Math.random() * Math.min(3, top5.length))];
+}
+
+function countPositions(roster) {
+  const c = { QB:0, RB:0, WR:0, TE:0, K:0, DST:0 };
+  roster.forEach(p => { if (c[p.pos] !== undefined) c[p.pos]++; });
+  return c;
+}
+
+function getPositionNeeds(counts, round) {
+  const order = [];
+  if (counts.RB < 2) order.push('RB');
+  if (counts.WR < 2) order.push('WR');
+  if (counts.QB < 1 && round >= 5) order.push('QB');
+  if (counts.TE < 1 && round >= 4) order.push('TE');
+  if (counts.RB < 4) order.push('RB');
+  if (counts.WR < 4) order.push('WR');
+  if (counts.QB < 1) order.push('QB');
+  if (counts.TE < 1) order.push('TE');
+  if (counts.K < 1 && round >= 13) order.push('K');
+  if (counts.DST < 1 && round >= 12) order.push('DST');
+  order.push('RB','WR','TE','QB','DST','K');
+  return order;
+}
+
+// ══════════════════════════════════════════════════════
+//  MARK DRAFTED
+// ══════════════════════════════════════════════════════
+function markDrafted(player, team, isUser) {
+  player.drafted = true;
+  team.roster.push(player);
+  league.picks.push({ team, player });
+  league.pickNum++;
+
+  // Log
+  const log = document.getElementById('draft-log');
+  const entry = document.createElement('div');
+  const pickLabel = `${Math.floor((league.pickNum-1)/league.size)+1}.${String(((league.pickNum-1)%league.size)+1).padStart(2,'0')}`;
+  entry.className = 'log-entry' + (isUser ? ' mine' : '');
+  entry.textContent = `${pickLabel} ${team.name}: ${player.name} (${player.pos})`;
+  log.prepend(entry);
+
+  if (isUser) {
+    renderRosterSlots();
+    updateRecommendation();
+  }
+
+  if (league.pickNum >= league.totalPicks) {
+    league.draftDone = true;
+    updateDraftHeader();
+    renderPool();
+    showToast(`Draft complete! Check "My Team" →`, 'success');
+  } else {
+    updateDraftHeader();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  USER PICKS
+// ══════════════════════════════════════════════════════
+function userPickPlayer(playerId) {
+  if (!isMyTurn()) return;
+  const player = league.availablePlayers.find(p => p.id === playerId && !p.drafted);
+  if (!player) return;
+  const myTeam = league.teams[league.myPick - 1];
+  markDrafted(player, myTeam, true);
+
+  if (!league.draftDone) {
+    renderPool();
+    setTimeout(runAIPicks, 200);
+  } else {
+    renderPool();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER POOL
+// ══════════════════════════════════════════════════════
+function filterPool(pos, btn) {
+  poolFilter = pos;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPool();
+}
+
+function renderPool() {
+  const search = (document.getElementById('player-search')?.value || '').toLowerCase();
+  const myTeam = league.teams[league.myPick - 1];
+  const rec = getRecommendedPlayer(myTeam);
+  const isTurn = isMyTurn() && !league.draftDone;
+
+  let players = league.availablePlayers.filter(p => {
+    if (poolFilter !== 'ALL' && p.pos !== poolFilter) return false;
+    if (search && !p.name.toLowerCase().includes(search) && !p.team.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  // Sort: available first, then drafted
+  players.sort((a,b) => {
+    if (a.drafted !== b.drafted) return a.drafted ? 1 : -1;
+    return a.pos === b.pos ? a.rank - b.rank : a.ppg > b.ppg ? -1 : 1;
+  });
+
+  const pool = document.getElementById('player-pool');
+  if (!pool) return;
+
+  if (league.draftDone && !players.filter(p=>!p.drafted).length) {
+    pool.innerHTML = `<div class="draft-complete">
+      <div class="complete-title">Draft Complete!</div>
+      <p style="color:rgba(255,255,255,.5);margin-bottom:24px;">Your roster is set. View your team and get trade suggestions.</p>
+      <button class="btn-primary" style="width:auto;padding:14px 32px;" onclick="showView('team')">View My Team →</button>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastTier = null;
+  const available = players.filter(p => !p.drafted);
+
+  available.forEach(p => {
+    if (p.tier !== lastTier) {
+      const tierLabels = ['','Elite','Starter','Solid Starter','Depth','Late Round','Streamer'];
+      html += `<div class="tier-divider">— Tier ${p.tier}: ${tierLabels[p.tier] || 'Value'} —</div>`;
+      lastTier = p.tier;
+    }
+    const isRec = rec && rec.id === p.id;
+    html += `<div class="player-row ${isRec ? 'recommended' : ''}">
+      <div class="player-rank">${p.pos === 'DST' ? '' : p.rank}</div>
+      <div class="pos-badge ${p.pos}">${p.pos}</div>
+      <div style="flex:1">
+        <div class="player-name">${p.name}</div>
+        <div class="player-team">${p.team} · ~${p.ppg} PPR pts/gm</div>
+      </div>
+      ${isRec ? '<div class="rec-star">⭐ REC</div>' : ''}
+      <button class="draft-btn" ${!isTurn ? 'disabled' : ''} onclick="userPickPlayer(${p.id})">
+        ${isTurn ? 'Draft' : 'On Clock…'}
+      </button>
+    </div>`;
+  });
+
+  // Show drafted players faded at bottom
+  const drafted = players.filter(p => p.drafted);
+  if (drafted.length && poolFilter !== 'ALL') {
+    html += `<div class="tier-divider">— Already Drafted —</div>`;
+    drafted.forEach(p => {
+      html += `<div class="player-row drafted">
+        <div class="player-rank">${p.rank}</div>
+        <div class="pos-badge ${p.pos}">${p.pos}</div>
+        <div style="flex:1">
+          <div class="player-name">${p.name}</div>
+          <div class="player-team">${p.team}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  pool.innerHTML = html || '<div style="padding:30px;text-align:center;color:rgba(255,255,255,.3)">No players match filter</div>';
+}
+
+// ══════════════════════════════════════════════════════
+//  RECOMMENDATION ENGINE
+// ══════════════════════════════════════════════════════
+function getRecommendedPlayer(team) {
+  if (!team) return null;
+  const available = league.availablePlayers.filter(p => !p.drafted);
+  if (!available.length) return null;
+
+  const round = Math.floor(league.pickNum / league.size) + 1;
+  const counts = countPositions(team.roster);
+  const needs  = getPositionNeeds(counts, round);
+
+  // Try to match top need
+  for (const pos of needs) {
+    const candidate = available.find(p => p.pos === pos);
+    if (candidate) return candidate;
+  }
+  return available[0];
+}
+
+function updateRecommendation() {
+  const myTeam = league.teams[league.myPick - 1];
+  const rec = getRecommendedPlayer(myTeam);
+  if (!rec) return;
+
+  const counts = countPositions(myTeam ? myTeam.roster : []);
+  const round = Math.floor(league.pickNum / league.size) + 1;
+
+  document.getElementById('rec-player-name').textContent = `${rec.name} (${rec.pos}) — ${rec.team}`;
+
+  let reason = '';
+  if (rec.pos === 'RB' && counts.RB < 2) reason = 'You need RBs — they score big receptions in PPR. Lock in starter value early.';
+  else if (rec.pos === 'WR' && counts.WR < 2) reason = 'Secure a WR1/WR2. PPR adds huge value to pass-catchers.';
+  else if (rec.pos === 'QB') reason = `Round ${round} — good QB window. ${rec.name} is a dual-threat who inflates in PPR leagues.`;
+  else if (rec.pos === 'TE') reason = 'Elite TEs are scarce. Grab one while value remains.';
+  else if (rec.pos === 'K') reason = 'Late rounds — fill your kicker spot with a reliable foot.';
+  else if (rec.pos === 'DST') reason = 'Solid D/ST rounds out your roster. Stream if needed later.';
+  else reason = `Best available at ~${rec.ppg} PPR pts/game. Great value at this pick.`;
+
+  document.getElementById('rec-reason').textContent = reason;
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER ROSTER SIDEBAR
+// ══════════════════════════════════════════════════════
+function renderRosterSlots() {
+  const myTeam = league.teams[league.myPick - 1];
+  const el = document.getElementById('my-roster-slots');
+  if (!el || !myTeam) return;
+
+  const filledSlots = assignSlotsToRoster(myTeam.roster);
+  el.innerHTML = filledSlots.map(s => {
+    const p = s.player;
+    return `<div class="roster-slot">
+      <div class="slot-label">${s.label}</div>
+      ${p
+        ? `<div class="slot-player">${p.name}<span style="font-size:.65rem;color:rgba(255,255,255,.35);margin-left:4px;">${p.pos}·${p.team}</span></div>
+           <div class="slot-ppg">${p.ppg}</div>`
+        : `<div class="slot-player slot-empty">—</div>`
+      }
+    </div>`;
+  }).join('');
+}
+
+function assignSlotsToRoster(roster) {
+  const used = new Set();
+  const result = [];
+
+  ROSTER_SLOTS.forEach(slotDef => {
+    const player = roster.find(p => !used.has(p.id) && slotDef.pos.includes(p.pos));
+    if (player) used.add(player.id);
+    result.push({ label: slotDef.label, player: player || null });
+  });
+  return result;
+}
+
+// ══════════════════════════════════════════════════════
+//  MY TEAM VIEW
+// ══════════════════════════════════════════════════════
+function renderTeamView() {
+  const el = document.getElementById('team-content');
+  const myTeam = league.teams[league.myPick - 1];
+
+  if (!myTeam || !myTeam.roster.length) {
+    el.innerHTML = `<div class="empty-state">
+      <h3>No team yet</h3>
+      <p>Complete the draft first to see your roster.</p>
+      <br><button class="btn-primary" style="width:auto;padding:14px 28px;" onclick="showView('draft')">Go to Draft →</button>
+    </div>`;
+    return;
+  }
+
+  const slots = assignSlotsToRoster(myTeam.roster);
+  const starters = slots.filter(s => !s.label.startsWith('BN'));
+  const bench    = slots.filter(s => s.label.startsWith('BN'));
+  const projTotal = myTeam.roster.reduce((s,p) => s + p.ppg, 0).toFixed(1);
+  const projStarter = starters.reduce((s,sl) => s + (sl.player ? sl.player.ppg : 0), 0).toFixed(1);
+
+  const posOrder = ['QB','RB','WR','TE','K','DST'];
+  const byPos = {};
+  posOrder.forEach(pos => {
+    byPos[pos] = myTeam.roster.filter(p => p.pos === pos).sort((a,b) => a.rank - b.rank);
+  });
+
+  el.innerHTML = `
+    <div class="team-header-card">
+      <div>
+        <div class="team-name-big">${myTeam.name}</div>
+        <div style="font-size:.8rem;color:rgba(255,255,255,.4);">PPR Scoring · ${myTeam.roster.length} players</div>
+      </div>
+      <div class="team-stats">
+        <div class="team-stat">
+          <div class="team-stat-val">${projStarter}</div>
+          <div class="team-stat-label">Proj Pts/Wk</div>
+        </div>
+        <div class="team-stat">
+          <div class="team-stat-val">${myTeam.roster.length}</div>
+          <div class="team-stat-label">Players</div>
+        </div>
+        <div class="team-stat">
+          <div class="team-stat-val">${league.myPick}</div>
+          <div class="team-stat-label">Draft Pos</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="position-section">
+      <div class="position-section-title" style="color:var(--green)">Starters</div>
+      ${starters.map(s => {
+        if (!s.player) return `<div class="roster-card" style="opacity:.3">
+          <div class="pos-badge ${s.label}">${s.label}</div>
+          <div class="player-info"><h4 style="color:rgba(255,255,255,.3)">Empty Slot</h4></div>
+        </div>`;
+        const p = s.player;
+        return `<div class="roster-card">
+          <div class="pos-badge ${p.pos}">${p.pos}</div>
+          <div class="player-info">
+            <h4>${p.name}</h4>
+            <p>${p.team} · Rank: ${p.pos} ${p.rank} overall</p>
+          </div>
+          <div style="margin-right:8px;"><span class="starter-tag">STARTER</span></div>
+          <div class="proj-pts">
+            <div class="pts-val">${p.ppg}</div>
+            <div class="pts-label">PPR pts/gm</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <div class="position-section">
+      <div class="position-section-title" style="color:rgba(255,255,255,.4)">Bench</div>
+      ${bench.filter(s => s.player).map(s => {
+        const p = s.player;
+        return `<div class="roster-card">
+          <div class="pos-badge ${p.pos}">${p.pos}</div>
+          <div class="player-info">
+            <h4>${p.name}</h4>
+            <p>${p.team} · Rank: ${p.pos} ${p.rank} overall</p>
+          </div>
+          <div style="margin-right:8px;"><span class="bench-tag">BENCH</span></div>
+          <div class="proj-pts">
+            <div class="pts-val" style="color:rgba(255,255,255,.5)">${p.ppg}</div>
+            <div class="pts-label">PPR pts/gm</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+//  TRADE ADVISOR
+// ══════════════════════════════════════════════════════
+function renderTradesView() {
+  const el = document.getElementById('trades-content');
+  const myTeam = league.teams[league.myPick - 1];
+
+  if (!myTeam || !myTeam.roster.length) {
+    el.innerHTML = `<div class="empty-state">
+      <h3>Complete your draft first</h3>
+      <p>Trade suggestions are generated after the draft based on your roster needs.</p>
+      <br><button class="btn-primary" style="width:auto;padding:14px 28px;" onclick="showView('draft')">Go to Draft →</button>
+    </div>`;
+    return;
+  }
+
+  const grades = gradeRoster(myTeam);
+  const suggestions = generateTrades(myTeam, grades);
+
+  el.innerHTML = `
+    <div class="trade-page-title">Trade Advisor</div>
+    <div class="trade-sub">PPR-optimized trade suggestions based on your roster strengths & weaknesses</div>
+
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:10px;">Your Roster Grades</div>
+    <div class="strength-meter">
+      ${Object.entries(grades).map(([pos, data]) => `
+        <div class="strength-item">
+          <div class="strength-pos" style="color:${posColor(pos)}">${pos}</div>
+          <div class="strength-bar"><div class="strength-fill" style="width:${data.score}%;background:${gradeColor(data.grade)}"></div></div>
+          <div class="strength-grade grade-${data.grade}">${data.grade}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="font-size:.7rem;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.4);text-transform:uppercase;margin:20px 0 12px;">Suggested Trades</div>
+
+    ${suggestions.length ? suggestions.map(t => `
+      <div class="trade-card">
+        <div class="trade-card-header">
+          <div style="font-weight:700;font-size:.95rem">${t.targetTeam}</div>
+          <div class="trade-value-badge ${t.valueClass}">${t.valueLabel}</div>
+        </div>
+        <div class="trade-players">
+          <div class="trade-side">
+            <div class="trade-side-label" style="color:var(--red)">You Give</div>
+            ${t.give.map(p => `
+              <div class="trade-player-chip">
+                <div class="pos-badge ${p.pos}" style="width:30px;height:18px;font-size:.6rem">${p.pos}</div>
+                <div>
+                  <div style="font-size:.82rem;font-weight:700">${p.name}</div>
+                  <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${p.team} · ${p.ppg} pts/gm</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="trade-arrow">⇄</div>
+          <div class="trade-side">
+            <div class="trade-side-label" style="color:var(--green)">You Get</div>
+            ${t.get.map(p => `
+              <div class="trade-player-chip">
+                <div class="pos-badge ${p.pos}" style="width:30px;height:18px;font-size:.6rem">${p.pos}</div>
+                <div>
+                  <div style="font-size:.82rem;font-weight:700">${p.name}</div>
+                  <div style="font-size:.68rem;color:rgba(255,255,255,.4)">${p.team} · ${p.ppg} pts/gm</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="trade-rationale">${t.rationale}</div>
+      </div>
+    `).join('') : '<div class="empty-state"><h3>Your roster is balanced!</h3><p>No lopsided trades recommended right now.</p></div>'}
+  `;
+}
+
+function posColor(pos) {
+  const c = { QB:'#e74c3c', RB:'#27ae60', WR:'#3498db', TE:'#f39c12', K:'#95a5a6', DST:'#9b59b6' };
+  return c[pos] || '#fff';
+}
+function gradeColor(g) {
+  const c = { A:'#00C853', B:'#7ddd9c', C:'#FFD700', D:'#f39c12', F:'#FF3D3D' };
+  return c[g] || '#fff';
+}
+
+function gradeRoster(team) {
+  const positions = ['QB','RB','WR','TE','K','DST'];
+  const maxRanks  = { QB:12, RB:28, WR:28, TE:12, K:8, DST:10 };
+  const grades = {};
+
+  positions.forEach(pos => {
+    const players = team.roster.filter(p => p.pos === pos).sort((a,b) => a.rank - b.rank);
+    if (!players.length) {
+      grades[pos] = { grade:'F', score:0, players:[] };
+      return;
+    }
+    const top = players[0];
+    const pct = 1 - (top.rank - 1) / maxRanks[pos];
+    const score = Math.round(pct * 100);
+    let grade = 'F';
+    if (score >= 85) grade = 'A';
+    else if (score >= 70) grade = 'B';
+    else if (score >= 50) grade = 'C';
+    else if (score >= 30) grade = 'D';
+    grades[pos] = { grade, score, players };
+  });
+  return grades;
+}
+
+function generateTrades(myTeam, grades) {
+  const suggestions = [];
+  const positions = ['QB','RB','WR','TE'];
+
+  // Find my strengths and weaknesses
+  const sorted = positions.sort((a,b) => grades[b]?.score - grades[a]?.score);
+  const strengths = sorted.slice(0, 2);
+  const weaknesses = sorted.slice(-2).filter(p => (grades[p]?.score || 0) < 70);
+
+  weaknesses.forEach(weakPos => {
+    strengths.forEach(strongPos => {
+      if (weakPos === strongPos) return;
+
+      const myStrong = (grades[strongPos]?.players || []).slice(1); // not my starter
+      const myWeak   = (grades[weakPos]?.players   || []).slice(0, 1);
+
+      if (!myStrong.length) return;
+
+      // Find an opponent who has a good player at weak position and might want strong
+      const opponent = league.teams.find(t => !t.isMine && t.roster.some(p => p.pos === weakPos && p.rank <= 8));
+      if (!opponent) return;
+
+      const theirPlayer = opponent.roster.filter(p => p.pos === weakPos).sort((a,b) => a.rank-b.rank)[0];
+      const myGivePlayer = myStrong[0];
+      if (!theirPlayer || !myGivePlayer) return;
+
+      const myGetPPG  = theirPlayer.ppg;
+      const myGivePPG = myGivePlayer.ppg;
+      const netPPG    = myGetPPG - myGivePPG;
+
+      let valueLabel, valueClass;
+      if (netPPG >= 2)        { valueLabel = 'WIN'; valueClass = 'value-win'; }
+      else if (netPPG >= -1)  { valueLabel = 'FAIR'; valueClass = 'value-fair'; }
+      else                    { valueLabel = 'SELL HIGH'; valueClass = 'value-fair'; }
+
+      const gradeFrom = grades[strongPos]?.grade;
+      const gradeTo   = grades[weakPos]?.grade || 'F';
+
+      suggestions.push({
+        targetTeam: opponent.name,
+        give: [myGivePlayer],
+        get:  [theirPlayer],
+        valueLabel,
+        valueClass,
+        rationale: `Your <strong>${strongPos}</strong> depth (grade ${gradeFrom}) is strong — you can afford to deal ${myGivePlayer.name}. Their <strong>${theirPlayer.name}</strong> upgrades your ${weakPos} from grade ${gradeTo} to a starter, adding ~${Math.abs(netPPG).toFixed(1)} projected PPR pts/week to your lineup.`,
+      });
+    });
+  });
+
+  // Add a "sell high" suggestion if user has an early-round RB
+  const eliteRBs = myTeam.roster.filter(p => p.pos === 'RB' && p.rank <= 3);
+  if (eliteRBs.length >= 2) {
+    const sellRB = eliteRBs[1];
+    const wantWR = league.teams.find(t => !t.isMine && t.roster.some(p => p.pos === 'WR' && p.rank <= 5));
+    if (wantWR) {
+      const theirWR = wantWR.roster.filter(p => p.pos === 'WR').sort((a,b)=>a.rank-b.rank)[0];
+      if (theirWR && !suggestions.find(s => s.give.includes(sellRB))) {
+        suggestions.push({
+          targetTeam: wantWR.name,
+          give: [sellRB],
+          get:  [theirWR],
+          valueLabel: 'WIN',
+          valueClass: 'value-win',
+          rationale: `You have two elite RBs — <strong>sell from RB depth</strong> to add a WR1. In PPR, having a balanced attack beats a one-position surplus. Trading ${sellRB.name} for ${theirWR.name} improves your WR corps while their team gets the RB2 they need.`,
+        });
+      }
+    }
+  }
+
+  return suggestions.slice(0, 4);
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+// Set setup view active
+document.getElementById('view-setup').classList.add('active');
+document.getElementById('view-draft').classList.remove('active');
+</script>
+</body>
+</html>
