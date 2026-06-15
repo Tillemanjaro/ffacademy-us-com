@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who Are You Not to Be? | FF Academy</title>
+<style>
+  :root {
+    --bg: #0c0b14;
+    --bg-soft: #151326;
+    --card: #1d1a31;
+    --border: rgba(255,255,255,0.12);
+    --text: #f2efff;
+    --muted: #b4aecf;
+    --gold: #f0c24f;
+    --sky: #76d2ff;
+    --mint: #66e5a8;
+    --rose: #ff9ba4;
+    --shadow: 0 16px 44px rgba(0,0,0,0.42);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1000px 500px at 10% -20%, rgba(118,210,255,0.18), transparent 60%),
+      radial-gradient(900px 480px at 90% 0%, rgba(240,194,79,0.14), transparent 65%),
+      var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+  }
+
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(12px);
+    background: rgba(12, 11, 20, 0.8);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .topbar-inner {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    font-weight: 800;
+    letter-spacing: 1px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .home-link {
+    text-decoration: none;
+    color: var(--gold);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .hero {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 46px 20px 10px;
+  }
+
+  .kicker {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: linear-gradient(120deg, var(--gold), #ffdb88);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: clamp(2.1rem, 5.8vw, 4.4rem);
+    line-height: 1.06;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    max-width: 720px;
+    font-size: 1.06rem;
+    margin-bottom: 28px;
+  }
+
+  .hero-image {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    display: block;
+    object-fit: cover;
+    max-height: 520px;
+  }
+
+  .article {
+    max-width: 840px;
+    margin: 0 auto;
+    padding: 30px 20px 70px;
+  }
+
+  .meta {
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 26px;
+  }
+
+  .lead-quote {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--sky);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin: 0 0 30px;
+  }
+
+  .lead-quote p {
+    font-size: 1.04rem;
+    color: #eef6ff;
+  }
+
+  h2 {
+    margin-top: 34px;
+    margin-bottom: 8px;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    line-height: 1.2;
+  }
+
+  p {
+    color: #e9e4ff;
+    margin-bottom: 14px;
+  }
+
+  .callout {
+    margin: 24px 0;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(102,229,168,0.4);
+    background: rgba(102,229,168,0.08);
+    color: #d5ffe7;
+    font-size: 0.96rem;
+  }
+
+  .rule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin: 18px 0 22px;
+  }
+
+  .rule-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .rule-card h3 {
+    font-size: 0.9rem;
+    color: var(--gold);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .rule-card p {
+    font-size: 0.92rem;
+    color: var(--muted);
+    margin-bottom: 0;
+  }
+
+  ul {
+    margin: 8px 0 16px 20px;
+    color: #e9e4ff;
+  }
+
+  li { margin-bottom: 7px; }
+
+  .footer-cta {
+    margin-top: 30px;
+    background: linear-gradient(135deg, rgba(118,210,255,0.08), rgba(240,194,79,0.1));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+
+  .footer-cta strong {
+    color: var(--gold);
+  }
+
+  .back-home {
+    margin-top: 16px;
+    display: inline-block;
+    text-decoration: none;
+    color: var(--bg);
+    font-weight: 800;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(120deg, var(--gold), #ffd77a);
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding-top: 30px; }
+    .article { padding-top: 22px; }
+    .lead-quote { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">FF Academy Writing</div>
+    <a class="home-link" href="index.html">Back to Home</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="kicker">Leadership and Mentorship</div>
+  <h1>Who Are You Not to Be?</h1>
+  <p class="subtitle">Mentorship is not coaching. Advising is not mentorship. Knowing the difference changes how you grow, who you ask for help, and how you show up for other people.</p>
+  <img class="hero-image" src="assets/images/who-are-you-not-to-be-main.png" alt="Featured artwork for Who Are You Not to Be article">
+</section>
+
+<main class="article">
+  <div class="meta">Published June 15, 2026</div>
+
+  <div class="lead-quote">
+    <p><strong>"Our deepest fear is not that we are inadequate. Our deepest fear is that we are powerful beyond measure... Who are you not to be?"</strong></p>
+    <p style="color: var(--muted); margin-top: 8px; margin-bottom: 0;">Marianne Williamson</p>
+  </div>
+
+  <p>I come back to this quote often because it cuts through the noise. People are rarely waiting for capability. Most are waiting for permission.</p>
+  <p>I have shared this quote with people who already knew what to do, but needed someone to say: yes, step into it. That is mentorship. It is not hype. It is not ownership. It is not credit-taking. It is steady belief with honest accountability.</p>
+
+  <h2>Let's Clear This Up</h2>
+  <p>The words mentorship, advising, and coaching get used interchangeably. They should not.</p>
+
+  <div class="rule-grid">
+    <article class="rule-card">
+      <h3>Mentorship</h3>
+      <p>An ongoing relationship built on trust, values alignment, and continued conversation in both directions.</p>
+    </article>
+    <article class="rule-card">
+      <h3>Advising</h3>
+      <p>Perspective and feedback without the same long-term stake or continuity as mentorship.</p>
+    </article>
+    <article class="rule-card">
+      <h3>Coaching</h3>
+      <p>A structured service with methodology, outcomes, and payment tied to a specific goal.</p>
+    </article>
+  </div>
+
+  <p>None of these are bad. All three can be valuable. The problem is confusion. People ask mentors for coaching-level delivery. People pay for coaching when what they actually need is belief, alignment, and a trusted mirror.</p>
+
+  <h2>Coaching Is a Service</h2>
+  <p>Coaching is a service, like a skilled trainer. You bring a target. They bring credentials, process, and accountability. You pay for structure and progress.</p>
+  <p>I benefited from coaching early in my career. It helped me get specific results. But it was still a service, and that distinction matters. If someone is charging for a structured method, know exactly what you are buying.</p>
+
+  <h2>Know Yourself First</h2>
+  <p>Before you find the right mentor, do internal work first. Know your values. If you cannot articulate what matters to you, you cannot assess alignment with anyone else.</p>
+  <p>When I built my mentorship network, I did not chase titles or follower counts. I looked for people who embodied success in how they treat others, not just how they perform online.</p>
+
+  <div class="callout">Values bleed through your work. In one real conversation, you can usually tell if there is alignment.</div>
+
+  <p>Mentorship relationships can be seasonal. Some are right for two or three conversations. Some last years. There is nothing wrong with recognizing when a relationship served its purpose and moving on respectfully.</p>
+
+  <h2>Watch the LinkedIn Noise</h2>
+  <p>Admiration is healthy. Idolization is not. Putting someone on a pedestal is not mentorship.</p>
+  <p>Mentorship should be grounded in shared values and mutual respect, not personal brand worship.</p>
+
+  <h2>The 1, 5, 10 Rule</h2>
+  <p>A framework I first heard from Zsolt Olah and still use:</p>
+  <ul>
+    <li><strong>1 year ahead:</strong> they remember exactly where you are right now.</li>
+    <li><strong>5 years ahead:</strong> they have navigated the messy middle and can see around corners.</li>
+    <li><strong>10 years ahead:</strong> they carry the long view and know what truly matters.</li>
+  </ul>
+  <p>These do not need to be formal relationships. They do need to be intentional relationships.</p>
+
+  <h2>Build Your Advisory Board</h2>
+  <p>Beyond mentors, build an advisory board across your life. People who will challenge you, steady you, and tell the truth when your direction gets blurry.</p>
+  <p>You do not need daily conversations. You need consistent trust over time. Real advisory relationships are built by showing up for each other repeatedly.</p>
+
+  <h2>Two Things to Do Today</h2>
+  <ul>
+    <li><strong>Become a mentor.</strong> You do not need a perfect story. You need willingness to invest in someone else's growth.</li>
+    <li><strong>Ask for mentorship.</strong> People are busy, yes. Ask anyway. Be direct. Be brave.</li>
+  </ul>
+
+  <div class="footer-cta">
+    <p style="margin: 0;"><strong>You do not need to shrink. You do not need to wait.</strong> Who are you not to be?</p>
+  </div>
+
+  <a class="back-home" href="index.html">Return to FF Academy Home</a>
+</main>
+
+</body>
+</html>
