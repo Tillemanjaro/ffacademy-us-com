@@ -1,0 +1,6 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/lxp", "destination": "/lxp.html" }
+  ]
+}
