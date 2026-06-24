@@ -1,0 +1,3582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tillem LXP</title>
+<style>
+/* ── DESIGN TOKENS ── */
+:root {
+  --brand:    #6C47FF;
+  --brand-lt: #8B6FFF;
+  --brand-dk: #4A29DD;
+  --accent:   #FF6B35;
+  --success:  #22C55E;
+  --warn:     #F59E0B;
+  --danger:   #EF4444;
+  --bg:       #0D0D14;
+  --surface:  #13131F;
+  --card:     #1A1A2E;
+  --border:   #2A2A45;
+  --text:     #E8E8F0;
+  --muted:    #7070A0;
+  --white:    #FFFFFF;
+  --radius:   12px;
+  --radius-lg:20px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── UTILITIES ── */
+.hidden { display: none !important; }
+.flex   { display: flex; }
+.col    { flex-direction: column; }
+.gap-8  { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.gap-24 { gap: 24px; }
+.center { align-items: center; justify-content: center; }
+.between{ justify-content: space-between; align-items: center; }
+.wrap   { flex-wrap: wrap; }
+.grow   { flex: 1; }
+.bold   { font-weight: 700; }
+.muted  { color: var(--muted); font-size: 0.85rem; }
+.small  { font-size: 0.8rem; }
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+}
+.tag-brand  { background: rgba(108,71,255,.2); color: var(--brand-lt); }
+.tag-success{ background: rgba(34,197,94,.2);  color: var(--success); }
+.tag-warn   { background: rgba(245,158,11,.2); color: var(--warn); }
+.tag-danger { background: rgba(239,68,68,.2);  color: var(--danger); }
+.tag-muted  { background: var(--border); color: var(--muted); }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 20px; border-radius: var(--radius); font-size: 0.9rem;
+  font-weight: 600; cursor: pointer; border: none; transition: all .2s; text-decoration: none;
+}
+.btn-primary { background: var(--brand); color: #fff; }
+.btn-primary:hover { background: var(--brand-lt); transform: translateY(-1px); }
+.btn-secondary { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger { background: rgba(239,68,68,.15); color: var(--danger); border: 1px solid rgba(239,68,68,.3); }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-ghost:hover { color: var(--text); background: var(--card); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-full { width: 100%; }
+
+/* ── FORMS ── */
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+input, select, textarea {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); border-radius: var(--radius); padding: 11px 14px;
+  font-size: 0.9rem; width: 100%; outline: none; transition: border .2s;
+  font-family: inherit;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--brand); }
+textarea { resize: vertical; min-height: 80px; }
+select option { background: var(--card); }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.card-hover { cursor: pointer; transition: transform .2s, border-color .2s; }
+.card-hover:hover { transform: translateY(-2px); border-color: var(--brand); }
+
+/* ── PROGRESS ── */
+.progress-bar {
+  height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand-lt));
+  border-radius: 3px; transition: width .5s ease;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.modal-header h2 { font-size: 1.2rem; }
+.modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.4rem; line-height:1; }
+.modal-close:hover { color: var(--text); }
+
+/* ── TOAST ── */
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 18px;
+  display: flex; align-items: center; gap: 10px; min-width: 260px;
+  animation: slideIn .3s ease; font-size: 0.9rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.toast.success { border-color: var(--success); }
+.toast.error   { border-color: var(--danger); }
+.toast.info    { border-color: var(--brand); }
+@keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── AUTH SCREEN ── */
+#auth-screen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 30% 40%, rgba(108,71,255,.15) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 60%, rgba(255,107,53,.08) 0%, transparent 60%), var(--bg);
+  padding: 20px;
+}
+.auth-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 40px; width: 100%; max-width: 420px;
+}
+.auth-logo {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 32px; justify-content: center;
+}
+.auth-logo .logo-mark {
+  width: 40px; height: 40px; background: linear-gradient(135deg, var(--brand), var(--accent));
+  border-radius: 10px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+.auth-logo .logo-text { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
+.auth-tabs { display: flex; gap: 4px; background: var(--card); border-radius: var(--radius); padding: 4px; margin-bottom: 24px; }
+.auth-tab {
+  flex: 1; padding: 8px; text-align: center; border-radius: 8px;
+  cursor: pointer; font-size: 0.9rem; font-weight: 600; color: var(--muted); transition: all .2s;
+}
+.auth-tab.active { background: var(--brand); color: #fff; }
+.auth-form { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── APP SHELL ── */
+#app { display: none; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px; background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; flex-shrink: 0; transition: width .3s;
+  overflow: hidden;
+}
+.sidebar-logo {
+  padding: 20px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-mark {
+  width: 32px; height: 32px; background: linear-gradient(135deg, var(--brand), var(--accent));
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.sidebar-logo .logo-text { font-size: 1.2rem; font-weight: 800; white-space: nowrap; }
+
+.nav-section { padding: 16px 12px 8px; }
+.nav-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 1px; color: var(--muted); padding: 0 8px; margin-bottom: 4px; text-transform: uppercase; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius); cursor: pointer;
+  font-size: 0.9rem; font-weight: 500; color: var(--muted); transition: all .2s;
+  white-space: nowrap;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active { background: rgba(108,71,255,.15); color: var(--brand-lt); font-weight: 600; }
+.nav-item .nav-icon { font-size: 1.1rem; flex-shrink: 0; }
+.nav-icon-text {
+  font-size: 0.65rem; font-weight: 800; letter-spacing: .5px;
+  width: 28px; height: 22px; border-radius: 5px; background: var(--border);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  color: var(--muted);
+}
+.nav-item.active .nav-icon-text { background: var(--brand); color: #fff; }
+.nav-badge {
+  margin-left: auto; background: var(--brand); color: #fff;
+  font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto; padding: 16px; border-top: 1px solid var(--border);
+}
+.user-chip {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+  padding: 8px; border-radius: var(--radius);
+}
+.user-chip:hover { background: var(--card); }
+.avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+}
+.avatar-lg {
+  width: 52px; height: 52px; font-size: 1.2rem;
+}
+.user-info { overflow: hidden; }
+.user-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-role-label { font-size: 0.72rem; color: var(--muted); }
+
+/* MAIN CONTENT */
+.main-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.page-header {
+  padding: 24px 28px 0; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;
+}
+.page-header h1 { font-size: 1.5rem; font-weight: 800; }
+.page-content { padding: 20px 28px 28px; flex: 1; }
+
+/* ── DASHBOARD ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px;
+}
+.stat-value { font-size: 2rem; font-weight: 800; }
+.stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+.stat-change { font-size: 0.8rem; margin-top: 8px; }
+.stat-change.up { color: var(--success); }
+
+.section-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 14px; }
+
+/* course / event / task cards */
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+.course-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; cursor: pointer;
+  transition: transform .2s, border-color .2s;
+}
+.course-card:hover { transform: translateY(-3px); border-color: var(--brand); }
+.course-thumb {
+  height: 120px; display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; position: relative;
+}
+.course-body { padding: 16px; }
+.course-title { font-weight: 700; margin-bottom: 6px; font-size: 0.95rem; }
+.course-meta { display: flex; gap: 12px; font-size: 0.78rem; color: var(--muted); margin-bottom: 12px; }
+
+.event-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px; cursor: pointer;
+  transition: transform .2s, border-color .2s; display: flex; gap: 16px;
+}
+.event-card:hover { transform: translateY(-2px); border-color: var(--brand); }
+.event-date-block {
+  width: 52px; flex-shrink: 0; background: rgba(108,71,255,.15);
+  border-radius: var(--radius); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 8px 4px;
+}
+.event-day { font-size: 1.4rem; font-weight: 800; color: var(--brand-lt); line-height:1; }
+.event-month { font-size: 0.65rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+.event-info { flex: 1; }
+.event-title { font-weight: 700; margin-bottom: 4px; font-size: 0.95rem; }
+.event-detail { font-size: 0.8rem; color: var(--muted); }
+
+.task-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  transition: border-color .2s;
+}
+.task-item:hover { border-color: var(--border); }
+.task-check {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--border); flex-shrink: 0;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.task-check.done { background: var(--success); border-color: var(--success); color: #fff; }
+.task-title { flex: 1; font-size: 0.9rem; font-weight: 500; }
+.task-title.done { text-decoration: line-through; color: var(--muted); }
+.task-due { font-size: 0.78rem; }
+
+/* ── ADMIN TABLE ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th {
+  text-align: left; padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing:.5px;
+}
+td { padding: 13px 14px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── LESSON VIEWER ── */
+#lesson-viewer {
+  position: fixed; inset: 0; background: var(--bg); z-index: 500;
+  display: flex; flex-direction: column;
+}
+.viewer-header {
+  padding: 16px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px;
+}
+.viewer-body { flex: 1; display: flex; overflow: hidden; }
+.lesson-sidebar {
+  width: 280px; background: var(--surface); border-right: 1px solid var(--border);
+  overflow-y: auto; flex-shrink: 0;
+}
+.lesson-nav-item {
+  padding: 14px 18px; cursor: pointer; border-bottom: 1px solid var(--border);
+  display: flex; gap: 10px; align-items: flex-start; transition: background .15s;
+}
+.lesson-nav-item:hover { background: var(--card); }
+.lesson-nav-item.active { background: rgba(108,71,255,.15); }
+.lesson-num { font-size: 0.75rem; color: var(--muted); font-weight: 600; flex-shrink: 0; }
+.lesson-nav-title { font-size: 0.88rem; font-weight: 500; }
+.lesson-main { flex: 1; overflow-y: auto; padding: 32px; max-width: 760px; margin: 0 auto; }
+.lesson-complete-btn { margin-top: 32px; }
+.lesson-content-area { font-size: 0.95rem; line-height: 1.7; color: var(--text); }
+.lesson-content-area h2 { font-size: 1.2rem; margin-bottom: 16px; }
+.lesson-content-area p { margin-bottom: 14px; }
+.lesson-content-area ul { padding-left: 20px; margin-bottom: 14px; }
+
+/* ── RISE MODULE VIEWER ── */
+.rise-viewer-wrap {
+  display: none; flex-direction: column; flex: 1; overflow: hidden;
+}
+.rise-viewer-wrap.active { display: flex; }
+.rise-scroll-area { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+
+/* hero */
+.rise-hero {
+  padding: 80px 40px; text-align: center; position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--brand) 0%, #a855f7 60%, #ec4899 100%);
+  color: #fff;
+}
+.rise-hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(255,255,255,.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+.rise-hero-tag {
+  display: inline-block; background: rgba(255,255,255,.22); border-radius: 20px;
+  padding: 4px 16px; font-size: .78rem; font-weight: 700; letter-spacing: .8px;
+  text-transform: uppercase; margin-bottom: 20px; position: relative;
+}
+.rise-hero h1 { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800; margin-bottom: 14px; position: relative; line-height: 1.2; }
+.rise-hero p { font-size: 1.1rem; opacity: .88; max-width: 540px; margin: 0 auto; position: relative; line-height: 1.6; }
+.rise-hero-shapes {
+  position: absolute; right: -40px; bottom: -40px; width: 260px; height: 260px;
+  border-radius: 50%; border: 40px solid rgba(255,255,255,.07); pointer-events: none;
+}
+
+/* content blocks */
+.rise-block {
+  max-width: 820px; margin: 0 auto; padding: 48px 40px;
+  opacity: 0; transform: translateY(22px);
+  transition: opacity .55s ease, transform .55s ease;
+}
+.rise-block.visible { opacity: 1; transform: none; }
+.rise-block h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
+.rise-block p { font-size: .97rem; line-height: 1.75; color: var(--text); margin-bottom: 14px; }
+.rise-block ul { padding-left: 22px; }
+.rise-block ul li { margin-bottom: 8px; font-size: .97rem; line-height: 1.65; }
+
+/* statement */
+.rise-statement {
+  border-left: 5px solid var(--brand); padding: 10px 0 10px 28px;
+  font-size: 1.3rem; font-weight: 700; line-height: 1.5; color: var(--text);
+}
+.rise-statement-attr { font-size: .85rem; font-weight: 400; color: var(--muted); margin-top: 10px; }
+
+/* visual / image */
+.rise-visual-block { border-radius: 14px; overflow: hidden; position: relative; }
+.rise-visual-img {
+  width: 100%; height: 300px; display: flex; align-items: center; justify-content: center;
+  font-size: 4rem; color: rgba(255,255,255,.85); font-weight: 800; letter-spacing: 2px;
+}
+.rise-visual-caption { padding: 10px 0; font-size: .84rem; color: var(--muted); text-align: center; }
+.rise-visual-label {
+  position: absolute; bottom: 14px; left: 14px; background: rgba(0,0,0,.55);
+  color: #fff; padding: 6px 14px; border-radius: 20px; font-size: .82rem; font-weight: 600; backdrop-filter: blur(6px);
+}
+
+/* video */
+.rise-video-block { border-radius: 14px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,.35); }
+.rise-video-block iframe { width: 100%; aspect-ratio: 16/9; border: none; display: block; }
+.rise-video-caption { padding: 10px 0; font-size: .84rem; color: var(--muted); text-align: center; }
+
+/* tabs */
+.rise-tabs-nav { display: flex; border-bottom: 2px solid var(--border); gap: 4px; flex-wrap: wrap; }
+.rise-tab-btn {
+  padding: 10px 22px; font-size: .88rem; font-weight: 600; border: none; background: none;
+  color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  transition: all .2s; border-radius: 6px 6px 0 0;
+}
+.rise-tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); background: rgba(108,71,255,.07); }
+.rise-tab-panel { padding: 24px; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; }
+.rise-tab-panel.hidden { display: none; }
+.rise-tab-panel p { margin: 0 0 10px; font-size: .93rem; line-height: 1.7; }
+
+/* accordion */
+.rise-acc-item { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+.rise-acc-header {
+  padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+  cursor: pointer; font-weight: 600; font-size: .93rem; background: var(--surface);
+  transition: background .15s; user-select: none;
+}
+.rise-acc-header:hover { background: var(--card); }
+.rise-acc-arrow { transition: transform .3s; color: var(--muted); font-style: normal; font-size: .8rem; }
+.rise-acc-item.open .rise-acc-arrow { transform: rotate(180deg); }
+.rise-acc-body { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .3s; }
+.rise-acc-item.open .rise-acc-body { max-height: 600px; }
+.rise-acc-body-inner { padding: 16px 20px 20px; font-size: .92rem; line-height: 1.7; color: var(--text); }
+
+/* flashcards */
+.rise-fc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 16px; perspective: 1200px; }
+.rise-fc-wrap { height: 170px; perspective: 800px; }
+.rise-fc {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d; transition: transform .5s; cursor: pointer; border-radius: 12px;
+}
+.rise-fc.flipped { transform: rotateY(180deg); }
+.rise-fc-front, .rise-fc-back {
+  position: absolute; inset: 0; border-radius: 12px;
+  backface-visibility: hidden; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 20px; text-align: center;
+}
+.rise-fc-front { background: linear-gradient(135deg, var(--brand), #a855f7); color: #fff; font-weight: 700; font-size: .95rem; }
+.rise-fc-back { background: var(--surface); border: 1px solid var(--border); transform: rotateY(180deg); font-size: .88rem; color: var(--text); line-height: 1.5; }
+.rise-fc-label { font-size: .7rem; opacity: .7; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+.rise-fc-hint { text-align: center; font-size: .78rem; color: var(--muted); margin-top: 10px; }
+
+/* knowledge check */
+.rise-kc { background: var(--surface); border-radius: 14px; padding: 30px; border: 1px solid var(--border); }
+.rise-kc-q { font-size: 1.05rem; font-weight: 700; margin-bottom: 22px; line-height: 1.5; }
+.rise-kc-opt {
+  display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+  border: 2px solid var(--border); border-radius: 10px; margin-bottom: 10px;
+  cursor: pointer; font-size: .92rem; transition: all .2s; background: var(--bg);
+}
+.rise-kc-opt:hover:not(.locked) { border-color: var(--brand); background: rgba(108,71,255,.06); }
+.rise-kc-opt.correct { border-color: var(--success); background: rgba(16,185,129,.1); color: var(--success); }
+.rise-kc-opt.wrong { border-color: var(--danger); background: rgba(239,68,68,.1); color: var(--danger); }
+.rise-kc-marker {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 800;
+  flex-shrink: 0; transition: all .2s;
+}
+.rise-kc-opt.correct .rise-kc-marker { background: var(--success); border-color: var(--success); color: #fff; }
+.rise-kc-opt.wrong .rise-kc-marker { background: var(--danger); border-color: var(--danger); color: #fff; }
+.rise-kc-feedback { margin-top: 16px; padding: 14px 18px; border-radius: 8px; font-size: .9rem; display: none; }
+.rise-kc-feedback.show { display: block; }
+.rise-kc-feedback.ok { background: rgba(16,185,129,.1); color: var(--success); border: 1px solid var(--success); }
+.rise-kc-feedback.fail { background: rgba(239,68,68,.1); color: var(--danger); border: 1px solid var(--danger); }
+
+/* checklist */
+.rise-cl-item {
+  display: flex; align-items: flex-start; gap: 14px; padding: 14px 18px;
+  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px;
+  cursor: pointer; transition: all .2s; background: var(--surface);
+}
+.rise-cl-item:hover { background: var(--card); }
+.rise-cl-box {
+  width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border);
+  flex-shrink: 0; margin-top: 1px; transition: all .2s; position: relative;
+  background: var(--bg);
+}
+.rise-cl-item.checked .rise-cl-box { background: var(--success); border-color: var(--success); }
+.rise-cl-item.checked .rise-cl-box::after { content: 'v'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: .75rem; font-weight: 900; }
+.rise-cl-text { font-size: .93rem; line-height: 1.55; }
+.rise-cl-item.checked .rise-cl-text { text-decoration: line-through; color: var(--muted); }
+
+/* numbered-steps */
+.rise-step {
+  display: flex; gap: 18px; align-items: flex-start; padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rise-step:last-child { border-bottom: none; }
+.rise-step-num {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff;
+  display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; font-size: .9rem;
+}
+.rise-step-body h4 { font-size: .95rem; font-weight: 700; margin-bottom: 4px; }
+.rise-step-body p { font-size: .88rem; color: var(--muted); margin: 0; line-height: 1.55; }
+
+/* divider */
+.rise-hr { border: none; height: 2px; background: var(--border); margin: 0; }
+
+/* rise nav footer */
+.rise-nav-footer {
+  border-top: 1px solid var(--border); padding: 16px 32px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg); flex-shrink: 0;
+}
+
+/* ── QR ATTENDANCE ── */
+.qr-display {
+  background: #fff; border-radius: var(--radius); padding: 20px;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+}
+.qr-code-grid {
+  display: grid; gap: 2px; width: 160px; height: 160px;
+}
+.checkin-code {
+  font-size: 2rem; font-weight: 900; letter-spacing: 8px;
+  color: var(--brand); background: rgba(108,71,255,.1);
+  padding: 16px 24px; border-radius: var(--radius); text-align: center;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar .logo-text, .sidebar .nav-item span, .sidebar .user-info { display: none; }
+  .sidebar-logo { justify-content: center; padding: 16px 8px; }
+  .page-header { padding: 16px 16px 0; }
+  .page-content { padding: 14px 16px 20px; }
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .item-grid { grid-template-columns: 1fr; }
+}
+
+/* ── SEARCH BAR ── */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 9px 14px; flex: 1; max-width: 360px;
+}
+.search-bar input { background: none; border: none; color: var(--text); font-size: 0.9rem; flex: 1; outline: none; }
+
+/* ── TABS ── */
+.tabs { display: flex; gap: 4px; background: var(--card); border-radius: var(--radius); padding: 4px; margin-bottom: 20px; width: fit-content; }
+.tab-btn {
+  padding: 7px 16px; border-radius: 8px; cursor: pointer;
+  font-size: 0.85rem; font-weight: 600; color: var(--muted); transition: all .2s; border: none; background: none;
+}
+.tab-btn.active { background: var(--brand); color: #fff; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center; padding: 48px 20px; color: var(--muted);
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-state h3 { color: var(--text); margin-bottom: 6px; }
+
+/* ── ROLE PILL ── */
+.role-admin   { background: rgba(255,107,53,.15); color: var(--accent); border: 1px solid rgba(255,107,53,.3); }
+.role-manager { background: rgba(245,158,11,.15); color: var(--warn); border: 1px solid rgba(245,158,11,.3); }
+.role-learner { background: rgba(108,71,255,.15); color: var(--brand-lt); border: 1px solid rgba(108,71,255,.3); }
+
+/* ── BREADCRUMB ── */
+.breadcrumb { display: flex; gap: 6px; align-items: center; font-size: 0.82rem; color: var(--muted); margin-bottom: 4px; }
+.breadcrumb span { cursor: pointer; } .breadcrumb span:hover { color: var(--brand-lt); }
+.breadcrumb .sep { opacity: .4; }
+
+/* ── LIGHT MODE ── */
+body.light {
+  --bg: #F4F4F8; --surface: #FFFFFF; --card: #F0F0F6; --border: #DCDCEC;
+  --text: #1A1A2E; --muted: #6060A0;
+}
+body.light .sidebar { background: #fff; }
+body.light input, body.light select, body.light textarea { background: #fff; }
+
+/* ── THEME TOGGLE ── */
+.theme-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 1rem; color: var(--muted); transition: all .2s; }
+.theme-btn:hover { background: var(--card); color: var(--text); }
+
+/* ── TOP BAR ── */
+.top-bar {
+  display: flex; align-items: center; gap: 12px; padding: 12px 24px;
+  border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0;
+}
+.global-search {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 14px; max-width: 400px;
+}
+.global-search input { background: none; border: none; color: var(--text); font-size: 0.88rem; flex: 1; outline: none; }
+
+/* ── SEARCH RESULTS ── */
+#search-results-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius); z-index: 200;
+  box-shadow: 0 8px 32px rgba(0,0,0,.3); max-height: 400px; overflow-y: auto; margin-top: 4px;
+}
+.search-result-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  cursor: pointer; border-bottom: 1px solid var(--border); transition: background .15s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--card); }
+.search-result-icon { font-size: 1.2rem; width: 32px; text-align: center; }
+.search-result-type { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+
+/* ── NOTIFICATIONS ── */
+.notif-btn { position: relative; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 1rem; color: var(--muted); transition: all .2s; }
+.notif-btn:hover { background: var(--card); color: var(--text); }
+.notif-dot { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid var(--surface); }
+.notif-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; width: 340px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px rgba(0,0,0,.3); z-index: 300; overflow: hidden;
+}
+.notif-header { padding: 14px 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.9rem; }
+.notif-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); align-items: flex-start; cursor: pointer; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--card); }
+.notif-icon { font-size: 1.2rem; flex-shrink: 0; }
+.notif-text { font-size: 0.85rem; }
+.notif-sub  { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+/* ── LEADERBOARD ── */
+.lb-row {
+  display: flex; align-items: center; gap: 16px; padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 8px; transition: border-color .2s;
+}
+.lb-row.me { border-color: var(--brand); background: rgba(108,71,255,.08); }
+.lb-rank { font-size: 1.1rem; font-weight: 800; width: 32px; text-align: center; flex-shrink: 0; }
+.lb-pts  { font-size: 1.1rem; font-weight: 800; color: var(--brand-lt); margin-left: auto; }
+.lb-bar  { width: 120px; }
+
+/* ── LEARNING PATHS ── */
+.path-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 20px; cursor: pointer; transition: transform .2s, border-color .2s;
+}
+.path-card:hover { transform: translateY(-2px); border-color: var(--brand); }
+.path-courses { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.path-step { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 4px 10px; background: var(--bg); border-radius: 20px; }
+
+/* ── CERTIFICATE ── */
+.cert-wrap {
+  background: #fff; color: #1a1a2e; border-radius: 12px; padding: 40px;
+  text-align: center; border: 3px solid #6C47FF; position: relative;
+}
+.cert-wrap::before {
+  content: ''; position: absolute; inset: 8px; border: 1px solid #6C47FF30; border-radius: 8px; pointer-events: none;
+}
+.cert-title  { font-size: 0.85rem; letter-spacing: 3px; text-transform: uppercase; color: #6C47FF; margin-bottom: 8px; }
+.cert-name   { font-size: 2rem; font-weight: 900; margin: 12px 0; }
+.cert-course { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+.cert-date   { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
+.cert-seal   { font-size: 3rem; margin-bottom: 8px; }
+@media print {
+  body > *:not(#cert-print-area) { display: none !important; }
+  #cert-print-area { display: block !important; }
+}
+
+/* ── QUIZ ── */
+.quiz-question { margin-bottom: 24px; }
+.quiz-q-text   { font-weight: 700; margin-bottom: 12px; font-size: 1rem; }
+.quiz-option   {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+  margin-bottom: 8px; transition: all .15s; font-size: 0.9rem;
+}
+.quiz-option:hover   { border-color: var(--brand); background: rgba(108,71,255,.06); }
+.quiz-option.correct { border-color: var(--success); background: rgba(34,197,94,.1); }
+.quiz-option.wrong   { border-color: var(--danger);  background: rgba(239,68,68,.1); }
+.quiz-option.selected{ border-color: var(--brand);   background: rgba(108,71,255,.1); }
+
+/* ── CALENDAR ── */
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.cal-day-label { text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--muted); padding: 6px 0; text-transform: uppercase; }
+.cal-cell {
+  min-height: 80px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 6px; font-size: 0.78rem;
+}
+.cal-cell.today { border-color: var(--brand); }
+.cal-cell.other-month { opacity: .3; }
+.cal-date { font-weight: 700; margin-bottom: 4px; }
+.cal-event-chip {
+  background: rgba(108,71,255,.2); color: var(--brand-lt);
+  border-radius: 4px; padding: 2px 5px; margin-bottom: 2px;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cal-nav { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.cal-nav h3 { flex: 1; text-align: center; font-size: 1rem; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ── TOAST ── -->
+<div id="toast-container"></div>
+
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-text">Tillem LXP</div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchAuthTab('signup')">Create Account</div>
+    </div>
+
+    <!-- Login -->
+    <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@company.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Sign In →</button>
+      <div style="border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:8px;">
+        <p class="muted" style="text-align:center;font-size:.75rem;margin-bottom:4px;">— or sign in as a demo account —</p>
+        <button type="button" class="btn btn-secondary btn-sm" id="demo-admin-btn">Admin Demo</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="demo-manager-btn">Manager Demo</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="demo-learner-btn">Learner Demo</button>
+      </div>
+    </form>
+
+    <!-- Signup -->
+    <form id="signup-form" class="auth-form hidden" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="Jane Smith" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@company.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Create Account →</button>
+      <p class="muted" style="text-align:center;font-size:.8rem;">
+        Your account will be assigned the <em>Learner</em> role. An admin can change this.
+      </p>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════════ -->
+<div id="app" class="flex" style="height:100vh;">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-text">Tillem LXP</div>
+    </div>
+
+    <div class="nav-section" style="flex:1;overflow-y:auto;">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" id="nav-dashboard">
+        <span class="nav-icon nav-icon-text">DB</span><span>Dashboard</span>
+      </div>
+      <div class="nav-item" id="nav-learning">
+        <span class="nav-icon nav-icon-text">LH</span><span>Learning Hub</span>
+      </div>
+      <div class="nav-item" id="nav-events">
+        <span class="nav-icon nav-icon-text">EV</span><span>Events</span>
+      </div>
+      <div class="nav-item" id="nav-tasks">
+        <span class="nav-icon nav-icon-text">TK</span><span>Tasks</span>
+        <span class="nav-badge hidden" id="task-badge">0</span>
+      </div>
+      <div class="nav-item" id="nav-paths">
+        <span class="nav-icon nav-icon-text">PT</span><span>Learning Paths</span>
+      </div>
+      <div class="nav-item" id="nav-leaderboard">
+        <span class="nav-icon nav-icon-text">LB</span><span>Leaderboard</span>
+      </div>
+
+      <div id="admin-nav" class="hidden">
+        <div class="nav-label" style="margin-top:16px;">Admin</div>
+        <div class="nav-item" id="nav-admin-users">
+          <span class="nav-icon nav-icon-text">US</span><span>Users</span>
+        </div>
+        <div class="nav-item" id="nav-admin-content">
+          <span class="nav-icon nav-icon-text">CT</span><span>Content</span>
+        </div>
+        <div class="nav-item" id="nav-admin-reports">
+          <span class="nav-icon nav-icon-text">RP</span><span>Reports</span>
+        </div>
+        <div id="manager-nav-item" class="hidden">
+          <div class="nav-item" id="nav-manager-dashboard">
+            <span class="nav-icon nav-icon-text">TM</span><span>My Team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="navigate('profile')">
+        <div class="avatar" id="sidebar-avatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebar-name">Loading…</div>
+          <div class="user-role-label" id="sidebar-role">—</div>
+        </div>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:8px;" onclick="handleLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main-area" id="main-area">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="global-search" style="position:relative;">
+        <span></span>
+        <input type="text" id="global-search-input" placeholder="Search courses, events, tasks…" oninput="globalSearch(this.value)" autocomplete="off">
+        <div id="search-results-dropdown" class="hidden"></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+        <button class="theme-btn" id="theme-btn" title="Toggle theme">Dark</button>
+        <div style="position:relative;">
+          <button class="notif-btn" id="notif-btn">Alerts<span class="notif-dot hidden" id="notif-dot"></span></button>
+          <div class="notif-panel hidden" id="notif-panel">
+            <div class="notif-header">Notifications</div>
+            <div id="notif-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div id="page-dashboard" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span>Home</span></div>
+          <h1 id="dash-greeting">Good morning </h1>
+          <p class="muted" id="dash-sub">Here's your learning snapshot.</p>
+        </div>
+      </div>
+      <div class="page-content flex col gap-24">
+
+        <div class="stat-grid" id="dash-stats"></div>
+
+        <div class="flex gap-24 wrap">
+          <!-- Continue Learning -->
+          <div style="flex:1;min-width:280px;">
+            <div class="section-title">Continue Learning</div>
+            <div id="dash-continue" class="flex col gap-12"></div>
+          </div>
+          <!-- Upcoming Events -->
+          <div style="flex:1;min-width:280px;">
+            <div class="section-title">Upcoming Events</div>
+            <div id="dash-events" class="flex col gap-12"></div>
+          </div>
+        </div>
+
+        <!-- Open Tasks -->
+        <div>
+          <div class="section-title">Open Tasks</div>
+          <div id="dash-tasks" class="flex col gap-8"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── LEARNING HUB PAGE ── -->
+    <div id="page-learning" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Learning Hub</span></div>
+          <h1>Learning Hub</h1>
+        </div>
+        <div class="search-bar">
+          <span></span>
+          <input type="text" placeholder="Search courses…" oninput="filterCourses(this.value)">
+        </div>
+      </div>
+      <div class="page-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchLearningTab('assigned',this)">Assigned</button>
+          <button class="tab-btn" onclick="switchLearningTab('all',this)">All Courses</button>
+          <button class="tab-btn" onclick="switchLearningTab('completed',this)">Completed</button>
+        </div>
+        <div class="item-grid" id="courses-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── EVENTS PAGE ── -->
+    <div id="page-events" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Events</span></div>
+          <h1>Events</h1>
+        </div>
+        <div id="events-admin-btn"></div>
+      </div>
+      <div class="page-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchEventsTab('upcoming',this)">Upcoming</button>
+          <button class="tab-btn" onclick="switchEventsTab('registered',this)">Registered</button>
+          <button class="tab-btn" onclick="switchEventsTab('past',this)">Past</button>
+        </div>
+        <div id="events-list" class="flex col gap-12"></div>
+      </div>
+    </div>
+
+    <!-- ── TASKS PAGE ── -->
+    <div id="page-tasks" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Tasks</span></div>
+          <h1>Tasks</h1>
+        </div>
+        <div id="tasks-admin-btn"></div>
+      </div>
+      <div class="page-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTasksTab('pending',this)">Pending</button>
+          <button class="tab-btn" onclick="switchTasksTab('completed',this)">Completed</button>
+          <button class="tab-btn" onclick="switchTasksTab('all',this)">All</button>
+        </div>
+        <div id="tasks-list" class="flex col gap-8"></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: USERS ── -->
+    <div id="page-admin-users" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Admin</span><span class="sep">›</span><span>Users</span></div>
+          <h1>User Management</h1>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('invite-modal')">+ Invite User</button>
+      </div>
+      <div class="page-content">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>User</th><th>Email</th><th>Role</th><th>Progress</th><th>Joined</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="users-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: CONTENT ── -->
+    <div id="page-admin-content" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Admin</span><span class="sep">›</span><span>Content</span></div>
+          <h1>Content Manager</h1>
+        </div>
+      </div>
+      <div class="page-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchContentTab('courses',this)">Courses</button>
+          <button class="tab-btn" onclick="switchContentTab('events',this)">Events</button>
+          <button class="tab-btn" onclick="switchContentTab('tasks',this)">Tasks</button>
+        </div>
+        <div id="content-panel"></div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN: REPORTS ── -->
+    <div id="page-admin-reports" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Admin</span><span class="sep">›</span><span>Reports</span></div>
+          <h1>Reports & Analytics</h1>
+        </div>
+      </div>
+      <div class="page-content">
+        <div class="stat-grid" id="report-stats"></div>
+        <div style="margin-top:24px;">
+          <div class="section-title">Learner Progress</div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr>
+                  <th>Learner</th><th>Role</th><th>Courses</th><th>Events Attended</th><th>Tasks Done</th><th>Overall %</th>
+                </tr></thead>
+                <tbody id="report-table-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:24px;">
+          <div class="section-title">Event Attendance</div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr>
+                  <th>Event</th><th>Date</th><th>Registered</th><th>Attended</th><th>Attendance %</th>
+                </tr></thead>
+                <tbody id="attendance-report-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE PAGE ── -->
+    <div id="page-profile" class="hidden">
+      <div class="page-header">
+        <div>
+          <div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Profile</span></div>
+          <h1>My Profile</h1>
+        </div>
+        <div class="flex gap-8">
+          <button class="btn btn-secondary btn-sm" onclick="openModal('change-pw-modal')">Change Password</button>
+          <button class="btn btn-secondary btn-sm" onclick="handleLogout()">Sign Out</button>
+        </div>
+      </div>
+      <div class="page-content">
+        <div class="flex gap-24 wrap">
+          <div class="card" style="width:280px;flex-shrink:0;">
+            <div class="flex col gap-12" style="align-items:center;text-align:center;">
+              <div class="avatar avatar-lg" id="profile-avatar">?</div>
+              <div>
+                <div class="bold" id="profile-name">—</div>
+                <div class="muted" id="profile-email">—</div>
+              </div>
+              <span class="tag" id="profile-role-tag">—</span>
+            </div>
+          </div>
+          <div class="flex col gap-16 grow">
+            <div class="card">
+              <div class="section-title">Learning Progress</div>
+              <div id="profile-progress" class="flex col gap-12"></div>
+            </div>
+            <div class="card">
+              <div class="section-title">Achievements</div>
+              <div id="profile-achievements" class="flex gap-12 wrap"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── LEADERBOARD PAGE ── -->
+    <div id="page-leaderboard" class="hidden">
+      <div class="page-header">
+        <div><div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Leaderboard</span></div><h1>Leaderboard</h1></div>
+      </div>
+      <div class="page-content">
+        <div class="flex gap-16 wrap" style="margin-bottom:20px;" id="lb-my-stats"></div>
+        <div id="leaderboard-list"></div>
+      </div>
+    </div>
+
+    <!-- ── LEARNING PATHS PAGE ── -->
+    <div id="page-paths" class="hidden">
+      <div class="page-header">
+        <div><div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>Learning Paths</span></div><h1>Learning Paths</h1></div>
+        <div id="paths-admin-btn"></div>
+      </div>
+      <div class="page-content">
+        <div class="item-grid" id="paths-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── MANAGER DASHBOARD ── -->
+    <div id="page-manager-dashboard" class="hidden">
+      <div class="page-header">
+        <div><div class="breadcrumb"><span onclick="navigate('dashboard')">Home</span><span class="sep">›</span><span>My Team</span></div><h1>My Team</h1></div>
+      </div>
+      <div class="page-content">
+        <div class="stat-grid" id="mgr-stats"></div>
+        <div style="margin-top:24px;" class="card">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Learner</th><th>Course Progress</th><th>Events Attended</th><th>Tasks Done</th><th>Points</th></tr></thead>
+            <tbody id="mgr-table"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-area -->
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════
+     LESSON VIEWER
+══════════════════════════════════════════ -->
+<div id="lesson-viewer" class="hidden">
+  <div class="viewer-header">
+    <button class="btn btn-ghost btn-sm" onclick="closeLessonViewer()">← Back</button>
+    <div style="flex:1;">
+      <div class="bold" id="viewer-course-title">Course</div>
+      <div class="muted small" id="viewer-lesson-count">Lesson 1 of 5</div>
+    </div>
+    <div id="viewer-progress-area" style="width:200px;">
+      <div class="flex between small muted" style="margin-bottom:4px;">
+        <span>Progress</span><span id="viewer-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="viewer-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+  <div class="viewer-body" id="viewer-body-classic">
+    <div class="lesson-sidebar" id="lesson-sidebar-list"></div>
+    <div class="lesson-main">
+      <h2 id="active-lesson-title" style="margin-bottom:16px;font-size:1.3rem;"></h2>
+      <div class="lesson-content-area" id="active-lesson-body"></div>
+      <div class="flex gap-12 lesson-complete-btn">
+        <button class="btn btn-secondary" id="prev-lesson-btn" onclick="prevLesson()">← Previous</button>
+        <button class="btn btn-primary" id="next-lesson-btn" onclick="nextLesson()">Mark Complete & Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rise-style immersive viewer -->
+  <div class="rise-viewer-wrap" id="rise-viewer-wrap">
+    <div class="rise-scroll-area" id="rise-scroll-area"></div>
+    <div class="rise-nav-footer">
+      <button class="btn btn-secondary" id="rise-prev-btn" onclick="prevLesson()">← Previous</button>
+      <span class="muted small" id="rise-lesson-count"></span>
+      <button class="btn btn-primary" id="rise-next-btn" onclick="nextLesson()">Mark Complete & Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+
+<!-- Create Course Modal -->
+<div class="modal-overlay hidden" id="create-course-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Course</h2>
+      <button class="modal-close" onclick="closeModal('create-course-modal')">×</button>
+    </div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Course Title</label><input id="cc-title" placeholder="e.g. Safety Fundamentals"></div>
+      <div class="form-group"><label>Description</label><textarea id="cc-desc" placeholder="What will learners gain?"></textarea></div>
+      <div class="form-group">
+        <label>Emoji / Cover Icon</label>
+        <input id="cc-emoji" placeholder="" maxlength="4">
+      </div>
+      <div class="form-group">
+        <label>Assign to Roles (auto-assigns to everyone in these roles)</label>
+        <div id="cc-roles" class="flex gap-8 wrap" style="margin-top:4px;"></div>
+      </div>
+      <div class="form-group">
+        <label>Lessons (one per line)</label>
+        <textarea id="cc-lessons" placeholder="Introduction&#10;Module 1: Core Concepts&#10;Module 2: Practical Skills&#10;Assessment" style="min-height:120px;"></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="createCourse()">Create Course</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Event Modal -->
+<div class="modal-overlay hidden" id="create-event-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Event</h2>
+      <button class="modal-close" onclick="closeModal('create-event-modal')">×</button>
+    </div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Event Title</label><input id="ce-title" placeholder="e.g. Q2 Kickoff Workshop"></div>
+      <div class="form-group"><label>Description</label><textarea id="ce-desc"></textarea></div>
+      <div class="flex gap-12">
+        <div class="form-group grow"><label>Date</label><input id="ce-date" type="date"></div>
+        <div class="form-group grow"><label>Time</label><input id="ce-time" type="time"></div>
+      </div>
+      <div class="form-group"><label>Location / Link</label><input id="ce-location" placeholder="Conference Room A or https://zoom.us/…"></div>
+      <div class="form-group">
+        <label>Format</label>
+        <select id="ce-format">
+          <option value="in-person">In-Person</option>
+          <option value="virtual">Virtual</option>
+          <option value="hybrid">Hybrid</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Auto-assign to Roles</label>
+        <div id="ce-roles" class="flex gap-8 wrap" style="margin-top:4px;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="createEvent()">Create Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Task Modal -->
+<div class="modal-overlay hidden" id="create-task-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Create Task</h2>
+      <button class="modal-close" onclick="closeModal('create-task-modal')">×</button>
+    </div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Task Title</label><input id="ct-title" placeholder="e.g. Complete onboarding survey"></div>
+      <div class="form-group"><label>Description</label><textarea id="ct-desc"></textarea></div>
+      <div class="form-group"><label>Due Date</label><input id="ct-due" type="date"></div>
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="ct-priority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Assign to Roles</label>
+        <div id="ct-roles" class="flex gap-8 wrap" style="margin-top:4px;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="createTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div class="modal-overlay hidden" id="event-detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="ed-title">Event</h2>
+      <button class="modal-close" onclick="closeModal('event-detail-modal')">×</button>
+    </div>
+    <div id="ed-body"></div>
+  </div>
+</div>
+
+<!-- Attendance Modal (admin) -->
+<div class="modal-overlay hidden" id="attendance-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Manage Attendance</h2>
+      <button class="modal-close" onclick="closeModal('attendance-modal')">×</button>
+    </div>
+    <div id="attendance-body"></div>
+  </div>
+</div>
+
+<!-- Invite User Modal -->
+<div class="modal-overlay hidden" id="invite-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2>Invite User</h2>
+      <button class="modal-close" onclick="closeModal('invite-modal')">×</button>
+    </div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Full Name</label><input id="inv-name" placeholder="Jane Smith"></div>
+      <div class="form-group"><label>Email</label><input id="inv-email" type="email" placeholder="jane@company.com"></div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="inv-role">
+          <option value="learner">Learner</option>
+          <option value="manager">Manager</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="inviteUser()">Add User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in Modal (learner) -->
+<div class="modal-overlay hidden" id="checkin-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h2>Check In to Event</h2>
+      <button class="modal-close" onclick="closeModal('checkin-modal')">×</button>
+    </div>
+    <div class="flex col gap-16">
+      <p class="muted">Enter the 6-character code displayed by your facilitator.</p>
+      <div class="form-group">
+        <label>Attendance Code</label>
+        <input id="checkin-code-input" placeholder="ABC123" maxlength="6" style="text-transform:uppercase;font-size:1.2rem;text-align:center;letter-spacing:4px;">
+      </div>
+      <button class="btn btn-primary" onclick="submitCheckin()">Confirm Attendance</button>
+    </div>
+  </div>
+</div>
+
+<!-- Certificate Modal -->
+<div class="modal-overlay hidden" id="cert-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header">
+      <h2> Certificate</h2>
+      <button class="modal-close" onclick="closeModal('cert-modal')">×</button>
+    </div>
+    <div id="cert-content"></div>
+    <div class="flex gap-12" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="printCert()"> Print / Save PDF</button>
+      <button class="btn btn-secondary" onclick="closeModal('cert-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Path Modal -->
+<div class="modal-overlay hidden" id="create-path-modal">
+  <div class="modal">
+    <div class="modal-header"><h2>Create Learning Path</h2><button class="modal-close" onclick="closeModal('create-path-modal')">×</button></div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Path Title</label><input id="cp-title" placeholder="e.g. New Hire Journey"></div>
+      <div class="form-group"><label>Description</label><textarea id="cp-desc"></textarea></div>
+      <div class="form-group"><label>Assign to Roles</label><div id="cp-roles" class="flex gap-8 wrap" style="margin-top:4px;"></div></div>
+      <div class="form-group">
+        <label>Courses (in order)</label>
+        <div id="cp-course-list" class="flex col gap-8" style="margin-top:4px;"></div>
+      </div>
+      <button class="btn btn-primary" onclick="createPath()">Create Path</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Lesson Modal -->
+<div class="modal-overlay hidden" id="edit-lesson-modal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><h2>Edit Lesson</h2><button class="modal-close" onclick="closeModal('edit-lesson-modal')">×</button></div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Lesson Title</label><input id="el-title"></div>
+      <div class="form-group">
+        <label>Lesson Type</label>
+        <select id="el-type" onchange="toggleLessonType(this.value)">
+          <option value="content">Content (text/HTML)</option>
+          <option value="quiz">Quiz</option>
+        </select>
+      </div>
+      <div id="el-content-area" class="form-group"><label>Body (HTML supported)</label><textarea id="el-body" style="min-height:200px;font-family:monospace;font-size:.85rem;"></textarea></div>
+      <div id="el-quiz-area" class="hidden flex col gap-12">
+        <div class="flex between"><span class="bold small">Quiz Questions</span><button class="btn btn-secondary btn-sm" onclick="addQuizQuestion()">+ Add Question</button></div>
+        <div id="el-quiz-questions"></div>
+      </div>
+      <div style="display:none;" id="el-course-id"></div>
+      <div style="display:none;" id="el-lesson-idx"></div>
+      <button class="btn btn-primary" onclick="saveLessonEdit()">Save Lesson</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay hidden" id="change-pw-modal">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header"><h2>Change Password</h2><button class="modal-close" onclick="closeModal('change-pw-modal')">×</button></div>
+    <div class="flex col gap-16">
+      <div class="form-group"><label>Current Password</label><input type="password" id="pw-current"></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="pw-new" placeholder="Min. 6 characters"></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="pw-confirm"></div>
+      <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP LOGIC
+══════════════════════════════════════════ -->
+<script>
+// ════════════════════════════════════════════
+// TILLEM DB — localStorage backend
+// Tables: users, courses, events, tasks, progress, sessions
+// ════════════════════════════════════════════
+const DB = {
+  _get: (table) => JSON.parse(localStorage.getItem(`tillem_${table}`) || '[]'),
+  _set: (table, data) => localStorage.setItem(`tillem_${table}`, JSON.stringify(data)),
+
+  // Generic CRUD
+  all:    (t)         => DB._get(t),
+  find:   (t, id)     => DB._get(t).find(r => r.id === id) || null,
+  where:  (t, fn)     => DB._get(t).filter(fn),
+  insert: (t, row)    => { const rows = DB._get(t); const r = { ...row, id: row.id || uid(), createdAt: now() }; rows.push(r); DB._set(t, rows); return r; },
+  update: (t, id, patch) => { const rows = DB._get(t).map(r => r.id === id ? { ...r, ...patch } : r); DB._set(t, rows); },
+  delete: (t, id)     => DB._set(t, DB._get(t).filter(r => r.id !== id)),
+
+  // Progress helpers
+  getProgress: (userId) => JSON.parse(localStorage.getItem(`tillem_progress_${userId}`) || '{"courses":{},"registrations":[],"attendance":[],"tasks":{}}'),
+  setProgress: (userId, data) => localStorage.setItem(`tillem_progress_${userId}`, JSON.stringify(data)),
+
+  // Session (who's logged in)
+  getSession: () => JSON.parse(localStorage.getItem('tillem_session') || 'null'),
+  setSession: (data) => localStorage.setItem('tillem_session', JSON.stringify(data)),
+  clearSession: () => localStorage.removeItem('tillem_session'),
+};
+
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+function now() { return new Date().toISOString(); }
+
+// ════════════════════════════════════════════
+// GLOBAL STATE
+// ════════════════════════════════════════════
+let currentUser     = null; // { id, email }
+let currentUserData = null; // { name, email, role, ... }
+let allUsers        = [];
+let allCourses      = [];
+let allEvents       = [];
+let allTasks        = [];
+let userProgress    = {};   // courseId → { completedLessons: [] }
+let userRegistrations = []; // eventIds the user registered for
+let userAttendance  = [];   // eventIds attended
+let userTaskStatus  = {};   // taskId → 'done' | 'pending'
+
+let activeCourse    = null;
+let activeLessonIdx = 0;
+let currentEventsTab  = 'upcoming';
+let currentTasksTab   = 'pending';
+let currentLearningTab= 'assigned';
+let currentContentTab = 'courses';
+let currentCheckinEventId = null;
+let _calendarVisible = false;
+
+const ROLES = ['admin','manager','learner'];
+
+// ════════════════════════════════════════════
+// SEED DATA (first-run demo)
+// ════════════════════════════════════════════
+const SEED_COURSES = [
+  {
+    title: 'Onboarding Essentials', emoji: '', description: 'Everything you need to hit the ground running.',
+    roles: ['learner','manager','admin'],
+    lessons: [
+      { title: 'Welcome to the Team', body: '<h2>Welcome!</h2><p>We\'re thrilled to have you on board. This course will walk you through the essential tools, processes, and culture that make our organization tick.</p><ul><li>Our mission and values</li><li>Key tools and systems</li><li>Who to go to for what</li></ul>' },
+      { title: 'Our Culture & Values', body: '<h2>Culture & Values</h2><p>Culture is the invisible hand that guides every decision we make. At Tillem LXP, we believe in <strong>continuous learning</strong>, radical honesty, and lifting each other up.</p><p>Take a moment to read our culture handbook linked in your email.</p>' },
+      { title: 'Tools & Systems', body: '<h2>Tools & Systems</h2><p>You\'ll be working across these platforms daily:</p><ul><li><strong>Tillem LXP LXP</strong> — learning, events, tasks</li><li><strong>Slack</strong> — async communication</li><li><strong>Google Workspace</strong> — docs, sheets, calendar</li></ul><p>IT credentials were emailed to you separately.</p>' },
+      { title: 'Your First 30 Days', body: '<h2>First 30 Days</h2><p>Here\'s what a great first month looks like:</p><ul><li>Week 1: Meet your team, set up tools</li><li>Week 2: Shadow key stakeholders</li><li>Week 3: Take on your first small project</li><li>Week 4: Reflect and set 90-day goals</li></ul>' },
+    ]
+  },
+  {
+    title: 'Leadership Foundations', emoji: '', description: 'Core frameworks every leader needs.',
+    roles: ['manager','admin'],
+    lessons: [
+      { title: 'The Leader vs Manager Mindset', body: '<h2>Leader vs. Manager</h2><p>Management is about <em>efficiency</em>. Leadership is about <em>direction</em>. The best managers are both — they run tight ships AND inspire their crew toward a meaningful destination.</p>' },
+      { title: 'Effective 1-on-1s', body: '<h2>Effective 1-on-1s</h2><p>One-on-ones are the single highest-leverage activity for a people manager. Use this structure:</p><ul><li><strong>10 min</strong> — their agenda, their wins</li><li><strong>10 min</strong> — your agenda, blockers</li><li><strong>10 min</strong> — growth conversation</li></ul>' },
+      { title: 'Giving Feedback That Lands', body: '<h2>Feedback That Lands</h2><p>Use the <strong>SBI model</strong>:</p><ul><li><strong>Situation</strong> — "In Tuesday\'s meeting…"</li><li><strong>Behavior</strong> — "You interrupted the client twice…"</li><li><strong>Impact</strong> — "It made them feel dismissed."</li></ul><p>Then ask: "What\'s your perspective?"</p>' },
+    ]
+  },
+  {
+    title: 'Workplace Safety', emoji: '', description: 'Mandatory safety training for all staff.',
+    roles: ['learner','manager','admin'],
+    lessons: [
+      { title: 'Hazard Identification', body: '<h2>Hazard Identification</h2><p>The first step in any safety process is identifying potential hazards before they become incidents. Use the <strong>STOP</strong> method: Survey, Think, Observe, Plan.</p>' },
+      { title: 'Emergency Procedures', body: '<h2>Emergency Procedures</h2><p>Know your exits. Know your muster point. Know who to call.</p><ul><li>Fire: exit via nearest stairwell, do NOT use elevator</li><li>Medical: call 911, then notify security at ext. 0</li><li>Evacuation: assemble at parking lot A</li></ul>' },
+      { title: 'Incident Reporting', body: '<h2>Incident Reporting</h2><p>All incidents — no matter how minor — must be reported within 24 hours. Use the online form on the intranet under Safety → Report Incident.</p><p>Near-misses are especially valuable. They\'re free lessons.</p>' },
+    ]
+  },
+  {
+    title: 'Data Privacy & Compliance', emoji: '', description: 'GDPR, data handling, and your obligations.',
+    roles: ['learner','manager','admin'],
+    lessons: [
+      { title: 'Why Privacy Matters', body: '<h2>Why Privacy Matters</h2><p>Data breaches cost companies millions — and cost customers their trust. Understanding your role in protecting data isn\'t optional; it\'s foundational to working here.</p>' },
+      { title: 'What is Personal Data?', body: '<h2>Personal Data</h2><p>Personal data is any information that can identify a living individual. This includes:</p><ul><li>Name, email, phone</li><li>IP addresses, cookies</li><li>Location data</li><li>Health or financial info</li></ul>' },
+      { title: 'Your Obligations', body: '<h2>Your Obligations</h2><p>You must:</p><ul><li>Only collect data you need</li><li>Store it securely</li><li>Never share it without authorization</li><li>Report any suspected breach immediately</li></ul>' },
+    ]
+  },
+];
+
+const SEED_EVENTS = [
+  {
+    title: 'Q3 All-Hands Meeting', description: 'Company-wide strategy update and Q2 results review.',
+    date: futureDate(7), time: '10:00', location: 'Main Auditorium + Zoom',
+    format: 'hybrid', roles: ['learner','manager','admin'],
+    attendanceCode: 'ALLQ3X', registeredUsers: [], attendedUsers: [],
+  },
+  {
+    title: 'Manager Development Workshop', description: 'Deep-dive session on coaching techniques.',
+    date: futureDate(14), time: '09:00', location: 'Board Room B',
+    format: 'in-person', roles: ['manager','admin'],
+    attendanceCode: 'MGRWK1', registeredUsers: [], attendedUsers: [],
+  },
+  {
+    title: 'New Hire Welcome Lunch', description: 'Informal lunch for all employees who joined in the last 90 days.',
+    date: futureDate(3), time: '12:30', location: 'Rooftop Terrace',
+    format: 'in-person', roles: ['learner'],
+    attendanceCode: 'WLCM23', registeredUsers: [], attendedUsers: [],
+  },
+  {
+    title: 'Compliance Training: Annual Refresh', description: 'Mandatory for all staff. Certificate issued on completion.',
+    date: futureDate(21), time: '14:00', location: 'https://zoom.us/j/example',
+    format: 'virtual', roles: ['learner','manager','admin'],
+    attendanceCode: 'COMP24', registeredUsers: [], attendedUsers: [],
+  },
+];
+
+const SEED_TASKS = [
+  {
+    title: 'Complete onboarding survey', description: 'Share your first-week impressions to help us improve the program.',
+    dueDate: futureDate(5), priority: 'high', roles: ['learner'],
+  },
+  {
+    title: 'Schedule 1-on-1 with your manager', description: 'Book your first monthly check-in using the shared calendar.',
+    dueDate: futureDate(7), priority: 'high', roles: ['learner','manager'],
+  },
+  {
+    title: 'Read the Employee Handbook', description: 'Available on the intranet under HR → Documents.',
+    dueDate: futureDate(10), priority: 'medium', roles: ['learner'],
+  },
+  {
+    title: 'Set your 30-60-90 day goals', description: 'Use the template shared by your manager and submit via the portal.',
+    dueDate: futureDate(14), priority: 'medium', roles: ['learner','manager'],
+  },
+  {
+    title: 'Complete team skills matrix', description: 'Rate your direct reports on the 12 core competencies.',
+    dueDate: futureDate(10), priority: 'high', roles: ['manager','admin'],
+  },
+];
+
+function futureDate(days) {
+  const d = new Date(); d.setDate(d.getDate() + days);
+  return d.toISOString().split('T')[0];
+}
+
+// ════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════
+window.switchAuthTab = (tab) => {
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('signup-form').classList.toggle('hidden', tab !== 'signup');
+};
+
+window.handleLogin = (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('login-password').value;
+  const users = DB.all('users');
+  const user  = users.find(u => u.email === email);
+  if (!user || user.password !== btoa(pw)) {
+    toast('Incorrect email or password.', 'error'); return;
+  }
+  DB.setSession({ id: user.id, email: user.email });
+  bootApp();
+};
+
+window.handleSignup = (e) => {
+  e.preventDefault();
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('signup-password').value;
+  if (pw.length < 6) { toast('Password must be at least 6 characters.', 'error'); return; }
+  if (DB.where('users', u => u.email === email).length) {
+    toast('An account with that email already exists.', 'error'); return;
+  }
+  const user = DB.insert('users', { name, email, password: btoa(pw), role: 'learner' });
+  DB.setSession({ id: user.id, email: user.email });
+  toast('Account created! Welcome to Tillem LXP.', 'success');
+  bootApp();
+};
+
+window.demoLogin = (email) => {
+  const users = DB.all('users');
+  const user  = users.find(u => u.email === email);
+  if (!user) { toast('Demo account not found. Please refresh and try again.', 'error'); return; }
+  DB.setSession({ id: user.id, email: user.email });
+  bootApp();
+};
+
+window.handleLogout = () => {
+  DB.clearSession();
+  currentUser = null; currentUserData = null;
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+};
+
+// Boot called at end of script after all functions are defined
+function init() {
+  seedDataIfNeeded();
+  seedRiseCourseIfNeeded();
+  const session = DB.getSession();
+  if (session) {
+    bootApp();
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+  }
+}
+
+function bootApp() {
+  const session = DB.getSession();
+  if (!session) return;
+  currentUser = session;
+  loadAllData();
+  showApp();
+  navigate('dashboard');
+}
+
+// ════════════════════════════════════════════
+// DATA LOADING
+// ════════════════════════════════════════════
+function seedDataIfNeeded() {
+  if (localStorage.getItem('tillem_seeded')) return;
+
+  // Seed demo users
+  DB.insert('users', { id: 'demo-admin',   name: 'Admin User',    email: 'admin@tillem.com',   password: btoa('password'), role: 'admin' });
+  DB.insert('users', { id: 'demo-manager', name: 'Sam Manager',   email: 'manager@tillem.com', password: btoa('password'), role: 'manager' });
+  DB.insert('users', { id: 'demo-learner', name: 'Demo Learner',  email: 'learner@tillem.com', password: btoa('password'), role: 'learner' });
+
+  for (const c of SEED_COURSES) DB.insert('courses', c);
+  for (const ev of SEED_EVENTS)  DB.insert('events',  ev);
+  for (const t of SEED_TASKS)    DB.insert('tasks',   t);
+
+  localStorage.setItem('tillem_seeded', '1');
+}
+
+function seedRiseCourseIfNeeded() {
+  if (localStorage.getItem('tillem_rise_seeded')) return;
+  DB.insert('courses', {
+    id: 'rise-demo-course',
+    title: 'Effective Communication at Work',
+    emoji: '',
+    description: 'An interactive Rise-style module covering communication fundamentals — with videos, flashcards, and knowledge checks.',
+    roles: ['learner','manager','admin'],
+    lessons: [
+      {
+        title: 'Module Overview',
+        type: 'rise',
+        blocks: [
+          { type: 'hero', tag: 'Communication Skills', title: 'Effective Communication at Work', subtitle: 'Master the skills that drive collaboration, trust, and results.' },
+          { type: 'text', heading: 'What you will learn', body: '<p>In this module you will explore the core principles of workplace communication — from active listening and clear writing to navigating difficult conversations with confidence.</p><ul><li>The four pillars of effective communication</li><li>How to adapt your style to your audience</li><li>Practical tools for written and verbal clarity</li></ul>' },
+          { type: 'statement', text: 'The single biggest problem in communication is the illusion that it has taken place.', attribution: 'George Bernard Shaw' },
+          { type: 'steps', heading: 'How this module works', items: [
+            { title: 'Read & Watch', desc: 'Explore each concept through text and embedded video.' },
+            { title: 'Interact', desc: 'Flip flashcards, expand accordions, and test your knowledge.' },
+            { title: 'Reflect', desc: 'Use the checklists to apply what you have learned.' }
+          ]},
+        ]
+      },
+      {
+        title: 'The Four Pillars',
+        type: 'rise',
+        blocks: [
+          { type: 'hero', tag: 'Lesson 2', title: 'The Four Pillars of Communication', subtitle: 'Every great communicator builds on these foundations.' },
+          { type: 'video', src: 'https://www.youtube.com/watch?v=lg48Bi9DA54', caption: 'Effective Communication at Work' },
+          { type: 'tabs', heading: 'Explore each pillar', items: [
+            { label: 'Clarity', content: 'Clarity means saying exactly what you mean with the fewest words necessary. Avoid jargon, filler phrases, and ambiguous language. Ask yourself: could this sentence be misunderstood? If yes, rewrite it.' },
+            { label: 'Listening', content: 'Active listening is more than being quiet while someone speaks. It means making eye contact, nodding, paraphrasing back what you heard, and asking follow-up questions that show genuine engagement.' },
+            { label: 'Empathy', content: 'Empathy in communication means acknowledging the other person\'s perspective before asserting your own. Start with "I understand that..." or "From your point of view..." to build trust before problem-solving.' },
+            { label: 'Brevity', content: 'Brevity is a sign of respect for your audience\'s time. Cut your first draft by 20%. Remove every word that does not add meaning. Short sentences win over long ones almost every time.' }
+          ]},
+          { type: 'divider' },
+          { type: 'visual', gradient: 'linear-gradient(135deg,#0ea5e9,#6c47ff)', stat: '25%', label: 'Research Insight', caption: 'Listeners retain only 25–50% of what they hear in a conversation. Active listening techniques can double that.' },
+          { type: 'knowledge_check', question: 'Which of the following BEST describes active listening?', options: ['Staying silent while someone talks', 'Paraphrasing and asking follow-up questions', 'Preparing your response while they speak', 'Making frequent eye contact only'], correct: 1 },
+        ]
+      },
+      {
+        title: 'Written Communication',
+        type: 'rise',
+        blocks: [
+          { type: 'hero', tag: 'Lesson 3', title: 'Written Communication', subtitle: 'Emails, messages, and documents that actually get read — and acted on.' },
+          { type: 'accordion', heading: 'Common writing mistakes — and how to fix them', items: [
+            { label: 'Burying the main point', content: 'Most people read the first two sentences and skim the rest. Lead with your ask or key message, then provide context. Think of it as an inverted pyramid — most important first.' },
+            { label: 'Passive voice overuse', content: 'Passive: "The report was submitted by the team." Active: "The team submitted the report." Active voice is clearer, shorter, and more accountable. Default to active unless passive is genuinely better.' },
+            { label: 'Missing a clear call to action', content: 'End every email with one clear next step: "Please confirm by Friday" or "Let me know if you have questions — otherwise I\'ll proceed on Monday." Never leave the reader wondering what to do next.' },
+            { label: 'Reply-all overuse', content: 'Before hitting Reply All, ask: does every person on this thread need my response? In most cases, the answer is no. Respect inboxes.' },
+          ]},
+          { type: 'checklist', heading: 'Before you send that email', items: [
+            'Is my main point in the first two sentences?',
+            'Have I removed all unnecessary jargon?',
+            'Is there a single, clear call to action?',
+            'Have I checked for spelling and grammar?',
+            'Does everyone on the CC line need to be there?',
+          ]},
+        ]
+      },
+      {
+        title: 'Key Terms',
+        type: 'rise',
+        blocks: [
+          { type: 'hero', tag: 'Lesson 4', title: 'Key Terms & Concepts', subtitle: 'Flip the cards to test yourself on the core vocabulary.' },
+          { type: 'flashcards', heading: 'Communication Vocabulary', items: [
+            { front: 'Active Listening', back: 'Fully concentrating, understanding, and responding to a speaker — not just waiting for your turn to talk.' },
+            { front: 'Non-verbal Communication', back: 'Body language, facial expressions, eye contact, and posture that convey meaning beyond words.' },
+            { front: 'Feedback Loop', back: 'The process of confirming a message was received and understood, then adjusting based on the response.' },
+            { front: 'Empathic Response', back: 'Acknowledging another person\'s feelings before offering solutions or your own perspective.' },
+            { front: 'Communication Noise', back: 'Anything that interferes with the intended message — physical distractions, emotional state, or cultural differences.' },
+            { front: 'The 7% Rule', back: 'Research suggests only 7% of meaning comes from words — 38% from tone and 55% from body language (Mehrabian, 1971).' },
+          ]},
+          { type: 'knowledge_check', question: 'What does "communication noise" refer to?', options: ['Loud environments only', 'Anything that interferes with the intended message', 'Using too many words', 'Speaking too quietly'], correct: 1 },
+          { type: 'statement', text: 'You are now equipped to communicate with more clarity, empathy, and impact. Go make it count.' },
+        ]
+      }
+    ]
+  });
+  localStorage.setItem('tillem_rise_seeded', '1');
+}
+
+function loadAllData() {
+  currentUserData   = DB.find('users', currentUser.id);
+  allCourses        = DB.all('courses');
+  allEvents         = DB.all('events');
+  allTasks          = DB.all('tasks');
+  allUsers          = DB.all('users');
+
+  const prog        = DB.getProgress(currentUser.id);
+  userProgress      = prog.courses      || {};
+  userRegistrations = prog.registrations|| [];
+  userAttendance    = prog.attendance   || [];
+  userTaskStatus    = prog.tasks        || {};
+}
+
+function saveProgress() {
+  DB.setProgress(currentUser.id, {
+    courses:       userProgress,
+    registrations: userRegistrations,
+    attendance:    userAttendance,
+    tasks:         userTaskStatus,
+  });
+}
+
+// ════════════════════════════════════════════
+// APP SHELL
+// ════════════════════════════════════════════
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  const initials = (currentUserData.name || 'U').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('sidebar-name').textContent   = currentUserData.name;
+  document.getElementById('sidebar-role').textContent   = capitalize(currentUserData.role);
+  document.getElementById('profile-avatar').textContent = initials;
+  document.getElementById('profile-name').textContent   = currentUserData.name;
+  document.getElementById('profile-email').textContent  = currentUserData.email;
+
+  const roleTag = document.getElementById('profile-role-tag');
+  roleTag.textContent = capitalize(currentUserData.role);
+  roleTag.className = `tag tag-${currentUserData.role === 'admin' ? 'danger' : currentUserData.role === 'manager' ? 'warn' : 'brand'}`;
+
+  if (currentUserData.role === 'admin' || currentUserData.role === 'manager') {
+    document.getElementById('admin-nav').classList.remove('hidden');
+  }
+  if (currentUserData.role === 'manager') {
+    document.getElementById('manager-nav-item')?.classList.remove('hidden');
+  }
+
+  updateTaskBadge();
+  setTimeout(updateNotifDot, 100);
+}
+
+window.navigate = (page) => {
+  document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  const pageEl = document.getElementById(`page-${page}`);
+  if (pageEl) pageEl.classList.remove('hidden');
+  const navEl = document.getElementById(`nav-${page}`);
+  if (navEl) navEl.classList.add('active');
+
+  switch(page) {
+    case 'dashboard':    renderDashboard();    break;
+    case 'learning':     renderLearning();     break;
+    case 'events':       renderEvents();       break;
+    case 'tasks':        renderTasks();        break;
+    case 'admin-users':  renderAdminUsers();   break;
+    case 'admin-content':renderAdminContent(); break;
+    case 'admin-reports':renderReports();      break;
+    case 'profile':      renderProfile();      break;
+  }
+};
+
+// ════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════
+function renderDashboard() {
+  const hr = new Date().getHours();
+  const greeting = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dash-greeting').textContent = `${greeting}, ${currentUserData.name.split(' ')[0]} `;
+
+  const myCourses  = allCourses.filter(c => c.roles?.includes(currentUserData.role));
+  const myEvents   = allEvents.filter(e => e.roles?.includes(currentUserData.role));
+  const myTasks    = allTasks.filter(t => t.roles?.includes(currentUserData.role));
+  const doneTasks  = myTasks.filter(t => userTaskStatus[t.id] === 'done').length;
+  const attended   = userAttendance.length;
+
+  // Calc overall course progress
+  let totalLessons = 0, doneLessons = 0;
+  myCourses.forEach(c => {
+    totalLessons += c.lessons?.length || 0;
+    doneLessons  += (userProgress[c.id]?.completedLessons || []).length;
+  });
+  const overallPct = totalLessons > 0 ? Math.round((doneLessons/totalLessons)*100) : 0;
+
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--brand-lt)">${overallPct}%</div>
+      <div class="stat-label">Overall Progress</div>
+      <div style="margin-top:10px;"><div class="progress-bar"><div class="progress-fill" style="width:${overallPct}%"></div></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">${myCourses.length}</div>
+      <div class="stat-label">Courses Assigned</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--success)">${doneTasks}</div>
+      <div class="stat-label">Tasks Complete</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:var(--accent)">${attended}</div>
+      <div class="stat-label">Events Attended</div>
+    </div>
+  `;
+
+  // Continue learning
+  const inProgress = myCourses.filter(c => {
+    const done = (userProgress[c.id]?.completedLessons || []).length;
+    return done > 0 && done < (c.lessons?.length || 0);
+  });
+  const notStarted = myCourses.filter(c => !(userProgress[c.id]?.completedLessons?.length));
+  const show = [...inProgress, ...notStarted].slice(0, 3);
+
+  document.getElementById('dash-continue').innerHTML = show.length ? show.map(c => {
+    const done = (userProgress[c.id]?.completedLessons || []).length;
+    const total = c.lessons?.length || 0;
+    const pct = total > 0 ? Math.round((done/total)*100) : 0;
+    return `<div class="card card-hover" onclick="openCourse('${c.id}')">
+      <div class="flex between" style="margin-bottom:10px;">
+        <span>${c.emoji || ''} <strong>${c.title}</strong></span>
+        <span class="muted small">${done}/${total}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('') : '<p class="muted small">All courses complete! </p>';
+
+  // Upcoming events
+  const upcoming = allEvents
+    .filter(e => e.roles?.includes(currentUserData.role) && e.date >= new Date().toISOString().split('T')[0])
+    .sort((a,b) => a.date.localeCompare(b.date)).slice(0,3);
+
+  document.getElementById('dash-events').innerHTML = upcoming.length ? upcoming.map(e => {
+    const d = new Date(e.date+'T12:00:00');
+    return `<div class="event-card" onclick="openEventDetail('${e.id}')">
+      <div class="event-date-block">
+        <div class="event-day">${d.getDate()}</div>
+        <div class="event-month">${d.toLocaleString('default',{month:'short'})}</div>
+      </div>
+      <div class="event-info">
+        <div class="event-title">${e.title}</div>
+        <div class="event-detail">${e.time} · ${formatFormat(e.format)}</div>
+        ${userRegistrations.includes(e.id) ? '<span class="tag tag-success" style="margin-top:6px">Registered</span>' : ''}
+      </div>
+    </div>`;
+  }).join('') : '<p class="muted small">No upcoming events.</p>';
+
+  // Open tasks
+  const openTasks = allTasks
+    .filter(t => t.roles?.includes(currentUserData.role) && userTaskStatus[t.id] !== 'done')
+    .slice(0, 4);
+
+  document.getElementById('dash-tasks').innerHTML = openTasks.length ? openTasks.map(t =>
+    taskItemHTML(t)
+  ).join('') : '<p class="muted small">No open tasks. You\'re all caught up! Done</p>';
+}
+
+// ════════════════════════════════════════════
+// LEARNING HUB
+// ════════════════════════════════════════════
+function renderLearning() {
+  renderCoursesGrid(currentLearningTab);
+  document.getElementById('events-admin-btn').innerHTML = '';
+}
+
+function renderCoursesGrid(tab) {
+  let courses = allCourses;
+  if (tab === 'assigned')  courses = courses.filter(c => c.roles?.includes(currentUserData.role));
+  if (tab === 'completed') courses = courses.filter(c => {
+    const done = (userProgress[c.id]?.completedLessons || []).length;
+    return done > 0 && done >= (c.lessons?.length || 0);
+  });
+
+  const grid = document.getElementById('courses-grid');
+  if (!courses.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>No courses here yet</h3></div>`;
+    return;
+  }
+
+  grid.innerHTML = courses.map(c => {
+    const done  = (userProgress[c.id]?.completedLessons || []).length;
+    const total = c.lessons?.length || 0;
+    const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+    const isCompleted = done >= total && total > 0;
+    return `<div class="course-card" onclick="openCourse('${c.id}')">
+      <div class="course-thumb" style="background:${courseGradient(c.id)}">
+        <span>${c.emoji || ''}</span>
+        ${isCompleted ? '<span style="position:absolute;top:10px;right:10px;font-size:1.2rem;">Done</span>' : ''}
+      </div>
+      <div class="course-body">
+        <div class="course-title">${c.title}</div>
+        <div class="course-meta">
+          <span> ${total} lessons</span>
+          <span>${pct}% done</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="flex gap-8 wrap" style="margin-top:10px;">
+          ${(c.roles||[]).map(r => `<span class="tag tag-muted small">${r}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.filterCourses = (q) => {
+  const lower = q.toLowerCase();
+  const filtered = allCourses.filter(c =>
+    c.title.toLowerCase().includes(lower) || c.description?.toLowerCase().includes(lower)
+  );
+  const grid = document.getElementById('courses-grid');
+  grid.innerHTML = filtered.map(c => {
+    const done  = (userProgress[c.id]?.completedLessons || []).length;
+    const total = c.lessons?.length || 0;
+    const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+    return `<div class="course-card" onclick="openCourse('${c.id}')">
+      <div class="course-thumb" style="background:${courseGradient(c.id)}">${c.emoji||''}</div>
+      <div class="course-body">
+        <div class="course-title">${c.title}</div>
+        <div class="course-meta"><span>${total} lessons</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+window.switchLearningTab = (tab, el) => {
+  currentLearningTab = tab;
+  document.querySelectorAll('#page-learning .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCoursesGrid(tab);
+};
+
+// ── LESSON VIEWER ──
+window.openCourse = (courseId) => {
+  activeCourse    = allCourses.find(c => c.id === courseId);
+  activeLessonIdx = 0;
+  if (!activeCourse) return;
+
+  document.getElementById('viewer-course-title').textContent = activeCourse.title;
+  document.getElementById('lesson-viewer').classList.remove('hidden');
+  renderLessonSidebar();
+  showLesson(0);
+};
+
+window.closeLessonViewer = () => {
+  document.getElementById('lesson-viewer').classList.add('hidden');
+  activeCourse = null;
+  renderLearning(); // refresh progress
+};
+
+function renderLessonSidebar() {
+  const lessons = activeCourse.lessons || [];
+  const done    = userProgress[activeCourse.id]?.completedLessons || [];
+  document.getElementById('lesson-sidebar-list').innerHTML = lessons.map((l,i) => `
+    <div class="lesson-nav-item ${i===activeLessonIdx?'active':''}" onclick="showLesson(${i})">
+      <span class="lesson-num">${done.includes(i)?'Done':(i+1)}</span>
+      <span class="lesson-nav-title">${l.title}</span>
+    </div>`).join('');
+}
+
+window.showLesson = (idx) => {
+  const lessons = activeCourse.lessons || [];
+  activeLessonIdx = idx;
+  const lesson = lessons[idx];
+  if (!lesson) return;
+
+  const isRise = lesson.type === 'rise';
+  document.getElementById('viewer-body-classic').style.display = isRise ? 'none' : '';
+  document.getElementById('rise-viewer-wrap').classList.toggle('active', isRise);
+
+  if (isRise) {
+    document.getElementById('rise-lesson-count').textContent = `Lesson ${idx+1} of ${lessons.length}`;
+    document.getElementById('rise-prev-btn').disabled = idx === 0;
+    renderRiseLesson(lesson);
+    const isDone = (userProgress[activeCourse.id]?.completedLessons || []).includes(idx);
+    const isLast = idx === lessons.length - 1;
+    const nb = document.getElementById('rise-next-btn');
+    nb.textContent = isDone && isLast ? 'Course Complete' : isDone ? 'Next Lesson →' : isLast ? 'Mark Complete' : 'Mark Complete & Continue →';
+    nb.onclick = isDone && isLast ? closeLessonViewer : nextLesson;
+  } else {
+    document.getElementById('active-lesson-title').textContent = lesson.title;
+    document.getElementById('active-lesson-body').innerHTML    = lesson.body || '<p>Content coming soon.</p>';
+    document.getElementById('viewer-lesson-count').textContent = `Lesson ${idx+1} of ${lessons.length}`;
+    document.getElementById('prev-lesson-btn').disabled = idx === 0;
+    const isDone = (userProgress[activeCourse.id]?.completedLessons || []).includes(idx);
+    const isLast = idx === lessons.length - 1;
+    const nextBtn = document.getElementById('next-lesson-btn');
+    if (isDone && isLast) { nextBtn.textContent = 'Course Complete'; nextBtn.onclick = closeLessonViewer; }
+    else if (isDone)      { nextBtn.textContent = 'Next Lesson →';   nextBtn.onclick = nextLesson; }
+    else { nextBtn.textContent = isLast ? 'Mark Complete' : 'Mark Complete & Next →'; nextBtn.onclick = nextLesson; }
+  }
+
+  updateViewerProgress();
+  renderLessonSidebar();
+};
+
+window.nextLesson = () => {
+  const lessons = activeCourse.lessons || [];
+  if (!userProgress[activeCourse.id]) userProgress[activeCourse.id] = { completedLessons: [] };
+  const done = userProgress[activeCourse.id].completedLessons;
+  if (!done.includes(activeLessonIdx)) done.push(activeLessonIdx);
+  saveProgress();
+  updateViewerProgress();
+  renderLessonSidebar();
+
+  if (activeLessonIdx < lessons.length - 1) {
+    showLesson(activeLessonIdx + 1);
+  } else {
+    toast(' Course complete!', 'success');
+    closeLessonViewer();
+  }
+};
+
+window.prevLesson = () => {
+  if (activeLessonIdx > 0) showLesson(activeLessonIdx - 1);
+};
+
+// ════════════════════════════════════════════
+// RISE MODULE RENDERER
+// ════════════════════════════════════════════
+function renderRiseLesson(lesson) {
+  const area = document.getElementById('rise-scroll-area');
+  area.innerHTML = '';
+  const blocks = lesson.blocks || [];
+  blocks.forEach((block, i) => {
+    const el = buildRiseBlock(block, i);
+    if (el) area.appendChild(el);
+  });
+  area.scrollTop = 0;
+  // Animate blocks into view on scroll
+  setTimeout(() => {
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    area.querySelectorAll('.rise-block').forEach(b => obs.observe(b));
+    // Immediately reveal first visible blocks
+    area.querySelectorAll('.rise-block').forEach(b => {
+      const r = b.getBoundingClientRect();
+      if (r.top < window.innerHeight) b.classList.add('visible');
+    });
+  }, 50);
+}
+
+function buildRiseBlock(block, idx) {
+  const wrap = (cls, html, extra='') => {
+    const d = document.createElement('div');
+    d.className = `rise-block ${cls}`;
+    if (extra) d.setAttribute('data-idx', extra);
+    d.innerHTML = html;
+    return d;
+  };
+
+  switch (block.type) {
+    case 'hero': {
+      const d = document.createElement('div');
+      d.className = 'rise-hero';
+      d.innerHTML = `
+        <div class="rise-hero-shapes"></div>
+        ${block.tag ? `<div class="rise-hero-tag">${block.tag}</div>` : ''}
+        <h1>${block.title}</h1>
+        ${block.subtitle ? `<p>${block.subtitle}</p>` : ''}
+      `;
+      return d;
+    }
+    case 'text':
+      return wrap('', `${block.heading ? `<h2>${block.heading}</h2>` : ''}${block.body}`);
+
+    case 'statement':
+      return wrap('', `<div class="rise-statement">${block.text}${block.attribution ? `<div class="rise-statement-attr">— ${block.attribution}</div>` : ''}</div>`);
+
+    case 'visual': {
+      const grad = block.gradient || 'linear-gradient(135deg,#6c47ff,#a855f7)';
+      return wrap('', `
+        <div class="rise-visual-block" style="background:${grad};border-radius:14px;overflow:hidden;padding:40px 32px;display:flex;align-items:center;gap:32px;min-height:180px;">
+          ${block.stat ? `<div style="font-size:3.5rem;font-weight:900;color:#fff;flex-shrink:0;line-height:1;">${block.stat}</div>` : ''}
+          <div>
+            ${block.label ? `<div style="font-size:.75rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:8px;">${block.label}</div>` : ''}
+            ${block.caption ? `<div style="font-size:1.05rem;color:#fff;line-height:1.6;">${block.caption}</div>` : ''}
+          </div>
+        </div>
+      `);
+    }
+
+    case 'video': {
+      const src = block.src || '';
+      const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      const embedSrc = ytMatch ? `https://www.youtube-nocookie.com/embed/${ytMatch[1]}?rel=0` : src;
+      return wrap('', `
+        <div style="border-radius:14px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.3);">
+          <iframe src="${embedSrc}" style="width:100%;aspect-ratio:16/9;border:none;display:block;"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen></iframe>
+        </div>
+        ${block.caption ? `<div style="text-align:center;font-size:.84rem;color:var(--muted);margin-top:10px;">${block.caption}</div>` : ''}
+      `);
+    }
+
+    case 'tabs': {
+      const tabs = block.items || [];
+      const tabBtns = tabs.map((t,i) => `<button class="rise-tab-btn${i===0?' active':''}" onclick="riseTabClick(this,'rise-tab-${idx}-${i}')">${t.label}</button>`).join('');
+      const panels = tabs.map((t,i) => `<div class="rise-tab-panel${i===0?'':' hidden'}" id="rise-tab-${idx}-${i}"><p>${t.content}</p></div>`).join('');
+      return wrap('', `
+        ${block.heading ? `<h2>${block.heading}</h2>` : ''}
+        <div class="rise-tabs-nav">${tabBtns}</div>
+        ${panels}
+      `);
+    }
+
+    case 'accordion': {
+      const items = (block.items || []).map((it, i) => `
+        <div class="rise-acc-item" id="acc-${idx}-${i}">
+          <div class="rise-acc-header" onclick="riseAccToggle('acc-${idx}-${i}')">
+            <span>${it.label}</span>
+            <i class="rise-acc-arrow">▼</i>
+          </div>
+          <div class="rise-acc-body"><div class="rise-acc-body-inner">${it.content}</div></div>
+        </div>`).join('');
+      return wrap('', `${block.heading ? `<h2>${block.heading}</h2>` : ''}${items}`);
+    }
+
+    case 'flashcards': {
+      const cards = (block.items || []).map((c, i) => `
+        <div class="rise-fc-wrap">
+          <div class="rise-fc" id="fc-${idx}-${i}" onclick="this.classList.toggle('flipped')">
+            <div class="rise-fc-front"><div class="rise-fc-label">Term</div>${c.front}</div>
+            <div class="rise-fc-back"><div class="rise-fc-label">Definition</div>${c.back}</div>
+          </div>
+        </div>`).join('');
+      return wrap('', `
+        ${block.heading ? `<h2>${block.heading}</h2>` : ''}
+        <div class="rise-fc-grid">${cards}</div>
+        <div class="rise-fc-hint">Click any card to flip it</div>
+      `);
+    }
+
+    case 'knowledge_check': {
+      const opts = (block.options || []).map((o, i) => `
+        <div class="rise-kc-opt" id="kco-${idx}-${i}" onclick="riseKcAnswer('${idx}',${i},${block.correct})">
+          <div class="rise-kc-marker">${String.fromCharCode(65+i)}</div>
+          <span>${o}</span>
+        </div>`).join('');
+      return wrap('', `
+        <div class="rise-kc">
+          <div class="rise-kc-q">${block.question}</div>
+          ${opts}
+          <div class="rise-kc-feedback" id="kcfb-${idx}"></div>
+        </div>
+      `);
+    }
+
+    case 'checklist': {
+      const items = (block.items || []).map((it, i) => `
+        <div class="rise-cl-item" id="cl-${idx}-${i}" onclick="this.classList.toggle('checked')">
+          <div class="rise-cl-box"></div>
+          <div class="rise-cl-text">${it}</div>
+        </div>`).join('');
+      return wrap('', `${block.heading ? `<h2>${block.heading}</h2>` : ''}${items}`);
+    }
+
+    case 'steps': {
+      const steps = (block.items || []).map((s, i) => `
+        <div class="rise-step">
+          <div class="rise-step-num">${i+1}</div>
+          <div class="rise-step-body"><h4>${s.title}</h4><p>${s.desc}</p></div>
+        </div>`).join('');
+      return wrap('', `${block.heading ? `<h2>${block.heading}</h2>` : ''}${steps}`);
+    }
+
+    case 'divider': {
+      const d = document.createElement('hr');
+      d.className = 'rise-hr';
+      return d;
+    }
+
+    default: return null;
+  }
+}
+
+// Rise interactive handlers
+window.riseTabClick = (btn, panelId) => {
+  const nav = btn.closest('.rise-tabs-nav');
+  nav.querySelectorAll('.rise-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const block = btn.closest('.rise-block');
+  block.querySelectorAll('.rise-tab-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById(panelId).classList.remove('hidden');
+};
+
+window.riseAccToggle = (id) => {
+  document.getElementById(id).classList.toggle('open');
+};
+
+window.risePlayVideo = (placeholderId, src) => {
+  const el = document.getElementById(placeholderId);
+  if (!el) return;
+  const iframe = document.createElement('iframe');
+  iframe.src = src + '&autoplay=1';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  iframe.allowFullscreen = true;
+  iframe.style.cssText = 'width:100%;height:100%;border:none;border-radius:14px;position:absolute;inset:0;';
+  el.innerHTML = '';
+  el.appendChild(iframe);
+  el.style.cursor = 'default';
+};
+
+window.riseKcAnswer = (blockIdx, optIdx, correctIdx) => {
+  const fb = document.getElementById(`kcfb-${blockIdx}`);
+  if (fb.classList.contains('show')) return; // already answered
+  const opts = document.querySelectorAll(`[id^="kco-${blockIdx}-"]`);
+  opts.forEach(o => o.classList.add('locked'));
+  opts[optIdx].classList.add(optIdx === correctIdx ? 'correct' : 'wrong');
+  if (optIdx !== correctIdx) opts[correctIdx].classList.add('correct');
+  fb.className = `rise-kc-feedback show ${optIdx === correctIdx ? 'ok' : 'fail'}`;
+  fb.textContent = optIdx === correctIdx
+    ? 'Correct! Well done.'
+    : `Not quite — the correct answer is "${opts[correctIdx].querySelector('span').textContent}".`;
+};
+
+function updateViewerProgress() {
+  const total = activeCourse.lessons?.length || 0;
+  const done  = (userProgress[activeCourse.id]?.completedLessons || []).length;
+  const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+  document.getElementById('viewer-pct').textContent = `${pct}%`;
+  document.getElementById('viewer-bar').style.width = `${pct}%`;
+}
+
+// ════════════════════════════════════════════
+// EVENTS
+// ════════════════════════════════════════════
+function renderEvents() {
+  _calendarVisible = false;
+  const isAdmin = ['admin','manager'].includes(currentUserData.role);
+  document.getElementById('events-admin-btn').innerHTML =
+    `<div class="flex gap-8">
+      <button class="btn btn-secondary btn-sm" onclick="toggleCalendarView()"> Calendar View</button>
+      ${isAdmin ? `<button class="btn btn-primary btn-sm" onclick="openEventCreateModal()">+ Create Event</button>` : ''}
+    </div>`;
+  renderEventsList(currentEventsTab);
+}
+
+function renderEventsList(tab) {
+  const today = new Date().toISOString().split('T')[0];
+  let events = allEvents;
+
+  if (tab === 'upcoming')   events = events.filter(e => e.date >= today && e.roles?.includes(currentUserData.role));
+  if (tab === 'registered') events = events.filter(e => userRegistrations.includes(e.id));
+  if (tab === 'past')       events = events.filter(e => e.date < today && e.roles?.includes(currentUserData.role));
+
+  events.sort((a,b) => a.date.localeCompare(b.date));
+
+  const el = document.getElementById('events-list');
+  if (!events.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>Nothing here</h3></div>`;
+    return;
+  }
+
+  el.innerHTML = events.map(e => {
+    const d = new Date(e.date+'T12:00:00');
+    const isReg = userRegistrations.includes(e.id);
+    const attended = userAttendance.includes(e.id);
+    return `<div class="event-card" onclick="openEventDetail('${e.id}')">
+      <div class="event-date-block">
+        <div class="event-day">${d.getDate()}</div>
+        <div class="event-month">${d.toLocaleString('default',{month:'short'})}</div>
+      </div>
+      <div class="event-info grow">
+        <div class="event-title">${e.title}</div>
+        <div class="event-detail">${e.time} · ${e.location} · ${formatFormat(e.format)}</div>
+        <div class="flex gap-8 wrap" style="margin-top:8px;">
+          ${isReg ? '<span class="tag tag-success">Registered</span>' : ''}
+          ${attended ? '<span class="tag tag-brand">Attended v</span>' : ''}
+          <span class="tag tag-muted">${formatFormat(e.format)}</span>
+        </div>
+      </div>
+      ${isReg && e.date >= today ? `<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();openCheckin('${e.id}')">Check In</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+window.switchEventsTab = (tab, el) => {
+  currentEventsTab = tab;
+  document.querySelectorAll('#page-events .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderEventsList(tab);
+};
+
+window.openEventDetail = (eventId) => {
+  const ev = allEvents.find(e => e.id === eventId);
+  if (!ev) return;
+  const d = new Date(ev.date+'T12:00:00');
+  const isReg = userRegistrations.includes(eventId);
+  const attended = userAttendance.includes(eventId);
+  const isAdmin = ['admin','manager'].includes(currentUserData.role);
+  const today = new Date().toISOString().split('T')[0];
+  const isPast = ev.date < today;
+
+  document.getElementById('ed-title').textContent = ev.title;
+  document.getElementById('ed-body').innerHTML = `
+    <div class="flex col gap-16">
+      <div class="flex gap-12 wrap">
+        <span class="tag tag-muted"> ${d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</span>
+        <span class="tag tag-muted"> ${ev.time}</span>
+        <span class="tag tag-muted">${formatFormat(ev.format)}</span>
+      </div>
+      <div class="flex gap-8"><span></span><span>${ev.location}</span></div>
+      <p style="color:var(--muted);font-size:.9rem;">${ev.description || ''}</p>
+      ${isAdmin && !isPast ? `
+        <div class="card" style="background:var(--bg);">
+          <div class="bold small" style="margin-bottom:8px;">Attendance Code (show to participants)</div>
+          <div class="checkin-code">${ev.attendanceCode || '------'}</div>
+          <div class="flex gap-8" style="margin-top:12px;">
+            <button class="btn btn-secondary btn-sm" onclick="openModal('attendance-modal');renderAttendanceManager('${eventId}')">Manage Attendance</button>
+          </div>
+        </div>` : ''}
+      ${attended ? '<div class="tag tag-success" style="font-size:1rem;padding:10px 16px;">Done You attended this event</div>' : ''}
+      ${!isPast && !isAdmin ? `<div class="flex gap-12">
+        ${!isReg
+          ? `<button class="btn btn-primary" onclick="registerForEvent('${eventId}')">Register</button>`
+          : `<button class="btn btn-secondary" onclick="unregisterEvent('${eventId}')">Cancel Registration</button>
+             ${!attended ? `<button class="btn btn-secondary" onclick="closeModal('event-detail-modal');openCheckin('${eventId}')">Check In</button>` : ''}`
+        }
+      </div>` : ''}
+      ${!isAdmin && !isReg && !isPast ? '' : ''}
+    </div>`;
+  openModal('event-detail-modal');
+};
+
+window.registerForEvent = (eventId) => {
+  if (!userRegistrations.includes(eventId)) userRegistrations.push(eventId);
+  saveProgress();
+  // Also track on the event record
+  const ev = allEvents.find(e => e.id === eventId);
+  if (ev && !ev.registeredUsers.includes(currentUser.id)) {
+    ev.registeredUsers.push(currentUser.id);
+    DB.update('events', eventId, { registeredUsers: ev.registeredUsers });
+  }
+  toast('Registered! See you there.', 'success');
+  closeModal('event-detail-modal');
+  renderEventsList(currentEventsTab);
+};
+
+window.unregisterEvent = (eventId) => {
+  userRegistrations = userRegistrations.filter(id => id !== eventId);
+  saveProgress();
+  const ev = allEvents.find(e => e.id === eventId);
+  if (ev) {
+    ev.registeredUsers = ev.registeredUsers.filter(id => id !== currentUser.id);
+    DB.update('events', eventId, { registeredUsers: ev.registeredUsers });
+  }
+  toast('Registration cancelled.', 'info');
+  closeModal('event-detail-modal');
+  renderEventsList(currentEventsTab);
+};
+
+window.openCheckin = (eventId) => {
+  currentCheckinEventId = eventId;
+  document.getElementById('checkin-code-input').value = '';
+  openModal('checkin-modal');
+};
+
+window.submitCheckin = () => {
+  const entered = document.getElementById('checkin-code-input').value.toUpperCase().trim();
+  const ev = allEvents.find(e => e.id === currentCheckinEventId);
+  if (!ev) return;
+
+  if (entered !== (ev.attendanceCode || '').toUpperCase()) {
+    toast('Incorrect code. Try again.', 'error'); return;
+  }
+
+  if (!userAttendance.includes(currentCheckinEventId)) userAttendance.push(currentCheckinEventId);
+  if (!userRegistrations.includes(currentCheckinEventId)) userRegistrations.push(currentCheckinEventId);
+  saveProgress();
+
+  if (!ev.attendedUsers.includes(currentUser.id))   ev.attendedUsers.push(currentUser.id);
+  if (!ev.registeredUsers.includes(currentUser.id)) ev.registeredUsers.push(currentUser.id);
+  DB.update('events', currentCheckinEventId, { attendedUsers: ev.attendedUsers, registeredUsers: ev.registeredUsers });
+
+  toast('Done Attendance confirmed!', 'success');
+  closeModal('checkin-modal');
+  renderEventsList(currentEventsTab);
+};
+
+window.renderAttendanceManager = (eventId) => {
+  const ev = allEvents.find(e => e.id === eventId);
+  if (!ev) return;
+
+  const attendedSet    = new Set();
+  const registeredSet  = new Set();
+  allUsers.forEach(u => {
+    const prog = DB.getProgress(u.id);
+    if ((prog.attendance    || []).includes(eventId)) attendedSet.add(u.id);
+    if ((prog.registrations || []).includes(eventId)) registeredSet.add(u.id);
+  });
+
+  const involved = allUsers.filter(u => registeredSet.has(u.id) || attendedSet.has(u.id));
+
+  document.getElementById('attendance-body').innerHTML = `
+    <div class="flex col gap-12">
+      <p class="muted small">${involved.length} registered · ${attendedSet.size} attended</p>
+      ${involved.map(u => {
+        const hasAttended = attendedSet.has(u.id);
+        return `<div class="task-item">
+          <div class="avatar" style="width:30px;height:30px;font-size:.75rem;">${initials(u.name)}</div>
+          <div class="grow">${u.name}<div class="muted small">${u.email}</div></div>
+          <button class="btn btn-sm ${hasAttended?'btn-secondary':'btn-primary'}"
+            onclick="adminMarkAttendance('${eventId}','${u.id}',${!hasAttended})">
+            ${hasAttended ? 'Done Attended' : 'Mark Present'}
+          </button>
+        </div>`;
+      }).join('')}
+      <div class="flex col gap-8" style="margin-top:8px;border-top:1px solid var(--border);padding-top:12px;">
+        <div class="muted small bold">Mark absent learner present:</div>
+        ${allUsers.filter(u => !registeredSet.has(u.id) && !attendedSet.has(u.id)).map(u => `
+          <div class="task-item">
+            <div class="avatar" style="width:30px;height:30px;font-size:.75rem;">${initials(u.name)}</div>
+            <div class="grow">${u.name}</div>
+            <button class="btn btn-sm btn-primary" onclick="adminMarkAttendance('${eventId}','${u.id}',true)">Mark Present</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+};
+
+window.adminMarkAttendance = (eventId, userId, markAsPresent) => {
+  const prog = DB.getProgress(userId);
+  let att = prog.attendance || [];
+  let reg = prog.registrations || [];
+  if (markAsPresent) {
+    if (!att.includes(eventId)) att.push(eventId);
+    if (!reg.includes(eventId)) reg.push(eventId);
+  } else {
+    att = att.filter(id => id !== eventId);
+  }
+  DB.setProgress(userId, { ...prog, attendance: att, registrations: reg });
+
+  const ev = allEvents.find(e => e.id === eventId);
+  if (ev) {
+    if (markAsPresent) {
+      if (!ev.attendedUsers.includes(userId))   ev.attendedUsers.push(userId);
+      if (!ev.registeredUsers.includes(userId)) ev.registeredUsers.push(userId);
+    } else {
+      ev.attendedUsers = ev.attendedUsers.filter(id => id !== userId);
+    }
+    DB.update('events', eventId, { attendedUsers: ev.attendedUsers, registeredUsers: ev.registeredUsers });
+  }
+
+  toast(markAsPresent ? 'Marked as present.' : 'Attendance removed.', 'success');
+  renderAttendanceManager(eventId);
+};
+
+// ════════════════════════════════════════════
+// TASKS
+// ════════════════════════════════════════════
+function renderTasks() {
+  const isAdmin = ['admin','manager'].includes(currentUserData.role);
+  document.getElementById('tasks-admin-btn').innerHTML = isAdmin
+    ? `<button class="btn btn-primary btn-sm" onclick="openModal('create-task-modal');populateRoleCheckboxes('ct-roles')">+ Create Task</button>`
+    : '';
+  renderTasksList(currentTasksTab);
+}
+
+function renderTasksList(tab) {
+  let tasks = allTasks.filter(t => t.roles?.includes(currentUserData.role));
+  if (tab === 'pending')   tasks = tasks.filter(t => userTaskStatus[t.id] !== 'done');
+  if (tab === 'completed') tasks = tasks.filter(t => userTaskStatus[t.id] === 'done');
+  tasks.sort((a,b) => (a.dueDate||'').localeCompare(b.dueDate||''));
+
+  const el = document.getElementById('tasks-list');
+  el.innerHTML = tasks.length ? tasks.map(t => taskItemHTML(t)).join('') :
+    `<div class="empty-state"><div class="empty-icon"></div><h3>All clear!</h3><p>No tasks here.</p></div>`;
+}
+
+window.switchTasksTab = (tab, el) => {
+  currentTasksTab = tab;
+  document.querySelectorAll('#page-tasks .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderTasksList(tab);
+};
+
+function taskItemHTML(t) {
+  const isDone = userTaskStatus[t.id] === 'done';
+  const due = t.dueDate ? new Date(t.dueDate+'T12:00:00') : null;
+  const isOverdue = due && due < new Date() && !isDone;
+  const dueTxt = due ? due.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
+  const priorityColor = {high:'var(--danger)', medium:'var(--warn)', low:'var(--success)'}[t.priority||'medium'];
+
+  return `<div class="task-item">
+    <div class="task-check ${isDone?'done':''}" onclick="toggleTask('${t.id}')">
+      ${isDone ? 'v' : ''}
+    </div>
+    <div class="grow">
+      <div class="task-title ${isDone?'done':''}">${t.title}</div>
+      ${t.description ? `<div class="muted small" style="margin-top:2px;">${t.description}</div>` : ''}
+    </div>
+    ${due ? `<span class="task-due ${isOverdue?'':'muted'}" style="${isOverdue?'color:var(--danger)':''}">${isOverdue?'Overdue ':''}${dueTxt}</span>` : ''}
+    <span style="width:8px;height:8px;border-radius:50%;background:${priorityColor};flex-shrink:0;"></span>
+  </div>`;
+}
+
+window.toggleTask = (taskId) => {
+  userTaskStatus[taskId] = userTaskStatus[taskId] === 'done' ? 'pending' : 'done';
+  saveProgress();
+  updateTaskBadge();
+  // Re-render whichever task view is visible
+  if (!document.getElementById('page-tasks').classList.contains('hidden')) renderTasksList(currentTasksTab);
+  if (!document.getElementById('page-dashboard').classList.contains('hidden')) renderDashboard();
+};
+
+function updateTaskBadge() {
+  const open = allTasks.filter(t => t.roles?.includes(currentUserData.role) && userTaskStatus[t.id] !== 'done').length;
+  const badge = document.getElementById('task-badge');
+  badge.textContent = open;
+  badge.classList.toggle('hidden', open === 0);
+}
+
+// ════════════════════════════════════════════
+// ADMIN: USERS
+// ════════════════════════════════════════════
+function renderAdminUsers() {
+  const rows = allUsers.map(u => {
+    const prog = DB.getProgress(u.id);
+    const myCourses = allCourses.filter(c => c.roles?.includes(u.role));
+    let done = 0, total = 0;
+    myCourses.forEach(c => { total += c.lessons?.length||0; done += (prog.courses?.[c.id]?.completedLessons||[]).length; });
+    const pct = total > 0 ? Math.round((done/total)*100) : 0;
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+    return `<tr>
+      <td><div class="flex gap-10" style="align-items:center;">
+        <div class="avatar" style="width:30px;height:30px;font-size:.75rem;">${initials(u.name)}</div>
+        ${u.name}
+      </div></td>
+      <td class="muted">${u.email}</td>
+      <td>
+        <select class="tag role-${u.role}" style="width:120px;padding:4px 8px;font-size:.8rem;"
+          onchange="changeUserRole('${u.id}',this.value)">
+          <option value="learner"  ${u.role==='learner' ?'selected':''}>Learner</option>
+          <option value="manager"  ${u.role==='manager' ?'selected':''}>Manager</option>
+          <option value="admin"    ${u.role==='admin'   ?'selected':''}>Admin</option>
+        </select>
+      </td>
+      <td>
+        <div class="flex gap-8" style="align-items:center;min-width:100px;">
+          <div class="progress-bar grow"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span class="small muted">${pct}%</span>
+        </div>
+      </td>
+      <td class="muted small">${joined}</td>
+      <td>
+        ${u.id !== currentUser.id
+          ? `<button class="btn btn-danger btn-sm" onclick="removeUser('${u.id}','${u.name}')">Remove</button>`
+          : '<span class="muted small">You</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('users-table-body').innerHTML = rows ||
+    `<tr><td colspan="6" class="muted" style="text-align:center;padding:24px;">No users yet.</td></tr>`;
+}
+
+window.changeUserRole = (userId, newRole) => {
+  DB.update('users', userId, { role: newRole });
+  allUsers = allUsers.map(u => u.id === userId ? { ...u, role: newRole } : u);
+  toast(`Role updated to ${newRole}.`, 'success');
+};
+
+window.removeUser = (userId, name) => {
+  if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
+  DB.delete('users', userId);
+  allUsers = allUsers.filter(u => u.id !== userId);
+  renderAdminUsers();
+  toast(`${name} removed.`, 'info');
+};
+
+window.inviteUser = () => {
+  const name  = document.getElementById('inv-name').value.trim();
+  const email = document.getElementById('inv-email').value.trim().toLowerCase();
+  const role  = document.getElementById('inv-role').value;
+  if (!name || !email) { toast('Name and email required.', 'error'); return; }
+  if (DB.where('users', u => u.email === email).length) { toast('Email already exists.', 'error'); return; }
+
+  const newUser = DB.insert('users', { name, email, password: btoa('changeme'), role });
+  allUsers.push(newUser);
+  closeModal('invite-modal');
+  renderAdminUsers();
+  toast(`${name} added as ${role}. Default password: changeme`, 'success');
+};
+
+// ════════════════════════════════════════════
+// ADMIN: CONTENT
+// ════════════════════════════════════════════
+function renderAdminContent() {
+  renderContentPanel(currentContentTab);
+}
+
+function renderContentPanel(tab) {
+  const el = document.getElementById('content-panel');
+
+  if (tab === 'courses') {
+    el.innerHTML = `
+      <div class="flex between" style="margin-bottom:16px;">
+        <span class="muted small">${allCourses.length} courses</span>
+        <button class="btn btn-primary btn-sm" onclick="openModal('create-course-modal');populateRoleCheckboxes('cc-roles')">+ New Course</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Course</th><th>Lessons</th><th>Roles</th><th>Actions</th></tr></thead>
+          <tbody>${allCourses.map(c => `<tr>
+            <td><span style="margin-right:8px;">${c.emoji||''}</span><strong>${c.title}</strong></td>
+            <td>
+              <details><summary style="cursor:pointer;font-size:.85rem;">${c.lessons?.length||0} lessons</summary>
+              <div style="margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+                ${(c.lessons||[]).map((l,i)=>`<div class="flex between" style="font-size:.8rem;gap:8px;">
+                  <span>${l.type==='quiz'?'Quiz:':''} ${l.title}</span>
+                  <button class="btn btn-ghost btn-sm" onclick="openLessonEditor('${c.id}',${i})">Edit</button>
+                </div>`).join('')}
+              </div></details>
+            </td>
+            <td>${(c.roles||[]).map(r=>`<span class="tag tag-muted small">${r}</span>`).join(' ')}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteCourse('${c.id}')">Delete</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+  }
+
+  if (tab === 'events') {
+    el.innerHTML = `
+      <div class="flex between" style="margin-bottom:16px;">
+        <span class="muted small">${allEvents.length} events</span>
+        <button class="btn btn-primary btn-sm" onclick="openEventCreateModal()">+ New Event</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Event</th><th>Date</th><th>Format</th><th>Code</th><th>Actions</th></tr></thead>
+          <tbody>${allEvents.map(e => `<tr>
+            <td><strong>${e.title}</strong></td>
+            <td>${e.date}</td>
+            <td><span class="tag tag-muted small">${formatFormat(e.format)}</span></td>
+            <td><code style="font-size:.8rem;background:var(--bg);padding:2px 6px;border-radius:4px;">${e.attendanceCode||'—'}</code></td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">Delete</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+  }
+
+  if (tab === 'tasks') {
+    el.innerHTML = `
+      <div class="flex between" style="margin-bottom:16px;">
+        <span class="muted small">${allTasks.length} tasks</span>
+        <button class="btn btn-primary btn-sm" onclick="openModal('create-task-modal');populateRoleCheckboxes('ct-roles')">+ New Task</button>
+      </div>
+      <div class="card">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Task</th><th>Due</th><th>Priority</th><th>Roles</th><th>Actions</th></tr></thead>
+          <tbody>${allTasks.map(t => `<tr>
+            <td><strong>${t.title}</strong></td>
+            <td class="muted small">${t.dueDate||'—'}</td>
+            <td><span class="tag tag-${t.priority==='high'?'danger':t.priority==='medium'?'warn':'success'} small">${t.priority||'medium'}</span></td>
+            <td>${(t.roles||[]).map(r=>`<span class="tag tag-muted small">${r}</span>`).join(' ')}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Delete</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+  }
+}
+
+window.switchContentTab = (tab, el) => {
+  currentContentTab = tab;
+  document.querySelectorAll('#page-admin-content .tab-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderContentPanel(tab);
+};
+
+// Create Course
+window.createCourse = () => {
+  const title   = document.getElementById('cc-title').value.trim();
+  const desc    = document.getElementById('cc-desc').value.trim();
+  const emoji   = document.getElementById('cc-emoji').value.trim() || '';
+  const roles   = [...document.querySelectorAll('#cc-roles input:checked')].map(c => c.value);
+  const lessonLines = document.getElementById('cc-lessons').value.split('\n').map(l=>l.trim()).filter(Boolean);
+
+  if (!title || !lessonLines.length) { toast('Title and at least one lesson required.', 'error'); return; }
+  const lessons = lessonLines.map(l => ({
+    title: l,
+    body: `<h2>${l}</h2><p>Content for this lesson is coming soon.</p>`
+  }));
+
+  const course = DB.insert('courses', { title, description: desc, emoji, roles, lessons });
+  allCourses.push(course);
+  closeModal('create-course-modal');
+  renderContentPanel('courses');
+  toast('Course created!', 'success');
+};
+
+window.deleteCourse = (id) => {
+  if (!confirm('Delete this course?')) return;
+  DB.delete('courses', id);
+  allCourses = allCourses.filter(c => c.id !== id);
+  renderContentPanel('courses');
+  toast('Course deleted.', 'info');
+};
+
+// Create Event
+window.openEventCreateModal = () => {
+  openModal('create-event-modal');
+  populateRoleCheckboxes('ce-roles');
+  document.getElementById('ce-date').min = new Date().toISOString().split('T')[0];
+};
+
+window.createEvent = () => {
+  const title    = document.getElementById('ce-title').value.trim();
+  const desc     = document.getElementById('ce-desc').value.trim();
+  const date     = document.getElementById('ce-date').value;
+  const time     = document.getElementById('ce-time').value;
+  const location = document.getElementById('ce-location').value.trim();
+  const format   = document.getElementById('ce-format').value;
+  const roles    = [...document.querySelectorAll('#ce-roles input:checked')].map(c => c.value);
+
+  if (!title || !date) { toast('Title and date required.', 'error'); return; }
+  const code = Math.random().toString(36).substring(2,8).toUpperCase();
+
+  const ev = DB.insert('events', {
+    title, description: desc, date, time, location, format, roles,
+    attendanceCode: code, registeredUsers: [], attendedUsers: [],
+  });
+  allEvents.push(ev);
+  closeModal('create-event-modal');
+  renderContentPanel('events');
+  toast('Event created!', 'success');
+};
+
+window.deleteEvent = (id) => {
+  if (!confirm('Delete this event?')) return;
+  DB.delete('events', id);
+  allEvents = allEvents.filter(e => e.id !== id);
+  renderContentPanel('events');
+  toast('Event deleted.', 'info');
+};
+
+// Create Task
+window.createTask = () => {
+  const title    = document.getElementById('ct-title').value.trim();
+  const desc     = document.getElementById('ct-desc').value.trim();
+  const dueDate  = document.getElementById('ct-due').value;
+  const priority = document.getElementById('ct-priority').value;
+  const roles    = [...document.querySelectorAll('#ct-roles input:checked')].map(c => c.value);
+
+  if (!title) { toast('Task title required.', 'error'); return; }
+
+  const task = DB.insert('tasks', { title, description: desc, dueDate, priority, roles });
+  allTasks.push(task);
+  closeModal('create-task-modal');
+  renderContentPanel('tasks');
+  updateTaskBadge();
+  toast('Task created and auto-assigned to selected roles!', 'success');
+};
+
+window.deleteTask = (id) => {
+  if (!confirm('Delete this task?')) return;
+  DB.delete('tasks', id);
+  allTasks = allTasks.filter(t => t.id !== id);
+  renderContentPanel('tasks');
+  updateTaskBadge();
+  toast('Task deleted.', 'info');
+};
+
+function populateRoleCheckboxes(containerId) {
+  document.getElementById(containerId).innerHTML = ROLES.map(r => `
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.85rem;">
+      <input type="checkbox" value="${r}" checked style="width:auto;"> ${capitalize(r)}
+    </label>`).join('');
+}
+
+// ════════════════════════════════════════════
+// ADMIN: REPORTS
+// ════════════════════════════════════════════
+function renderReports() {
+  const totalUsers   = allUsers.length;
+  const totalCourses = allCourses.length;
+  const totalEvents  = allEvents.length;
+  const totalTasks   = allTasks.length;
+
+  document.getElementById('report-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${totalUsers}</div><div class="stat-label">Total Users</div></div>
+    <div class="stat-card"><div class="stat-value">${totalCourses}</div><div class="stat-label">Courses</div></div>
+    <div class="stat-card"><div class="stat-value">${totalEvents}</div><div class="stat-label">Events</div></div>
+    <div class="stat-card"><div class="stat-value">${totalTasks}</div><div class="stat-label">Tasks</div></div>
+  `;
+  // CSV export button
+  document.getElementById('report-stats').insertAdjacentHTML('afterend',
+    `<div style="display:flex;justify-content:flex-end;margin:12px 0;">
+      <button class="btn btn-secondary btn-sm" onclick="exportReportsCSV()"> Export CSV</button>
+    </div>`);
+
+  // Load all progress from localStorage
+  const progressMap = {};
+  allUsers.forEach(u => { progressMap[u.id] = DB.getProgress(u.id); });
+
+  document.getElementById('report-table-body').innerHTML = allUsers.map(u => {
+    const prog = progressMap[u.id] || {};
+    const myCourses = allCourses.filter(c => c.roles?.includes(u.role));
+    const myTasks   = allTasks.filter(t => t.roles?.includes(u.role));
+    let doneLessons = 0, totalLessons = 0;
+    myCourses.forEach(c => {
+      totalLessons += c.lessons?.length || 0;
+      doneLessons  += (prog.courses?.[c.id]?.completedLessons || []).length;
+    });
+    const coursePct = totalLessons > 0 ? Math.round((doneLessons/totalLessons)*100) : 0;
+    const attended  = (prog.attendance||[]).length;
+    const tasksDone = myTasks.filter(t => prog.tasks?.[t.id]==='done').length;
+    const overall   = Math.round(((coursePct/100)*(myCourses.length) + attended + tasksDone) /
+                      Math.max(1, myCourses.length + allEvents.length + myTasks.length) * 100);
+
+    return `<tr>
+      <td><div class="flex gap-8" style="align-items:center;">
+        <div class="avatar" style="width:28px;height:28px;font-size:.7rem;">${initials(u.name)}</div>${u.name}
+      </div></td>
+      <td><span class="tag role-${u.role}">${capitalize(u.role)}</span></td>
+      <td>${coursePct}%</td>
+      <td>${attended}</td>
+      <td>${tasksDone} / ${myTasks.length}</td>
+      <td>
+        <div class="flex gap-8" style="align-items:center;">
+          <div class="progress-bar grow"><div class="progress-fill" style="width:${coursePct}%"></div></div>
+          <span class="small muted">${coursePct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('attendance-report-body').innerHTML = allEvents.map(e => {
+    const registered = (e.registeredUsers||[]).length;
+    const attended   = (e.attendedUsers||[]).length;
+    const pct = registered > 0 ? Math.round((attended/registered)*100) : 0;
+    return `<tr>
+      <td><strong>${e.title}</strong></td>
+      <td class="muted small">${e.date}</td>
+      <td>${registered}</td>
+      <td>${attended}</td>
+      <td>
+        <div class="flex gap-8" style="align-items:center;">
+          <div class="progress-bar" style="width:80px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span class="small muted">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// PROFILE
+// ════════════════════════════════════════════
+function renderProfile() {
+  const myCourses = allCourses.filter(c => c.roles?.includes(currentUserData.role));
+  let html = '';
+  myCourses.forEach(c => {
+    const done  = (userProgress[c.id]?.completedLessons || []).length;
+    const total = c.lessons?.length || 0;
+    const pct   = total > 0 ? Math.round((done/total)*100) : 0;
+    html += `<div>
+      <div class="flex between small" style="margin-bottom:4px;">
+        <span>${c.emoji||''} ${c.title}</span><span class="muted">${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  });
+  document.getElementById('profile-progress').innerHTML = html || '<p class="muted small">No courses assigned.</p>';
+
+  const achievements = [];
+  if (userAttendance.length >= 1)   achievements.push({ icon:'', label:'First Event' });
+  if (userAttendance.length >= 5)   achievements.push({ icon:'', label:'Event Regular' });
+  const completedCourses = allCourses.filter(c => {
+    const done = (userProgress[c.id]?.completedLessons || []).length;
+    return done >= (c.lessons?.length || 0) && done > 0;
+  });
+  if (completedCourses.length >= 1) achievements.push({ icon:'', label:'First Course' });
+  if (completedCourses.length >= 3) achievements.push({ icon:'', label:'Power Learner' });
+  const doneTasks = allTasks.filter(t => userTaskStatus[t.id]==='done').length;
+  if (doneTasks >= 5)               achievements.push({ icon:'', label:'Task Master' });
+
+  document.getElementById('profile-achievements').innerHTML = achievements.length
+    ? achievements.map(a => `<div class="card" style="text-align:center;padding:16px 20px;">
+        <div style="font-size:1.8rem;">${a.icon}</div>
+        <div class="small bold" style="margin-top:6px;">${a.label}</div>
+      </div>`).join('')
+    : '<p class="muted small">Complete courses and attend events to earn achievements.</p>';
+}
+
+// ════════════════════════════════════════════
+// MODAL HELPERS
+// ════════════════════════════════════════════
+window.openModal  = (id) => document.getElementById(id).classList.remove('hidden');
+window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+// Close on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.add('hidden'); });
+});
+
+// ════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { success:'Done', error:'Error', info:'Info' };
+  el.innerHTML = `<span>${icons[type]||'Info'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function capitalize(s) { return s ? s[0].toUpperCase() + s.slice(1) : ''; }
+
+function initials(name='') {
+  return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2) || '?';
+}
+
+function formatFormat(f) {
+  return { 'in-person':'In-Person','virtual':'Virtual','hybrid':'Hybrid' }[f] || f;
+}
+
+function courseGradient(id) {
+  const colors = [
+    'linear-gradient(135deg,#6C47FF22,#6C47FF44)',
+    'linear-gradient(135deg,#FF6B3522,#FF6B3544)',
+    'linear-gradient(135deg,#22C55E22,#22C55E44)',
+    'linear-gradient(135deg,#F59E0B22,#F59E0B44)',
+    'linear-gradient(135deg,#EC489922,#EC489944)',
+  ];
+  let h = 0; for (const c of id) h = (h*31 + c.charCodeAt(0)) % colors.length;
+  return colors[h];
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(m => m.classList.add('hidden'));
+    document.getElementById('search-results-dropdown').classList.add('hidden');
+    document.getElementById('notif-panel').classList.add('hidden');
+    if (!document.getElementById('lesson-viewer').classList.contains('hidden')) closeLessonViewer();
+  }
+});
+
+// ── WIRE EVENT LISTENERS (avoids inline onclick sandbox issues) ──
+document.getElementById('demo-admin-btn')?.addEventListener('click',   () => demoLogin('admin@tillem.com'));
+document.getElementById('demo-manager-btn')?.addEventListener('click', () => demoLogin('manager@tillem.com'));
+document.getElementById('demo-learner-btn')?.addEventListener('click', () => demoLogin('learner@tillem.com'));
+document.getElementById('theme-btn')?.addEventListener('click', () => window.toggleTheme?.());
+document.getElementById('notif-btn')?.addEventListener('click', () => window.toggleNotifs?.());
+[
+  ['nav-dashboard','dashboard'], ['nav-learning','learning'], ['nav-events','events'],
+  ['nav-tasks','tasks'], ['nav-paths','paths'], ['nav-leaderboard','leaderboard'],
+  ['nav-admin-users','admin-users'], ['nav-admin-content','admin-content'],
+  ['nav-admin-reports','admin-reports'], ['nav-manager-dashboard','manager-dashboard'],
+].forEach(([id, page]) => document.getElementById(id)?.addEventListener('click', () => navigate(page)));
+
+// ── BOOT ── must be last so all window.navigate etc. are assigned
+init();
+document.addEventListener('click', e => {
+  if (!e.target.closest('#notif-btn') && !e.target.closest('#notif-panel'))
+    document.getElementById('notif-panel')?.classList.add('hidden');
+  if (!e.target.closest('.global-search'))
+    document.getElementById('search-results-dropdown')?.classList.add('hidden');
+});
+
+// ════════════════════════════════════════════
+// POINTS SYSTEM
+// ════════════════════════════════════════════
+function calcPoints(userId) {
+  const prog = DB.getProgress(userId);
+  const user = DB.find('users', userId);
+  if (!user) return 0;
+  let pts = 0;
+  // Lessons completed
+  Object.values(prog.courses || {}).forEach(c => { pts += (c.completedLessons || []).length * 10; });
+  // Completed courses bonus
+  allCourses.forEach(c => {
+    const done = (prog.courses?.[c.id]?.completedLessons || []).length;
+    const total = c.lessons?.length || 0;
+    if (total > 0 && done >= total) pts += 50;
+  });
+  // Events attended
+  pts += (prog.attendance || []).length * 30;
+  // Tasks done
+  const myTasks = allTasks.filter(t => t.roles?.includes(user.role));
+  myTasks.forEach(t => { if (prog.tasks?.[t.id] === 'done') pts += 15; });
+  return pts;
+}
+
+// ════════════════════════════════════════════
+// THEME TOGGLE
+// ════════════════════════════════════════════
+window.toggleTheme = () => {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = isLight ? 'Dark' : 'Light';
+  localStorage.setItem('tillem_theme', isLight ? 'light' : 'dark');
+};
+(function applyTheme() {
+  if (localStorage.getItem('tillem_theme') === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = 'Dark';
+    });
+  }
+})();
+
+// ════════════════════════════════════════════
+// GLOBAL SEARCH
+// ════════════════════════════════════════════
+window.globalSearch = (q) => {
+  const drop = document.getElementById('search-results-dropdown');
+  if (!q.trim()) { drop.classList.add('hidden'); return; }
+  const lq = q.toLowerCase();
+  const results = [
+    ...allCourses.filter(c => c.title.toLowerCase().includes(lq) || c.description?.toLowerCase().includes(lq))
+      .map(c => ({ icon: c.emoji || '', type: 'Course', label: c.title, action: () => { navigate('learning'); setTimeout(()=>openCourse(c.id),100); } })),
+    ...allEvents.filter(e => e.title.toLowerCase().includes(lq))
+      .map(e => ({ icon: '', type: 'Event', label: e.title, action: () => { navigate('events'); setTimeout(()=>openEventDetail(e.id),100); } })),
+    ...allTasks.filter(t => t.title.toLowerCase().includes(lq))
+      .map(t => ({ icon: 'Done', type: 'Task', label: t.title, action: () => navigate('tasks') })),
+  ].slice(0, 8);
+
+  if (!results.length) {
+    drop.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:.88rem;">No results found.</div>';
+  } else {
+    drop.innerHTML = results.map((r, i) => `
+      <div class="search-result-item" onclick="searchGo(${i})">
+        <div class="search-result-icon">${r.icon}</div>
+        <div><div class="search-result-type">${r.type}</div><div>${r.label}</div></div>
+      </div>`).join('');
+    window._searchResults = results;
+  }
+  drop.classList.remove('hidden');
+};
+window.searchGo = (i) => {
+  window._searchResults?.[i]?.action();
+  document.getElementById('search-results-dropdown').classList.add('hidden');
+  document.getElementById('global-search-input').value = '';
+};
+
+// ════════════════════════════════════════════
+// NOTIFICATIONS
+// ════════════════════════════════════════════
+window.toggleNotifs = () => {
+  const panel = document.getElementById('notif-panel');
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) renderNotifs();
+};
+
+function renderNotifs() {
+  const today = new Date();
+  const soon  = new Date(); soon.setDate(soon.getDate() + 2);
+  const items = [];
+
+  // Overdue tasks
+  allTasks.filter(t => t.roles?.includes(currentUserData.role) && userTaskStatus[t.id] !== 'done' && t.dueDate && new Date(t.dueDate+'T23:59:59') < today)
+    .forEach(t => items.push({ icon:'Warning:', text: `Overdue: ${t.title}`, sub: `Was due ${t.dueDate}`, action: ()=>navigate('tasks') }));
+
+  // Upcoming events (next 48h)
+  allEvents.filter(e => e.roles?.includes(currentUserData.role) && userRegistrations.includes(e.id))
+    .filter(e => { const d = new Date(e.date+'T'+e.time); return d >= today && d <= soon; })
+    .forEach(e => items.push({ icon:'', text: `Upcoming: ${e.title}`, sub: `${e.date} at ${e.time}`, action: ()=>openEventDetail(e.id) }));
+
+  // Courses not started
+  const notStarted = allCourses.filter(c => c.roles?.includes(currentUserData.role) && !(userProgress[c.id]?.completedLessons?.length));
+  if (notStarted.length) items.push({ icon:'', text: `${notStarted.length} course${notStarted.length>1?'s':''} not yet started`, sub: 'Click to go to Learning Hub', action:()=>navigate('learning') });
+
+  const dot = document.getElementById('notif-dot');
+  dot.classList.toggle('hidden', items.length === 0);
+
+  document.getElementById('notif-list').innerHTML = items.length
+    ? items.map((n,i) => `<div class="notif-item" onclick="notifGo(${i})"><div class="notif-icon">${n.icon}</div><div><div class="notif-text">${n.text}</div><div class="notif-sub">${n.sub}</div></div></div>`).join('')
+    : '<div style="padding:20px;text-align:center;color:var(--muted);font-size:.85rem;">You\'re all caught up! Done</div>';
+
+  window._notifActions = items.map(n => n.action);
+}
+window.notifGo = (i) => {
+  document.getElementById('notif-panel').classList.add('hidden');
+  window._notifActions?.[i]?.();
+};
+
+function updateNotifDot() {
+  const today = new Date();
+  const soon  = new Date(); soon.setDate(soon.getDate() + 2);
+  const overdue = allTasks.filter(t => t.roles?.includes(currentUserData?.role) && userTaskStatus[t.id] !== 'done' && t.dueDate && new Date(t.dueDate+'T23:59:59') < today).length;
+  const upcoming = allEvents.filter(e => e.roles?.includes(currentUserData?.role) && userRegistrations.includes(e.id)).filter(e => { const d = new Date(e.date+'T'+e.time); return d >= today && d <= soon; }).length;
+  document.getElementById('notif-dot')?.classList.toggle('hidden', overdue + upcoming === 0);
+}
+
+// ════════════════════════════════════════════
+// LEADERBOARD
+// ════════════════════════════════════════════
+function renderLeaderboard() {
+  const ranked = allUsers.map(u => ({ ...u, pts: calcPoints(u.id) })).sort((a,b) => b.pts - a.pts);
+  const myRank = ranked.findIndex(u => u.id === currentUser.id) + 1;
+  const myPts  = calcPoints(currentUser.id);
+
+  document.getElementById('lb-my-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value" style="color:var(--brand-lt)">#${myRank}</div><div class="stat-label">Your Rank</div></div>
+    <div class="stat-card"><div class="stat-value">${myPts}</div><div class="stat-label">Your Points</div></div>
+    <div class="stat-card" style="flex:1;">
+      <div class="muted small" style="margin-bottom:8px;">Point Breakdown</div>
+      <div class="flex col gap-4 small">
+        <span> Lesson completed = <strong>10 pts</strong></span>
+        <span> Course finished = <strong>+50 pts bonus</strong></span>
+        <span> Event attended = <strong>30 pts</strong></span>
+        <span>Done Task completed = <strong>15 pts</strong></span>
+      </div>
+    </div>`;
+
+  const maxPts = ranked[0]?.pts || 1;
+  document.getElementById('leaderboard-list').innerHTML = ranked.map((u, i) => {
+    const pct = Math.round((u.pts / maxPts) * 100);
+    const medal = i === 0 ? '#1' : i === 1 ? '#2' : i === 2 ? '#3' : `${i+1}`;
+    return `<div class="lb-row ${u.id === currentUser.id ? 'me' : ''}">
+      <div class="lb-rank">${medal}</div>
+      <div class="avatar" style="width:32px;height:32px;font-size:.8rem;">${initials(u.name)}</div>
+      <div class="grow">
+        <div class="bold small">${u.name}${u.id === currentUser.id ? ' (you)':''}</div>
+        <div class="progress-bar lb-bar" style="margin-top:4px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="lb-pts">${u.pts} pts</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// LEARNING PATHS
+// ════════════════════════════════════════════
+function renderPaths() {
+  const isAdmin = ['admin','manager'].includes(currentUserData.role);
+  document.getElementById('paths-admin-btn').innerHTML = isAdmin
+    ? `<button class="btn btn-primary btn-sm" onclick="openCreatePathModal()">+ Create Path</button>` : '';
+
+  const paths = DB.all('paths').filter(p => !p.roles?.length || p.roles.includes(currentUserData.role));
+  const grid  = document.getElementById('paths-grid');
+
+  if (!paths.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"></div><h3>No learning paths yet</h3></div>`;
+    return;
+  }
+
+  grid.innerHTML = paths.map(p => {
+    const courses = (p.courseIds || []).map(id => allCourses.find(c => c.id === id)).filter(Boolean);
+    const done    = courses.filter(c => {
+      const d = (userProgress[c.id]?.completedLessons || []).length;
+      return d >= (c.lessons?.length || 0) && d > 0;
+    }).length;
+    const pct = courses.length > 0 ? Math.round((done/courses.length)*100) : 0;
+    return `<div class="path-card" onclick="openPath('${p.id}')">
+      <div class="bold" style="margin-bottom:6px;">${p.title}</div>
+      <div class="muted small" style="margin-bottom:10px;">${p.description||''}</div>
+      <div class="path-courses">
+        ${courses.map((c,i) => `<div class="path-step">${i+1}. ${c.emoji||''} ${c.title}</div>`).join('<span style="color:var(--muted);font-size:.8rem;">→</span>')}
+      </div>
+      <div style="margin-top:12px;">
+        <div class="flex between small muted" style="margin-bottom:4px;"><span>${done}/${courses.length} courses complete</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.openPath = (pathId) => {
+  const path    = DB.find('paths', pathId);
+  const courses = (path.courseIds || []).map(id => allCourses.find(c => c.id === id)).filter(Boolean);
+  if (courses.length) openCourse(courses[0].id);
+};
+
+window.openCreatePathModal = () => {
+  populateRoleCheckboxes('cp-roles');
+  document.getElementById('cp-course-list').innerHTML = allCourses.map(c => `
+    <label class="flex gap-8" style="align-items:center;cursor:pointer;font-size:.88rem;">
+      <input type="checkbox" value="${c.id}" style="width:auto;"> ${c.emoji||''} ${c.title}
+    </label>`).join('');
+  openModal('create-path-modal');
+};
+
+window.createPath = () => {
+  const title     = document.getElementById('cp-title').value.trim();
+  const desc      = document.getElementById('cp-desc').value.trim();
+  const roles     = [...document.querySelectorAll('#cp-roles input:checked')].map(c => c.value);
+  const courseIds = [...document.querySelectorAll('#cp-course-list input:checked')].map(c => c.value);
+  if (!title || !courseIds.length) { toast('Title and at least one course required.', 'error'); return; }
+  const p = DB.insert('paths', { title, description: desc, roles, courseIds });
+  closeModal('create-path-modal');
+  renderPaths();
+  toast('Learning path created!', 'success');
+};
+
+// ════════════════════════════════════════════
+// CERTIFICATES
+// ════════════════════════════════════════════
+function showCertificate(course) {
+  const date = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('cert-content').innerHTML = `
+    <div class="cert-wrap" id="cert-print-inner">
+      <div class="cert-seal"></div>
+      <div class="cert-title">Certificate of Completion</div>
+      <div style="color:#666;font-size:.9rem;">This certifies that</div>
+      <div class="cert-name">${currentUserData.name}</div>
+      <div style="color:#666;margin-bottom:4px;">has successfully completed</div>
+      <div class="cert-course">${course.title}</div>
+      <div class="cert-date">Completed on ${date}</div>
+      <div style="border-top:1px solid #eee;padding-top:16px;margin-top:4px;">
+        <div style="font-size:.8rem;color:#999;letter-spacing:1px;">TILLEM LXP</div>
+      </div>
+    </div>`;
+  openModal('cert-modal');
+}
+
+window.printCert = () => {
+  const inner = document.getElementById('cert-print-inner').outerHTML;
+  const w = window.open('', '_blank');
+  w.document.write(`<html><body style="display:flex;justify-content:center;padding:40px;font-family:sans-serif;">${inner}</body></html>`);
+  w.document.close(); w.print();
+};
+
+// Override nextLesson to show cert on completion
+const _origNextLesson = window.nextLesson;
+window.nextLesson = () => {
+  const lessons = activeCourse.lessons || [];
+  if (!userProgress[activeCourse.id]) userProgress[activeCourse.id] = { completedLessons: [] };
+  const done = userProgress[activeCourse.id].completedLessons;
+  const isLastLesson = activeLessonIdx === lessons.length - 1;
+  const alreadyDone  = done.includes(activeLessonIdx);
+  if (!done.includes(activeLessonIdx)) done.push(activeLessonIdx);
+  saveProgress();
+  updateViewerProgress();
+  renderLessonSidebar();
+
+  if (isLastLesson && !alreadyDone) {
+    const courseRef = activeCourse;
+    closeLessonViewer();
+    toast(' Course complete! Certificate ready.', 'success');
+    setTimeout(() => showCertificate(courseRef), 400);
+  } else if (!isLastLesson) {
+    showLesson(activeLessonIdx + 1);
+  } else {
+    closeLessonViewer();
+  }
+};
+
+// ════════════════════════════════════════════
+// QUIZ LESSON TYPE
+// ════════════════════════════════════════════
+window._quizState = {};
+
+function renderQuiz(lesson, lessonIdx) {
+  const questions = lesson.questions || [];
+  if (!questions.length) return '<p class="muted">No questions configured for this quiz.</p>';
+
+  window._quizState = { answers: {}, submitted: false, total: questions.length };
+  return `<div id="quiz-container">
+    ${questions.map((q, qi) => `
+      <div class="quiz-question">
+        <div class="quiz-q-text">${qi+1}. ${q.q}</div>
+        ${q.options.map((opt, oi) => `
+          <div class="quiz-option" id="qopt-${qi}-${oi}" onclick="selectQuizOption(${qi},${oi},${q.correct})">
+            <span>${String.fromCharCode(65+oi)}.</span> ${opt}
+          </div>`).join('')}
+      </div>`).join('')}
+    <button class="btn btn-primary" id="quiz-submit-btn" onclick="submitQuiz(${lessonIdx})">Submit Quiz</button>
+  </div>`;
+}
+
+window.selectQuizOption = (qi, oi, correct) => {
+  if (window._quizState.submitted) return;
+  // Deselect others in this question
+  document.querySelectorAll(`[id^="qopt-${qi}-"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`qopt-${qi}-${oi}`).classList.add('selected');
+  window._quizState.answers[qi] = { selected: oi, correct };
+};
+
+window.submitQuiz = (lessonIdx) => {
+  const state = window._quizState;
+  state.submitted = true;
+  let correct = 0;
+  Object.entries(state.answers).forEach(([qi, ans]) => {
+    const selEl = document.getElementById(`qopt-${qi}-${ans.selected}`);
+    const corrEl= document.getElementById(`qopt-${qi}-${ans.correct}`);
+    if (ans.selected === ans.correct) { selEl?.classList.add('correct'); correct++; }
+    else { selEl?.classList.add('wrong'); corrEl?.classList.add('correct'); }
+  });
+  const pct = Math.round((correct / state.total) * 100);
+  const passed = pct >= 80;
+  document.getElementById('quiz-submit-btn').outerHTML = `
+    <div class="card" style="text-align:center;background:${passed?'rgba(34,197,94,.1)':'rgba(239,68,68,.1)'};border-color:${passed?'var(--success)':'var(--danger)'};">
+      <div style="font-size:1.5rem;">${passed?'':''}</div>
+      <div class="bold">${passed?'Passed!':'Not quite.'} ${correct}/${state.total} correct (${pct}%)</div>
+      ${passed
+        ? `<button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="nextLesson()">Continue →</button>`
+        : `<button class="btn btn-secondary btn-sm" style="margin-top:8px;" onclick="retryQuiz(${lessonIdx})">Retry Quiz</button>`}
+    </div>`;
+};
+
+window.retryQuiz = (lessonIdx) => showLesson(lessonIdx);
+
+// Override showLesson to handle quiz type
+const _origShowLesson = window.showLesson;
+window.showLesson = (idx) => {
+  const lesson = activeCourse?.lessons?.[idx];
+  if (lesson?.type === 'quiz') {
+    activeLessonIdx = idx;
+    document.getElementById('active-lesson-title').textContent = lesson.title;
+    document.getElementById('active-lesson-body').innerHTML = renderQuiz(lesson, idx);
+    document.getElementById('viewer-lesson-count').textContent = `Quiz ${idx+1} of ${activeCourse.lessons.length}`;
+    document.getElementById('prev-lesson-btn').disabled = idx === 0;
+    document.getElementById('next-lesson-btn').style.display = 'none';
+    updateViewerProgress();
+    renderLessonSidebar();
+  } else {
+    document.getElementById('next-lesson-btn').style.display = '';
+    _origShowLesson(idx);
+  }
+};
+
+// ════════════════════════════════════════════
+// RICH LESSON EDITOR
+// ════════════════════════════════════════════
+window.openLessonEditor = (courseId, lessonIdx) => {
+  const course = allCourses.find(c => c.id === courseId);
+  const lesson = course?.lessons?.[lessonIdx];
+  if (!lesson) return;
+
+  document.getElementById('el-title').value     = lesson.title;
+  document.getElementById('el-type').value      = lesson.type || 'content';
+  document.getElementById('el-body').value      = lesson.body || '';
+  document.getElementById('el-course-id').textContent  = courseId;
+  document.getElementById('el-lesson-idx').textContent = lessonIdx;
+  toggleLessonType(lesson.type || 'content');
+
+  if (lesson.type === 'quiz') {
+    renderQuizEditor(lesson.questions || []);
+  }
+  openModal('edit-lesson-modal');
+};
+
+window.toggleLessonType = (type) => {
+  document.getElementById('el-content-area').classList.toggle('hidden', type === 'quiz');
+  document.getElementById('el-quiz-area').classList.toggle('hidden',    type !== 'quiz');
+};
+
+let _quizEditorQuestions = [];
+function renderQuizEditor(questions) {
+  _quizEditorQuestions = questions.map(q => ({ ...q }));
+  refreshQuizEditor();
+}
+function refreshQuizEditor() {
+  document.getElementById('el-quiz-questions').innerHTML = _quizEditorQuestions.map((q, qi) => `
+    <div class="card" style="margin-bottom:8px;">
+      <div class="flex between" style="margin-bottom:8px;">
+        <span class="bold small">Q${qi+1}</span>
+        <button class="btn btn-ghost btn-sm" onclick="removeQuizQuestion(${qi})">x</button>
+      </div>
+      <input style="width:100%;margin-bottom:8px;" placeholder="Question text" value="${q.q||''}" oninput="_quizEditorQuestions[${qi}].q=this.value">
+      ${q.options.map((opt, oi) => `
+        <div class="flex gap-8" style="margin-bottom:4px;">
+          <input style="flex:1;" placeholder="Option ${String.fromCharCode(65+oi)}" value="${opt}" oninput="_quizEditorQuestions[${qi}].options[${oi}]=this.value">
+          <label class="flex gap-4" style="align-items:center;font-size:.8rem;white-space:nowrap;">
+            <input type="radio" name="correct-${qi}" ${q.correct===oi?'checked':''} onchange="_quizEditorQuestions[${qi}].correct=${oi}"> Correct
+          </label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+window.addQuizQuestion = () => {
+  _quizEditorQuestions.push({ q:'', options:['','','',''], correct:0 });
+  refreshQuizEditor();
+};
+window.removeQuizQuestion = (qi) => {
+  _quizEditorQuestions.splice(qi, 1);
+  refreshQuizEditor();
+};
+
+window.saveLessonEdit = () => {
+  const courseId  = document.getElementById('el-course-id').textContent;
+  const lessonIdx = parseInt(document.getElementById('el-lesson-idx').textContent);
+  const type      = document.getElementById('el-type').value;
+  const title     = document.getElementById('el-title').value.trim();
+
+  const course = allCourses.find(c => c.id === courseId);
+  if (!course) return;
+
+  course.lessons[lessonIdx] = type === 'quiz'
+    ? { title, type: 'quiz', questions: _quizEditorQuestions }
+    : { title, body: document.getElementById('el-body').value };
+
+  DB.update('courses', courseId, { lessons: course.lessons });
+  closeModal('edit-lesson-modal');
+  renderContentPanel('courses');
+  toast('Lesson saved!', 'success');
+};
+
+// ════════════════════════════════════════════
+// MANAGER DASHBOARD
+// ════════════════════════════════════════════
+function renderManagerDashboard() {
+  const team = allUsers.filter(u => u.role === 'learner');
+  const totalPts = team.reduce((sum, u) => sum + calcPoints(u.id), 0);
+  const avgPts   = team.length ? Math.round(totalPts / team.length) : 0;
+
+  document.getElementById('mgr-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value">${team.length}</div><div class="stat-label">Learners</div></div>
+    <div class="stat-card"><div class="stat-value">${avgPts}</div><div class="stat-label">Avg Points</div></div>
+    <div class="stat-card"><div class="stat-value">${team.filter(u => calcPoints(u.id) > 0).length}</div><div class="stat-label">Active Learners</div></div>`;
+
+  document.getElementById('mgr-table').innerHTML = team
+    .map(u => ({ ...u, pts: calcPoints(u.id) }))
+    .sort((a,b) => b.pts - a.pts)
+    .map(u => {
+      const prog = DB.getProgress(u.id);
+      const myCourses = allCourses.filter(c => c.roles?.includes(u.role));
+      let done = 0, total = 0;
+      myCourses.forEach(c => { total += c.lessons?.length||0; done += (prog.courses?.[c.id]?.completedLessons||[]).length; });
+      const pct = total > 0 ? Math.round((done/total)*100) : 0;
+      const tasksDone = allTasks.filter(t => t.roles?.includes(u.role) && prog.tasks?.[t.id]==='done').length;
+      return `<tr>
+        <td><div class="flex gap-8" style="align-items:center;">
+          <div class="avatar" style="width:28px;height:28px;font-size:.7rem;">${initials(u.name)}</div>${u.name}
+        </div></td>
+        <td><div class="flex gap-8" style="align-items:center;min-width:120px;">
+          <div class="progress-bar grow"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <span class="small muted">${pct}%</span>
+        </div></td>
+        <td>${(prog.attendance||[]).length}</td>
+        <td>${tasksDone}</td>
+        <td><span class="bold" style="color:var(--brand-lt)">${u.pts}</span></td>
+      </tr>`;
+    }).join('');
+}
+
+// ════════════════════════════════════════════
+// CALENDAR VIEW
+// ════════════════════════════════════════════
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+function renderCalendar() {
+  const first   = new Date(calYear, calMonth, 1);
+  const last    = new Date(calYear, calMonth + 1, 0);
+  const startDay= first.getDay();
+  const today   = new Date().toISOString().split('T')[0];
+
+  const monthName = first.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  // Group events by date
+  const byDate = {};
+  allEvents.filter(e => e.roles?.includes(currentUserData.role)).forEach(e => {
+    if (!byDate[e.date]) byDate[e.date] = [];
+    byDate[e.date].push(e);
+  });
+
+  let cells = '';
+  // Blank cells before first
+  for (let i = 0; i < startDay; i++) cells += `<div class="cal-cell other-month"></div>`;
+  // Day cells
+  for (let d = 1; d <= last.getDate(); d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === today;
+    const evts    = byDate[dateStr] || [];
+    cells += `<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-date" style="${isToday?'color:var(--brand-lt)':''}">${d}</div>
+      ${evts.map(e => `<div class="cal-event-chip" onclick="openEventDetail('${e.id}')" title="${e.title}">${e.title}</div>`).join('')}
+    </div>`;
+  }
+
+  return `
+    <div class="cal-nav">
+      <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">←</button>
+      <h3>${monthName}</h3>
+      <button class="btn btn-ghost btn-sm" onclick="calNav(1)">→</button>
+    </div>
+    <div class="cal-grid">
+      ${days.map(d=>`<div class="cal-day-label">${d}</div>`).join('')}
+      ${cells}
+    </div>`;
+}
+
+window.calNav = (dir) => {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  if (document.getElementById('events-cal-view')?.style.display !== 'none')
+    document.getElementById('events-cal-inner').innerHTML = renderCalendar();
+};
+
+// Patch renderEvents to add calendar toggle
+const _origRenderEvents = window.renderEvents || (() => {});
+
+// ════════════════════════════════════════════
+// CSV EXPORT
+// ════════════════════════════════════════════
+window.exportReportsCSV = () => {
+  const rows = [['Name','Email','Role','Course Progress %','Events Attended','Tasks Done','Points']];
+  allUsers.forEach(u => {
+    const prog = DB.getProgress(u.id);
+    const myCourses = allCourses.filter(c => c.roles?.includes(u.role));
+    let done = 0, total = 0;
+    myCourses.forEach(c => { total += c.lessons?.length||0; done += (prog.courses?.[c.id]?.completedLessons||[]).length; });
+    const pct = total > 0 ? Math.round((done/total)*100) : 0;
+    const attended  = (prog.attendance||[]).length;
+    const tasksDone = allTasks.filter(t => t.roles?.includes(u.role) && prog.tasks?.[t.id]==='done').length;
+    const pts = calcPoints(u.id);
+    rows.push([u.name, u.email, u.role, pct+'%', attended, tasksDone, pts]);
+  });
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = `tillem-lxp-report-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('Report downloaded!', 'success');
+};
+
+// ════════════════════════════════════════════
+// CHANGE PASSWORD
+// ════════════════════════════════════════════
+window.changePassword = () => {
+  const current  = document.getElementById('pw-current').value;
+  const newPw    = document.getElementById('pw-new').value;
+  const confirm  = document.getElementById('pw-confirm').value;
+  const user     = DB.find('users', currentUser.id);
+
+  if (user.password !== btoa(current)) { toast('Current password is incorrect.', 'error'); return; }
+  if (newPw.length < 6)                { toast('New password must be at least 6 characters.', 'error'); return; }
+  if (newPw !== confirm)               { toast('Passwords do not match.', 'error'); return; }
+
+  DB.update('users', currentUser.id, { password: btoa(newPw) });
+  closeModal('change-pw-modal');
+  document.getElementById('pw-current').value = document.getElementById('pw-new').value = document.getElementById('pw-confirm').value = '';
+  toast('Password updated!', 'success');
+};
+
+// ════════════════════════════════════════════
+// PATCH navigate() FOR NEW PAGES + NOTIF DOT
+// ════════════════════════════════════════════
+const _origNavigate = window.navigate;
+window.navigate = (page) => {
+  _origNavigate(page);
+  switch(page) {
+    case 'leaderboard':       renderLeaderboard();       break;
+    case 'paths':             renderPaths();             break;
+    case 'manager-dashboard': renderManagerDashboard();  break;
+  }
+};
+
+// showApp extra wiring handled in bootApp below via _postShowApp
+
+window.toggleCalendarView = () => {
+  _calendarVisible = !_calendarVisible;
+  let calEl = document.getElementById('events-cal-view');
+  const listEl = document.getElementById('events-list');
+  if (!calEl) {
+    calEl = document.createElement('div');
+    calEl.id = 'events-cal-view';
+    calEl.innerHTML = `<div id="events-cal-inner" class="card" style="margin-top:4px;"></div>`;
+    listEl.parentNode.insertBefore(calEl, listEl);
+  }
+  calEl.style.display = _calendarVisible ? 'block' : 'none';
+  listEl.style.display = _calendarVisible ? 'none' : 'flex';
+  if (_calendarVisible) document.getElementById('events-cal-inner').innerHTML = renderCalendar();
+};
+
+
+
+</script>
+</body>
+</html>
