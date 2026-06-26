@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>High-Level Training Mastery</title>
+  <style>
+    /* ============================================================
+       RESET & CUSTOM PROPERTIES
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:        #2563EB;
+      --blue-dark:   #1D4ED8;
+      --blue-light:  #EFF6FF;
+      --purple:      #7C3AED;
+      --green:       #059669;
+      --amber:       #D97706;
+      --red:         #DC2626;
+      --dark:        #111827;
+      --mid:         #374151;
+      --muted:       #6B7280;
+      --border:      #E5E7EB;
+      --bg:          #F3F4F6;
+      --white:       #FFFFFF;
+      --radius-sm:   8px;
+      --radius:      14px;
+      --radius-lg:   20px;
+      --shadow-sm:   0 1px 2px rgba(0,0,0,.07);
+      --shadow:      0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.05);
+      --shadow-lg:   0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
+      --font:        -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --hdr:         60px;
+      --max:         860px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--dark);
+      line-height: 1.65;
+      padding-top: var(--hdr);
+    }
+
+    /* ============================================================
+       FIXED HEADER
+    ============================================================ */
+    #site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--hdr);
+      background: var(--white);
+      box-shadow: 0 1px 0 var(--border), var(--shadow-sm);
+      z-index: 900;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hdr-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: calc(var(--hdr) - 5px);
+    }
+
+    .hdr-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hdr-badge {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .hdr-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.2;
+    }
+
+    .hdr-sub {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      line-height: 1;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .hdr-pct {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .02em;
+    }
+
+    .progress-track {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--blue) 0%, var(--purple) 100%);
+      border-radius: 0 2px 2px 0;
+      transition: width .08s linear;
+    }
+
+    /* ============================================================
+       LAYOUT SHELL
+    ============================================================ */
+    .course-wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 20px 80px;
+    }
+
+    /* ============================================================
+       SHARED BLOCK STYLES
+    ============================================================ */
+    .block {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin: 32px 0;
+      overflow: hidden;
+    }
+
+    .blk-hd  { padding: 32px 36px 0; }
+    .blk-bod { padding: 24px 36px 36px; }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--blue);
+      background: var(--blue-light);
+      padding: 4px 12px;
+      border-radius: 100px;
+      margin-bottom: 10px;
+    }
+
+    .blk-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1.3;
+      margin-bottom: 6px;
+    }
+
+    .blk-lead {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .rule { height: 1px; background: var(--border); margin: 16px 0 0; }
+
+    p {
+      font-size: 15px;
+      color: var(--mid);
+      line-height: 1.78;
+      margin-bottom: 14px;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    /* ============================================================
+       HERO / INTRO
+    ============================================================ */
+    .hero {
+      position: relative;
+      background: linear-gradient(145deg, #1D4ED8 0%, #4F46E5 50%, #7C3AED 100%);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin-top: 28px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -80px;
+      width: 300px; height: 300px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; left: -60px;
+      width: 260px; height: 260px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-body {
+      position: relative;
+      z-index: 1;
+      padding: 56px 48px 48px;
+    }
+
+    .hero-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 14px;
+    }
+
+    .hero-h1 {
+      font-size: 38px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: rgba(255,255,255,.82);
+      font-weight: 400;
+      margin-bottom: 22px;
+    }
+
+    .hero-p {
+      font-size: 15px;
+      color: rgba(255,255,255,.72);
+      line-height: 1.78;
+      max-width: 600px;
+      margin-bottom: 0;
+    }
+
+    .obj-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.5);
+      margin: 32px 0 14px;
+    }
+
+    .obj-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .obj-card {
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 12px;
+      padding: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      backdrop-filter: blur(6px);
+    }
+
+    .obj-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,.15);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .obj-text {
+      font-size: 13.5px;
+      color: rgba(255,255,255,.88);
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       MODULE DIVIDER
+    ============================================================ */
+    .mod-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 48px 0 4px;
+    }
+
+    .mod-line { flex: 1; height: 1px; background: var(--border); }
+
+    .mod-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--dark);
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       ACCORDION
+    ============================================================ */
+    .acc-list { list-style: none; }
+
+    .acc-item { border-bottom: 1px solid var(--border); }
+    .acc-item:last-child { border-bottom: none; }
+
+    .acc-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 20px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: background .15s;
+    }
+
+    .acc-btn:hover { background: #FAFAFA; }
+    .acc-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+    .acc-btn-lhs {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .acc-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .acc-title {
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .acc-chevron {
+      width: 18px; height: 18px;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: transform .25s ease;
+    }
+
+    .acc-item.open .acc-chevron { transform: rotate(180deg); }
+
+    .acc-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .32s ease;
+    }
+
+    .acc-panel-inner {
+      padding: 4px 36px 24px 78px;
+    }
+
+    .acc-panel-inner p {
+      font-size: 14.5px;
+      line-height: 1.78;
+    }
+
+    /* ============================================================
+       TIMELINE
+    ============================================================ */
+    .timeline {
+      position: relative;
+      list-style: none;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 22px; top: 4px; bottom: 4px;
+      width: 2px;
+      background: linear-gradient(180deg, var(--blue) 0%, var(--purple) 100%);
+      border-radius: 2px;
+    }
+
+    .tl-item {
+      display: flex;
+      gap: 26px;
+      margin-bottom: 28px;
+    }
+
+    .tl-item:last-child { margin-bottom: 0; }
+
+    .tl-dot-wrap {
+      width: 46px;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .tl-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--blue);
+      border: 3px solid var(--white);
+      box-shadow: 0 0 0 2px var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 2px;
+    }
+
+    .tl-dot span {
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+    }
+
+    .tl-card {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 20px;
+    }
+
+    .tl-step {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 2px;
+    }
+
+    .tl-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    .tl-desc {
+      font-size: 14px;
+      color: var(--mid);
+      line-height: 1.68;
+      margin: 0;
+    }
+
+    /* ============================================================
+       LABELED GRAPHIC
+    ============================================================ */
+    .lbl-graphic-wrap {
+      position: relative;
+      border-radius: 10px;
+      overflow: visible;
+      background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 60%, #1E293B 100%);
+      min-height: 300px;
+    }
+
+    .net-svg {
+      display: block;
+      width: 100%;
+      height: 300px;
+    }
+
+    .marker {
+      position: absolute;
+    }
+
+    .mkr-btn {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--amber);
+      border: 3px solid #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      position: relative;
+      z-index: 10;
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .mkr-btn:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+    .marker.active .mkr-btn,
+    .mkr-btn:hover {
+      transform: scale(1.18);
+      box-shadow: 0 4px 18px rgba(0,0,0,.45);
+    }
+
+    .mkr-popup {
+      position: absolute;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      width: 220px;
+      box-shadow: var(--shadow-lg);
+      display: none;
+      z-index: 20;
+    }
+
+    .marker.active .mkr-popup { display: block; }
+
+    /* popup above the marker */
+    .popup-up .mkr-popup {
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .popup-up .mkr-popup::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 10px; height: 10px;
+      background: #fff;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* popup below the marker */
+    .popup-dn .mkr-popup {
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .popup-dn .mkr-popup::after {
+      content: '';
+      position: absolute;
+      top: -6px; left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 10px; height: 10px;
+      background: #fff;
+      border-left: 1px solid var(--border);
+      border-top: 1px solid var(--border);
+    }
+
+    /* left-aligned popup */
+    .popup-left .mkr-popup {
+      bottom: calc(100% + 10px);
+      right: 0;
+      left: auto;
+      transform: none;
+    }
+
+    .popup-left .mkr-popup::after {
+      content: '';
+      position: absolute;
+      bottom: -6px; right: 12px;
+      transform: rotate(45deg);
+      width: 10px; height: 10px;
+      background: #fff;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pop-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 5px;
+    }
+
+    .pop-body {
+      font-size: 12.5px;
+      color: var(--mid);
+      line-height: 1.58;
+      margin: 0;
+    }
+
+    /* ============================================================
+       CHECKLIST
+    ============================================================ */
+    .chk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      list-style: none;
+    }
+
+    .chk-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .18s, background .18s;
+      user-select: none;
+    }
+
+    .chk-item:hover:not(.done) { border-color: var(--blue); background: var(--blue-light); }
+    .chk-item:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .chk-item.done {
+      background: #ECFDF5;
+      border-color: var(--green);
+    }
+
+    .chk-box {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .18s;
+    }
+
+    .chk-item.done .chk-box {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .chk-box svg { display: none; }
+    .chk-item.done .chk-box svg { display: block; }
+
+    .chk-text {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--mid);
+      transition: color .18s;
+    }
+
+    .chk-item.done .chk-text {
+      color: var(--green);
+      text-decoration: line-through;
+    }
+
+    /* ============================================================
+       FLASHCARDS
+    ============================================================ */
+    .fc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    .fc-wrap {
+      perspective: 1000px;
+      height: 190px;
+      cursor: pointer;
+    }
+
+    .fc-inner {
+      position: relative;
+      width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transition: transform .5s cubic-bezier(.4,0,.2,1);
+    }
+
+    .fc-wrap.flipped .fc-inner { transform: rotateY(180deg); }
+
+    .fc-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .fc-front {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--purple) 100%);
+    }
+
+    .fc-front.danger {
+      background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);
+    }
+
+    .fc-back {
+      background: var(--white);
+      border: 2px solid var(--border);
+      transform: rotateY(180deg);
+    }
+
+    .fc-eyebrow {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 6px;
+    }
+
+    .fc-word {
+      font-size: 30px;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .fc-hint {
+      font-size: 10.5px;
+      color: rgba(255,255,255,.45);
+      margin-top: 10px;
+    }
+
+    .fc-back-text {
+      font-size: 14.5px;
+      color: var(--mid);
+      font-weight: 500;
+      line-height: 1.65;
+    }
+
+    .fc-back-hint {
+      font-size: 10.5px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    /* ============================================================
+       SCENARIO
+    ============================================================ */
+    .sc-scene {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      border-radius: 12px;
+      padding: 28px 28px 28px;
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sc-scene::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--amber), var(--blue));
+    }
+
+    .sc-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #F59E0B;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      margin-bottom: 10px;
+    }
+
+    .sc-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .sc-text {
+      font-size: 15.5px;
+      color: rgba(255,255,255,.88);
+      line-height: 1.72;
+      margin: 0;
+    }
+
+    .sc-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .sc-choice {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      text-align: left;
+      width: 100%;
+      transition: border-color .18s, background .18s;
+    }
+
+    .sc-choice:hover:not(:disabled) {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+
+    .sc-choice:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+    .ch-letter {
+      width: 30px; height: 30px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--muted);
+      transition: all .18s;
+    }
+
+    .sc-choice:hover:not(:disabled) .ch-letter {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .ch-text {
+      font-size: 14.5px;
+      color: var(--mid);
+      line-height: 1.62;
+      font-weight: 500;
+    }
+
+    .sc-outcome {
+      display: none;
+      border-radius: 12px;
+      padding: 20px 22px;
+      margin-top: 14px;
+    }
+
+    .sc-outcome.pos { background: #ECFDF5; border: 1px solid #A7F3D0; }
+    .sc-outcome.neg { background: #FEF2F2; border: 1px solid #FECACA; }
+    .sc-outcome.neu { background: #FFFBEB; border: 1px solid #FDE68A; }
+
+    .oc-icon { font-size: 24px; margin-bottom: 6px; display: block; }
+    .oc-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .sc-outcome.pos .oc-title { color: #065F46; }
+    .sc-outcome.neg .oc-title { color: #991B1B; }
+    .sc-outcome.neu .oc-title { color: #92400E; }
+    .oc-body { font-size: 13.5px; line-height: 1.65; margin: 0; }
+    .sc-outcome.pos .oc-body { color: #064E3B; }
+    .sc-outcome.neg .oc-body { color: #7F1D1D; }
+    .sc-outcome.neu .oc-body { color: #78350F; }
+
+    .sc-reset {
+      display: none;
+      margin-top: 12px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .18s;
+    }
+
+    .sc-reset:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ============================================================
+       QUIZ
+    ============================================================ */
+    .quiz-q {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .quiz-q:last-child { margin-bottom: 0; }
+
+    .q-num {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+
+    .q-text {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      line-height: 1.4;
+      margin-bottom: 18px;
+    }
+
+    .q-opts { display: flex; flex-direction: column; gap: 8px; }
+
+    .q-opt {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 13px 16px;
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .18s;
+    }
+
+    .q-opt:hover:not([data-locked]) { border-color: var(--blue); background: var(--blue-light); }
+    .q-opt:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .q-opt.q-correct { background: #ECFDF5; border-color: var(--green); }
+    .q-opt.q-wrong   { background: #FEF2F2; border-color: var(--red); }
+
+    .q-radio {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .18s;
+    }
+
+    .q-opt.q-correct .q-radio { background: var(--green); border-color: var(--green); }
+    .q-opt.q-wrong   .q-radio { background: var(--red);   border-color: var(--red); }
+
+    .q-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      display: none;
+    }
+
+    .q-opt.q-correct .q-dot,
+    .q-opt.q-wrong   .q-dot { display: block; }
+
+    .q-label { font-size: 14px; font-weight: 600; color: var(--mid); }
+    .q-opt.q-correct .q-label { color: #065F46; }
+    .q-opt.q-wrong   .q-label { color: #991B1B; }
+
+    .q-fb {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .q-fb.ok  { display: block; background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .q-fb.err { display: block; background: #FEF2F2; color: #991B1B; border: 1px solid #FECACA; }
+
+    /* ============================================================
+       CONGRATS BLOCK
+    ============================================================ */
+    .congrats-blk {
+      background: linear-gradient(145deg, #059669 0%, #0891B2 100%);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      text-align: center;
+      margin: 32px 0 0;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .congrats-inner {
+      padding: 56px 36px 52px;
+    }
+
+    .trophy {
+      width: 76px; height: 76px;
+      background: rgba(255,255,255,.18);
+      border: 3px solid rgba(255,255,255,.35);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 22px;
+    }
+
+    .congrats-h2 {
+      font-size: 34px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .congrats-p {
+      font-size: 15.5px;
+      color: rgba(255,255,255,.85);
+      max-width: 580px;
+      margin: 0 auto 32px;
+      line-height: 1.78;
+    }
+
+    .btn-cert {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: #fff;
+      color: #059669;
+      font-size: 14.5px;
+      font-weight: 800;
+      padding: 14px 30px;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18);
+      transition: transform .2s, box-shadow .2s;
+      letter-spacing: .01em;
+    }
+
+    .btn-cert:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.22);
+    }
+
+    .btn-cert:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      :root { --hdr: 52px; }
+
+      .course-wrap { padding: 0 12px 60px; }
+      .hero-body { padding: 36px 24px 36px; }
+      .hero-h1 { font-size: 26px; }
+      .hero-sub { font-size: 15px; }
+      .obj-grid { grid-template-columns: 1fr; }
+      .blk-hd, .blk-bod { padding-left: 22px; padding-right: 22px; }
+      .acc-btn { padding: 16px 22px; }
+      .acc-panel-inner { padding: 4px 22px 20px 64px; }
+      .fc-grid { grid-template-columns: 1fr; }
+      .chk-grid { grid-template-columns: 1fr; }
+      .timeline::before { left: 18px; }
+      .tl-dot-wrap { width: 38px; }
+      .congrats-inner { padding: 40px 20px 44px; }
+      .congrats-h2 { font-size: 26px; }
+      .hdr-pct { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .hero-h1 { font-size: 22px; }
+      .hero-sub { font-size: 14px; }
+      .blk-title { font-size: 18px; }
+      .fc-wrap { height: 170px; }
+      .fc-word { font-size: 26px; }
+      .sc-scene { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =========================================================
+       FIXED HEADER
+  ========================================================= -->
+  <header id="site-header" role="banner">
+    <div class="hdr-inner">
+      <div class="hdr-brand">
+        <div class="hdr-badge" aria-hidden="true">HT</div>
+        <div>
+          <p class="hdr-name">High-Level Training Mastery</p>
+          <span class="hdr-sub">Professional Development Course</span>
+        </div>
+      </div>
+      <p class="hdr-pct" aria-live="polite">
+        <span id="pct-label">0%</span>&nbsp;complete
+      </p>
+    </div>
+    <div class="progress-track"
+         role="progressbar"
+         aria-label="Course scroll progress"
+         aria-valuenow="0"
+         aria-valuemin="0"
+         aria-valuemax="100"
+         id="prog-track">
+      <div class="progress-fill" id="prog-fill"></div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       MAIN CONTENT
+  ========================================================= -->
+  <main class="course-wrap" id="main" tabindex="-1">
+
+    <!-- ── INTRODUCTION ──────────────────────────────────────── -->
+    <section class="hero" aria-labelledby="hero-h1">
+      <div class="hero-body">
+        <p class="hero-eyebrow">Welcome to the Course</p>
+        <h1 class="hero-h1" id="hero-h1">Welcome to High-Level Training Mastery</h1>
+        <p class="hero-sub">A course designed for the architects of learning.</p>
+        <p class="hero-p">
+          This course is built for learning &amp; development professionals, trainers, managers,
+          and anyone accountable for designing, coordinating, and delivering impactful training.
+          Over four focused modules you will develop a complete, systems-level mastery of what
+          separates good training from truly transformative learning experiences — the frameworks,
+          the mindsets, and the practical craft that the world's best learning architects apply
+          every day.
+        </p>
+        <p class="obj-label">By the end of this course you will be able to:</p>
+        <ul class="obj-grid" role="list" aria-label="Learning Objectives">
+          <li class="obj-card">
+            <div class="obj-icon" aria-hidden="true">🎯</div>
+            <p class="obj-text">Apply the ADDIE instructional design process to build high-impact training programs from the ground up.</p>
+          </li>
+          <li class="obj-card">
+            <div class="obj-icon" aria-hidden="true">🤝</div>
+            <p class="obj-text">Identify key stakeholders and coordinate the logistics required for flawless training execution.</p>
+          </li>
+          <li class="obj-card">
+            <div class="obj-icon" aria-hidden="true">🎤</div>
+            <p class="obj-text">Employ proven facilitation techniques to deliver engaging, learner-centered experiences.</p>
+          </li>
+          <li class="obj-card">
+            <div class="obj-icon" aria-hidden="true">📊</div>
+            <p class="obj-text">Evaluate training effectiveness using established assessment models and measurement strategies.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ── MODULE 1 DIVIDER ──────────────────────────────────── -->
+    <div class="mod-divider" role="separator" aria-label="Module 1: Development">
+      <div class="mod-line"></div>
+      <div class="mod-pill"><span aria-hidden="true">📐</span> Module 1: Development</div>
+      <div class="mod-line"></div>
+    </div>
+
+    <!-- MODULE 1 — Text Intro -->
+    <article class="block" aria-labelledby="m1-intro">
+      <div class="blk-hd">
+        <p class="tag">The Blueprint for Excellence</p>
+        <h2 class="blk-title" id="m1-intro">Why Development is the Foundation of Everything</h2>
+      </div>
+      <div class="blk-bod">
+        <p>
+          Every exceptional training program begins long before a facilitator enters the room.
+          It begins with rigorous, thoughtful development — a phase where goals are clarified,
+          audiences understood, and content architected with intentionality. Without a solid
+          development phase, even the most charismatic facilitator is simply rearranging deck
+          chairs.
+        </p>
+        <p>
+          The development phase is where strategy meets creativity. It is the translation layer
+          between what a business needs and what a learner experiences. In this module we examine
+          the core pillars: understanding the need, knowing your audience, and defining
+          crystal-clear objectives that guide every subsequent design decision.
+        </p>
+      </div>
+    </article>
+
+    <!-- MODULE 1 — Accordion -->
+    <article class="block" aria-labelledby="acc-head">
+      <div class="blk-hd">
+        <p class="tag">Explore the Fundamentals</p>
+        <h2 class="blk-title" id="acc-head">The Core of Development</h2>
+        <p class="blk-lead">Select each topic below to reveal the foundational elements of effective training development.</p>
+      </div>
+      <div class="rule"></div>
+      <ul class="acc-list" aria-label="Core development topics">
+
+        <li class="acc-item">
+          <button class="acc-btn" aria-expanded="false" aria-controls="ap-1" id="ab-1">
+            <div class="acc-btn-lhs">
+              <span class="acc-num" aria-hidden="true">1</span>
+              <span class="acc-title">Needs Analysis</span>
+            </div>
+            <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-panel" id="ap-1" role="region" aria-labelledby="ab-1">
+            <div class="acc-panel-inner">
+              <p>
+                A Needs Analysis answers the most fundamental question in L&amp;D: <strong>Is training actually the solution?</strong>
+                By systematically investigating the gap between current performance and desired performance,
+                we determine whether a skills deficit is causing the problem — and whether training
+                is the right remedy.
+              </p>
+              <p>
+                Effective needs analysis links every training initiative directly to a business goal.
+                Stakeholder interviews, performance data reviews, focus groups, and surveys are common
+                methods. The output should clearly articulate the performance gap, its root cause, and
+                a recommendation on whether and how training can close it. This phase prevents
+                organizations from spending resources on training that solves the wrong problem.
+              </p>
+            </div>
+          </div>
+        </li>
+
+        <li class="acc-item">
+          <button class="acc-btn" aria-expanded="false" aria-controls="ap-2" id="ab-2">
+            <div class="acc-btn-lhs">
+              <span class="acc-num" aria-hidden="true">2</span>
+              <span class="acc-title">Audience Analysis</span>
+            </div>
+            <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-panel" id="ap-2" role="region" aria-labelledby="ab-2">
+            <div class="acc-panel-inner">
+              <p>
+                Knowing <em>what</em> to teach is only half the equation. <strong>Knowing <em>who</em> you are teaching</strong>
+                is equally critical. Audience Analysis builds a rich, empathetic understanding of your
+                learners — their prior knowledge, experience levels, learning preferences, motivations,
+                and barriers to engagement.
+              </p>
+              <p>
+                A thorough analysis considers educational background, existing skill sets, generational
+                and cultural differences, technology access, and attitudes toward training. These insights
+                directly shape design decisions: choice of modality, language complexity, examples
+                chosen, and even the length of sessions. Training designed without this understanding
+                assumes a "generic" learner who simply does not exist.
+              </p>
+            </div>
+          </div>
+        </li>
+
+        <li class="acc-item">
+          <button class="acc-btn" aria-expanded="false" aria-controls="ap-3" id="ab-3">
+            <div class="acc-btn-lhs">
+              <span class="acc-num" aria-hidden="true">3</span>
+              <span class="acc-title">Defining Learning Objectives</span>
+            </div>
+            <svg class="acc-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="acc-panel" id="ap-3" role="region" aria-labelledby="ab-3">
+            <div class="acc-panel-inner">
+              <p>
+                Learning objectives are the architectural blueprints of your course. They specify precisely
+                what a learner will be able to <em>do</em>, <em>know</em>, or <em>feel</em> differently
+                after completing the training. The gold standard is the <strong>SMART</strong> framework:
+                Specific, Measurable, Achievable, Relevant, and Time-bound.
+              </p>
+              <p>
+                A well-formed objective uses an action verb from Bloom's Taxonomy (e.g., "analyze,"
+                "create," "evaluate") rather than vague language like "understand." Example: <em>"Given a
+                realistic case study, the learner will identify at least three root causes of a
+                performance gap using the 5-Whys methodology."</em> Strong objectives guide content
+                selection, activity design, and assessment creation — they are the north star of the
+                entire development effort.
+              </p>
+            </div>
+          </div>
+        </li>
+
+      </ul>
+    </article>
+
+    <!-- MODULE 1 — Timeline -->
+    <article class="block" aria-labelledby="tl-head">
+      <div class="blk-hd">
+        <p class="tag">The Process</p>
+        <h2 class="blk-title" id="tl-head">The Instructional Design Process</h2>
+        <p class="blk-lead">The ADDIE model is the industry-standard framework for developing effective training programs systematically and iteratively.</p>
+      </div>
+      <div class="blk-bod">
+        <ol class="timeline" aria-label="ADDIE process steps">
+
+          <li class="tl-item">
+            <div class="tl-dot-wrap" aria-hidden="true"><div class="tl-dot"><span>1</span></div></div>
+            <div class="tl-card">
+              <p class="tl-step">Step 01</p>
+              <h3 class="tl-name">Analysis</h3>
+              <p class="tl-desc">Define the problem and the learning environment. Conduct needs, audience, task, and context analyses. The output is a clear project brief documenting performance gaps, learner profiles, constraints, and the overall goals the training is expected to accomplish. Every downstream decision traces back to this foundation.</p>
+            </div>
+          </li>
+
+          <li class="tl-item">
+            <div class="tl-dot-wrap" aria-hidden="true"><div class="tl-dot"><span>2</span></div></div>
+            <div class="tl-card">
+              <p class="tl-step">Step 02</p>
+              <h3 class="tl-name">Design</h3>
+              <p class="tl-desc">Create the learning blueprint. This phase specifies learning objectives, content structure, assessment strategies, sequencing logic, and the overall instructional approach. A Design Document or storyboard is produced, serving as the authoritative guide for developers and subject matter experts throughout the build phase.</p>
+            </div>
+          </li>
+
+          <li class="tl-item">
+            <div class="tl-dot-wrap" aria-hidden="true"><div class="tl-dot"><span>3</span></div></div>
+            <div class="tl-card">
+              <p class="tl-step">Step 03</p>
+              <h3 class="tl-name">Development</h3>
+              <p class="tl-desc">Build the actual training materials based on the approved design document. This includes authoring eLearning modules, writing facilitator guides, creating participant workbooks, producing videos, and developing assessments. A pilot test with a representative sample of the target audience typically closes this phase before full rollout.</p>
+            </div>
+          </li>
+
+          <li class="tl-item">
+            <div class="tl-dot-wrap" aria-hidden="true"><div class="tl-dot"><span>4</span></div></div>
+            <div class="tl-card">
+              <p class="tl-step">Step 04</p>
+              <h3 class="tl-name">Implementation</h3>
+              <p class="tl-desc">Deploy the training to the target audience. This involves scheduling sessions, enrolling learners, preparing facilitators, configuring technology platforms, distributing materials, and managing all logistical elements. This is where coordination expertise becomes absolutely paramount to learner experience.</p>
+            </div>
+          </li>
+
+          <li class="tl-item">
+            <div class="tl-dot-wrap" aria-hidden="true"><div class="tl-dot"><span>5</span></div></div>
+            <div class="tl-card">
+              <p class="tl-step">Step 05</p>
+              <h3 class="tl-name">Evaluation</h3>
+              <p class="tl-desc">Measure the effectiveness and business impact of the program. Using models like Kirkpatrick's Four Levels, teams assess learner reaction, knowledge acquisition, on-the-job behavioral transfer, and ultimately, business results. Findings feed directly back into the Analysis phase — making ADDIE a continuous improvement cycle, not a linear sequence.</p>
+            </div>
+          </li>
+
+        </ol>
+      </div>
+    </article>
+
+    <!-- ── MODULE 2 DIVIDER ──────────────────────────────────── -->
+    <div class="mod-divider" role="separator" aria-label="Module 2: Coordination">
+      <div class="mod-line"></div>
+      <div class="mod-pill"><span aria-hidden="true">🎯</span> Module 2: Coordination</div>
+      <div class="mod-line"></div>
+    </div>
+
+    <!-- MODULE 2 — Text Intro -->
+    <article class="block" aria-labelledby="m2-intro">
+      <div class="blk-hd">
+        <p class="tag">The Art of Flawless Execution</p>
+        <h2 class="blk-title" id="m2-intro">Coordination: The Invisible Force Behind Great Training</h2>
+      </div>
+      <div class="blk-bod">
+        <p>
+          Exceptional training doesn't just happen — it is <em>made</em> to happen through meticulous,
+          proactive, and people-centered coordination. This phase is the connective tissue of a training
+          program, binding together the right people, places, technology, and materials at precisely the
+          right moment. It is, in many ways, the art of anticipating what could go wrong and ensuring
+          it doesn't.
+        </p>
+        <p>
+          A highly skilled training coordinator is part project manager, part diplomat, and part logistics
+          expert. They build bridges between senior stakeholders and frontline learners, translate the
+          vision of subject matter experts into practical learning schedules, and absorb the inevitable
+          chaos of last-minute changes so that the learner's experience remains seamless. Invest in this
+          phase, and everything downstream becomes easier.
+        </p>
+      </div>
+    </article>
+
+    <!-- MODULE 2 — Labeled Graphic -->
+    <article class="block" aria-labelledby="lg-head">
+      <div class="blk-hd">
+        <p class="tag">Interactive Diagram</p>
+        <h2 class="blk-title" id="lg-head">The Key Players in Training Coordination</h2>
+        <p class="blk-lead">Click each numbered marker to learn about the role each player has in a successful training ecosystem.</p>
+      </div>
+      <div class="blk-bod" style="padding-top: 8px;">
+        <div class="lbl-graphic-wrap"
+             id="lbl-graphic"
+             aria-label="Network diagram of key training coordination players. Click numbered markers to reveal each role.">
+
+          <!-- Background SVG network -->
+          <svg class="net-svg" viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <!-- Rings -->
+            <circle cx="430" cy="150" r="45"  fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)" stroke-width="1.5"/>
+            <circle cx="430" cy="150" r="90"  fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
+            <circle cx="430" cy="150" r="135" fill="none" stroke="rgba(255,255,255,.04)" stroke-width="1"/>
+            <!-- Spokes -->
+            <line x1="430" y1="150" x2="148" y2="64"  stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="5 4"/>
+            <line x1="430" y1="150" x2="712" y2="64"  stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="5 4"/>
+            <line x1="430" y1="150" x2="190" y2="258" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="5 4"/>
+            <line x1="430" y1="150" x2="670" y2="258" stroke="rgba(255,255,255,.14)" stroke-width="1" stroke-dasharray="5 4"/>
+            <!-- Center label -->
+            <text x="430" y="145" text-anchor="middle" fill="rgba(255,255,255,.38)" font-size="9" font-family="sans-serif" font-weight="700" letter-spacing="1.5">TRAINING</text>
+            <text x="430" y="160" text-anchor="middle" fill="rgba(255,255,255,.38)" font-size="9" font-family="sans-serif" font-weight="700" letter-spacing="1.5">ECOSYSTEM</text>
+            <!-- Node dots at spoke ends -->
+            <circle cx="148" cy="64"  r="7" fill="rgba(217,119,6,.45)"/>
+            <circle cx="712" cy="64"  r="7" fill="rgba(217,119,6,.45)"/>
+            <circle cx="190" cy="258" r="7" fill="rgba(217,119,6,.45)"/>
+            <circle cx="670" cy="258" r="7" fill="rgba(217,119,6,.45)"/>
+          </svg>
+
+          <!-- Marker 1: Stakeholder (top-left) -->
+          <div class="marker popup-dn" style="position:absolute; left:13%; top:10%;" id="m1">
+            <button class="mkr-btn"
+                    onclick="toggleMkr('m1')"
+                    aria-expanded="false"
+                    aria-controls="mp1"
+                    aria-label="Marker 1: The Stakeholder">1</button>
+            <div class="mkr-popup" id="mp1" role="tooltip">
+              <p class="pop-title">The Stakeholder</p>
+              <p class="pop-body">The senior leader or sponsor who defines the business problem, approves the budget, and holds accountability for training ROI. Effective coordination keeps stakeholders informed without overwhelming them, converting them into active program champions.</p>
+            </div>
+          </div>
+
+          <!-- Marker 2: SME (top-right) -->
+          <div class="marker popup-left" style="position:absolute; right:13%; top:10%;" id="m2">
+            <button class="mkr-btn"
+                    onclick="toggleMkr('m2')"
+                    aria-expanded="false"
+                    aria-controls="mp2"
+                    aria-label="Marker 2: The Subject Matter Expert">2</button>
+            <div class="mkr-popup" id="mp2" role="tooltip">
+              <p class="pop-title">The Subject Matter Expert (SME)</p>
+              <p class="pop-body">Holds the deep domain knowledge the training must convey. SMEs are invaluable but often time-constrained. A skilled coordinator extracts knowledge efficiently through structured interviews, manages review cycles, and protects the SME's primary responsibilities throughout the project.</p>
+            </div>
+          </div>
+
+          <!-- Marker 3: Facilitator (bottom-left) -->
+          <div class="marker popup-up" style="position:absolute; left:17%; bottom:10%;" id="m3">
+            <button class="mkr-btn"
+                    onclick="toggleMkr('m3')"
+                    aria-expanded="false"
+                    aria-controls="mp3"
+                    aria-label="Marker 3: The Facilitator">3</button>
+            <div class="mkr-popup" id="mp3" role="tooltip">
+              <p class="pop-title">The Facilitator</p>
+              <p class="pop-body">The face of the program who delivers the learning experience. Coordinators ensure facilitators receive all materials well in advance, are briefed on learner profiles, and have a detailed run-of-show document to guide every moment of the session.</p>
+            </div>
+          </div>
+
+          <!-- Marker 4: Learner (bottom-right) -->
+          <div class="marker popup-up" style="position:absolute; right:17%; bottom:10%;" id="m4">
+            <button class="mkr-btn"
+                    onclick="toggleMkr('m4')"
+                    aria-expanded="false"
+                    aria-controls="mp4"
+                    aria-label="Marker 4: The Learner">4</button>
+            <div class="mkr-popup" id="mp4" role="tooltip">
+              <p class="pop-title">The Learner</p>
+              <p class="pop-body">The ultimate client of the entire training enterprise. All coordination exists to serve the learner's experience — clear communication, logistical support, and an environment that minimizes friction. A seamless learner experience is the hallmark of invisible, expert-level coordination.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </article>
+
+    <!-- MODULE 2 — Checklist -->
+    <article class="block" aria-labelledby="chk-head">
+      <div class="blk-hd">
+        <p class="tag">Action Items</p>
+        <h2 class="blk-title" id="chk-head">Pre-Program Logistics Checklist</h2>
+        <p class="blk-lead">Click each item to mark it complete as you prepare your training program.</p>
+      </div>
+      <div class="blk-bod">
+        <ul class="chk-grid" aria-label="Pre-program logistics checklist">
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Book Venue / Reserve Virtual Platform</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Confirm Technology &amp; AV Equipment</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Print &amp; Collate Participant Materials</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Send Pre-work to All Participants</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Brief &amp; Prepare Facilitator(s)</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Confirm Catering &amp; Refreshments</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Send Calendar Invites &amp; Venue Directions</span>
+          </li>
+
+          <li class="chk-item"
+              role="checkbox"
+              aria-checked="false"
+              tabindex="0"
+              onclick="toggleChk(this)"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleChk(this)}">
+            <div class="chk-box" aria-hidden="true">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><polyline points="1.5,5.5 4.5,8.5 9.5,2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <span class="chk-text">Prepare Post-Training Survey &amp; Evaluation</span>
+          </li>
+
+        </ul>
+      </div>
+    </article>
+
+    <!-- ── MODULE 3 DIVIDER ──────────────────────────────────── -->
+    <div class="mod-divider" role="separator" aria-label="Module 3: Delivery">
+      <div class="mod-line"></div>
+      <div class="mod-pill"><span aria-hidden="true">🎤</span> Module 3: Delivery</div>
+      <div class="mod-line"></div>
+    </div>
+
+    <!-- MODULE 3 — Text Intro -->
+    <article class="block" aria-labelledby="m3-intro">
+      <div class="blk-hd">
+        <p class="tag">Creating an Unforgettable Experience</p>
+        <h2 class="blk-title" id="m3-intro">Delivery: Where Preparation Meets Performance</h2>
+      </div>
+      <div class="blk-bod">
+        <p>
+          All the meticulous work of development and coordination culminates in the moment of delivery.
+          This is where a training program lives or dies. An expert facilitator can elevate average
+          content into a transformative experience; a poor one can render even the best-designed
+          material inert. Delivery is not merely the act of presenting information — it is the dynamic,
+          responsive, human art of creating the conditions for learning to occur.
+        </p>
+        <p>
+          The best facilitators understand that their primary role is not to be an expert on stage, but
+          to be a <em>learning architect in real time</em>. They read the room, adapt their energy, ask
+          powerful questions, manage group dynamics, and bring an authentic presence that earns trust
+          and creates psychological safety. In this module we explore the key principles, practical
+          do's and don'ts, and real-world scenarios that define exceptional training delivery.
+        </p>
+      </div>
+    </article>
+
+    <!-- MODULE 3 — Flashcards -->
+    <article class="block" aria-labelledby="fc-head">
+      <div class="blk-hd">
+        <p class="tag">Flip to Reveal</p>
+        <h2 class="blk-title" id="fc-head">Facilitation Do's and Don'ts</h2>
+        <p class="blk-lead">Click each card to flip it and reveal the facilitation principle on the other side.</p>
+      </div>
+      <div class="blk-bod">
+        <div class="fc-grid" role="list" aria-label="Facilitation flashcards">
+
+          <div class="fc-wrap"
+               role="listitem"
+               tabindex="0"
+               aria-label="Flashcard: DO — click or press Enter to flip"
+               onclick="flipCard(this)"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this)}">
+            <div class="fc-inner">
+              <div class="fc-face fc-front" aria-hidden="false">
+                <p class="fc-eyebrow">Best Practice</p>
+                <p class="fc-word">DO ✓</p>
+                <p class="fc-hint">Click to reveal →</p>
+              </div>
+              <div class="fc-face fc-back" aria-hidden="true">
+                <p class="fc-back-text">Encourage active participation and create generous space for learner questions throughout the session. A two-way dialogue is always more effective than a monologue.</p>
+                <p class="fc-back-hint">Click to flip back</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fc-wrap"
+               role="listitem"
+               tabindex="0"
+               aria-label="Flashcard: DON'T — click or press Enter to flip"
+               onclick="flipCard(this)"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this)}">
+            <div class="fc-inner">
+              <div class="fc-face fc-front danger" aria-hidden="false">
+                <p class="fc-eyebrow">Avoid This</p>
+                <p class="fc-word">DON'T ✗</p>
+                <p class="fc-hint">Click to reveal →</p>
+              </div>
+              <div class="fc-face fc-back" aria-hidden="true">
+                <p class="fc-back-text">Read directly from your slides or materials. It signals a lack of mastery, kills engagement instantly, and turns learning into a passive — often painful — exercise in endurance.</p>
+                <p class="fc-back-hint">Click to flip back</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fc-wrap"
+               role="listitem"
+               tabindex="0"
+               aria-label="Flashcard: DO — click or press Enter to flip"
+               onclick="flipCard(this)"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this)}">
+            <div class="fc-inner">
+              <div class="fc-face fc-front" aria-hidden="false">
+                <p class="fc-eyebrow">Best Practice</p>
+                <p class="fc-word">DO ✓</p>
+                <p class="fc-hint">Click to reveal →</p>
+              </div>
+              <div class="fc-face fc-back" aria-hidden="true">
+                <p class="fc-back-text">Manage time proactively. Honor your agenda while remaining flexible enough to linger on content that sparks rich discussion, and willing to cut content that is not landing.</p>
+                <p class="fc-back-hint">Click to flip back</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="fc-wrap"
+               role="listitem"
+               tabindex="0"
+               aria-label="Flashcard: DON'T — click or press Enter to flip"
+               onclick="flipCard(this)"
+               onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();flipCard(this)}">
+            <div class="fc-inner">
+              <div class="fc-face fc-front danger" aria-hidden="false">
+                <p class="fc-eyebrow">Avoid This</p>
+                <p class="fc-word">DON'T ✗</p>
+                <p class="fc-hint">Click to reveal →</p>
+              </div>
+              <div class="fc-face fc-back" aria-hidden="true">
+                <p class="fc-back-text">Ignore difficult or off-topic questions. Address them with respect. Use "parking lot" lists for off-topic items, and never dismiss a learner's genuine curiosity.</p>
+                <p class="fc-back-hint">Click to flip back</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </article>
+
+    <!-- MODULE 3 — Scenario -->
+    <article class="block" aria-labelledby="sc-head">
+      <div class="blk-hd">
+        <p class="tag">Branching Scenario</p>
+        <h2 class="blk-title" id="sc-head">Navigating a Challenging Situation</h2>
+        <p class="blk-lead">Read the scenario below and select the response you believe is most effective. Think carefully — choose wisely.</p>
+      </div>
+      <div class="blk-bod" id="sc-block">
+
+        <div class="sc-scene">
+          <span class="sc-icon" aria-hidden="true">💻</span>
+          <p class="sc-badge">The Situation</p>
+          <p class="sc-text">
+            You are facilitating a virtual training session with twelve participants. One learner —
+            clearly knowledgeable and enthusiastic — has been consistently dominating the conversation
+            for the past 45 minutes, answering every question before others have a chance to contribute,
+            and not allowing other voices into the room. The group's engagement is visibly declining.
+            What do you do?
+          </p>
+        </div>
+
+        <div class="sc-choices" role="group" aria-label="Choose your response">
+
+          <button class="sc-choice"
+                  onclick="pickChoice(this,'neg')"
+                  aria-label="Choice A: Publicly ask the dominant participant to stop speaking">
+            <span class="ch-letter" aria-hidden="true">A</span>
+            <span class="ch-text">Publicly call them out and ask them to stop speaking so that other participants can contribute.</span>
+          </button>
+
+          <button class="sc-choice"
+                  onclick="pickChoice(this,'pos')"
+                  aria-label="Choice B: Acknowledge and redirect skillfully by name">
+            <span class="ch-letter" aria-hidden="true">B</span>
+            <span class="ch-text">Use their name warmly to thank them for their contribution, then immediately and directly invite a specific, quieter participant by name to share their perspective.</span>
+          </button>
+
+          <button class="sc-choice"
+                  onclick="pickChoice(this,'neu')"
+                  aria-label="Choice C: Ignore the dynamic and continue">
+            <span class="ch-letter" aria-hidden="true">C</span>
+            <span class="ch-text">Ignore the dynamic and continue facilitating, hoping the situation naturally resolves itself as the session progresses.</span>
+          </button>
+
+        </div>
+
+        <div class="sc-outcome neg" id="oc-neg" role="alert">
+          <span class="oc-icon" aria-hidden="true">❌</span>
+          <p class="oc-title">Ineffective Response</p>
+          <p class="oc-body">Public callouts create shame and defensiveness — both for the individual singled out and for the group witnessing it. This approach will likely damage psychological safety, create lasting resentment, and cause the dominant participant to shut down completely rather than become a constructive contributor. The group will feel the tension and disengage further.</p>
+        </div>
+
+        <div class="sc-outcome pos" id="oc-pos" role="alert">
+          <span class="oc-icon" aria-hidden="true">✅</span>
+          <p class="oc-title">Expert Response — Well Done!</p>
+          <p class="oc-body">This technique is a hallmark of expert facilitation. By sincerely acknowledging the enthusiastic participant's contribution, you avoid shame and defensiveness. By immediately inviting another learner by name, you redistribute the conversational floor gracefully, model inclusivity for the room, and re-engage quieter voices — all without making anyone feel targeted or excluded.</p>
+        </div>
+
+        <div class="sc-outcome neu" id="oc-neu" role="alert">
+          <span class="oc-icon" aria-hidden="true">⚠️</span>
+          <p class="oc-title">Missed Opportunity</p>
+          <p class="oc-body">Ignoring a group dynamic rarely, if ever, resolves it. Without intervention, the dominant participant is likely to continue, other learners will disengage further or grow frustrated, and the session's overall effectiveness will diminish significantly. A facilitator's core responsibility is active management of the learning environment — in real time.</p>
+        </div>
+
+        <button class="sc-reset" id="sc-rst" onclick="resetScenario()">↺ Try Again</button>
+
+      </div>
+    </article>
+
+    <!-- ── MODULE 4 DIVIDER ──────────────────────────────────── -->
+    <div class="mod-divider" role="separator" aria-label="Module 4: Assessment and Wrap-up">
+      <div class="mod-line"></div>
+      <div class="mod-pill"><span aria-hidden="true">📊</span> Module 4: Assessment &amp; Wrap-up</div>
+      <div class="mod-line"></div>
+    </div>
+
+    <!-- MODULE 4 — Knowledge Check -->
+    <article class="block" aria-labelledby="qz-head">
+      <div class="blk-hd">
+        <p class="tag">Knowledge Check</p>
+        <h2 class="blk-title" id="qz-head">Test Your Understanding</h2>
+        <p class="blk-lead">Answer the questions below to confirm your comprehension. Immediate feedback is provided after each selection.</p>
+      </div>
+      <div class="blk-bod">
+
+        <!-- Question 1 -->
+        <div class="quiz-q" id="q1">
+          <p class="q-num">Question 1 of 2</p>
+          <p class="q-text" id="q1t">Which of the following is the <strong>first step</strong> in the ADDIE instructional design model?</p>
+          <div class="q-opts" role="radiogroup" aria-labelledby="q1t">
+            <div class="q-opt" onclick="checkQ(this,'q1',false)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q1',false)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">Design</span>
+            </div>
+            <div class="q-opt" onclick="checkQ(this,'q1',false)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q1',false)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">Development</span>
+            </div>
+            <div class="q-opt" onclick="checkQ(this,'q1',true)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q1',true)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">Analysis</span>
+            </div>
+            <div class="q-opt" onclick="checkQ(this,'q1',false)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q1',false)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">Implementation</span>
+            </div>
+          </div>
+          <div class="q-fb" id="q1fb" role="alert"></div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="quiz-q" id="q2">
+          <p class="q-num">Question 2 of 2</p>
+          <p class="q-text" id="q2t"><strong>True or False:</strong> A good facilitator should never deviate from their lesson plan, regardless of group dynamics or emerging learner needs.</p>
+          <div class="q-opts" role="radiogroup" aria-labelledby="q2t">
+            <div class="q-opt" onclick="checkQ(this,'q2',false)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q2',false)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">True</span>
+            </div>
+            <div class="q-opt" onclick="checkQ(this,'q2',true)" role="radio" aria-checked="false" tabindex="0" onkeydown="if(event.key==='Enter')checkQ(this,'q2',true)">
+              <div class="q-radio"><div class="q-dot"></div></div>
+              <span class="q-label">False</span>
+            </div>
+          </div>
+          <div class="q-fb" id="q2fb" role="alert"></div>
+        </div>
+
+      </div>
+    </article>
+
+    <!-- MODULE 4 — Congratulations -->
+    <section class="congrats-blk" aria-labelledby="cong-h2">
+      <div class="congrats-inner">
+        <div class="trophy" aria-hidden="true">🏆</div>
+        <h2 class="congrats-h2" id="cong-h2">Congratulations!</h2>
+        <p class="congrats-p">
+          You have successfully completed <strong>High-Level Training Mastery</strong>. Throughout
+          this course you explored the full spectrum of what it takes to design, coordinate, and
+          deliver exceptional training programs. From rigorous needs analysis and the ADDIE
+          framework, to the choreography of flawless logistics, to the human art of facilitation —
+          you now possess a comprehensive, systems-level view of the training profession.
+          <br><br>
+          Carry these principles not merely as a framework, but as a living philosophy. Every program
+          you build is an opportunity to change how someone thinks, acts, and contributes. That is
+          the true power — and privilege — of the training profession.
+        </p>
+        <button class="btn-cert" onclick="getCertificate()" aria-label="Download your certificate of completion">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download Your Certificate of Completion
+        </button>
+      </div>
+    </section>
+
+  </main><!-- /course-wrap -->
+
+  <!-- =========================================================
+       JAVASCRIPT
+  ========================================================= -->
+  <script>
+    'use strict';
+
+    /* ── PROGRESS BAR ─────────────────────────────────────── */
+    (function () {
+      var fill  = document.getElementById('prog-fill');
+      var label = document.getElementById('pct-label');
+      var track = document.getElementById('prog-track');
+
+      function update() {
+        var scrolled = window.scrollY || document.documentElement.scrollTop;
+        var total    = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        var pct      = total > 0 ? Math.min(100, Math.round((scrolled / total) * 100)) : 0;
+        fill.style.width = pct + '%';
+        label.textContent = pct + '%';
+        track.setAttribute('aria-valuenow', pct);
+      }
+
+      window.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', update, { passive: true });
+      update();
+    }());
+
+
+    /* ── ACCORDION ────────────────────────────────────────── */
+    document.querySelectorAll('.acc-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var item   = btn.closest('.acc-item');
+        var panel  = document.getElementById(btn.getAttribute('aria-controls'));
+        var isOpen = item.classList.contains('open');
+
+        // close all
+        document.querySelectorAll('.acc-item.open').forEach(function (openItem) {
+          openItem.classList.remove('open');
+          openItem.querySelector('.acc-btn').setAttribute('aria-expanded', 'false');
+          var p = openItem.querySelector('.acc-panel');
+          if (p) p.style.maxHeight = null;
+        });
+
+        // open this one if it was closed
+        if (!isOpen) {
+          item.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+          panel.style.maxHeight = panel.scrollHeight + 'px';
+        }
+      });
+    });
+
+
+    /* ── LABELED GRAPHIC MARKERS ──────────────────────────── */
+    function toggleMkr(id) {
+      var el     = document.getElementById(id);
+      var btn    = el.querySelector('.mkr-btn');
+      var isOpen = el.classList.contains('active');
+
+      // close all
+      document.querySelectorAll('.marker.active').forEach(function (m) {
+        m.classList.remove('active');
+        m.querySelector('.mkr-btn').setAttribute('aria-expanded', 'false');
+      });
+
+      if (!isOpen) {
+        el.classList.add('active');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+    }
+
+    // close on outside click
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.marker')) {
+        document.querySelectorAll('.marker.active').forEach(function (m) {
+          m.classList.remove('active');
+          m.querySelector('.mkr-btn').setAttribute('aria-expanded', 'false');
+        });
+      }
+    });
+
+
+    /* ── CHECKLIST ────────────────────────────────────────── */
+    function toggleChk(el) {
+      el.classList.toggle('done');
+      el.setAttribute('aria-checked', el.classList.contains('done') ? 'true' : 'false');
+    }
+
+
+    /* ── FLASHCARDS ───────────────────────────────────────── */
+    function flipCard(wrap) {
+      var flipped = wrap.classList.toggle('flipped');
+      wrap.setAttribute('aria-label',
+        (flipped ? 'Flipped card — click to flip back' : wrap.getAttribute('aria-label').replace('Flipped card — click to flip back', ''))
+          .replace('click or press Enter to flip', flipped ? 'click to flip back' : 'click or press Enter to flip')
+      );
+      var front = wrap.querySelector('.fc-front');
+      var back  = wrap.querySelector('.fc-back');
+      if (front) front.setAttribute('aria-hidden', flipped ? 'true' : 'false');
+      if (back)  back.setAttribute('aria-hidden',  flipped ? 'false' : 'true');
+    }
+
+    // init back faces as hidden
+    document.querySelectorAll('.fc-back').forEach(function (b) {
+      b.setAttribute('aria-hidden', 'true');
+    });
+
+
+    /* ── SCENARIO ─────────────────────────────────────────── */
+    function pickChoice(btn, outcome) {
+      // lock all buttons
+      document.querySelectorAll('.sc-choice').forEach(function (b) {
+        b.disabled = true;
+        b.style.opacity  = '0.45';
+        b.style.cursor   = 'default';
+        b.style.pointerEvents = 'none';
+      });
+
+      // highlight selected button
+      var colors = {
+        pos: { border: '#059669', bg: '#ECFDF5' },
+        neg: { border: '#DC2626', bg: '#FEF2F2' },
+        neu: { border: '#D97706', bg: '#FFFBEB' }
+      };
+      btn.style.opacity      = '1';
+      btn.style.borderColor  = colors[outcome].border;
+      btn.style.background   = colors[outcome].bg;
+      btn.style.pointerEvents = 'none';
+
+      // show outcome
+      var oc = document.getElementById('oc-' + outcome);
+      if (oc) {
+        oc.style.display = 'block';
+        setTimeout(function () {
+          oc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 60);
+      }
+
+      // show reset
+      document.getElementById('sc-rst').style.display = 'inline-block';
+    }
+
+    function resetScenario() {
+      document.querySelectorAll('.sc-choice').forEach(function (b) {
+        b.disabled        = false;
+        b.style.opacity   = '';
+        b.style.cursor    = '';
+        b.style.borderColor  = '';
+        b.style.background   = '';
+        b.style.pointerEvents = '';
+      });
+      ['oc-pos', 'oc-neg', 'oc-neu'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      document.getElementById('sc-rst').style.display = 'none';
+    }
+
+
+    /* ── QUIZ ─────────────────────────────────────────────── */
+    var answered = {};
+
+    var correctLabels = { q1: 'Analysis', q2: 'False' };
+    var feedbackText = {
+      q1: {
+        ok:  '✓ Correct! The ADDIE model always begins with Analysis — understanding the problem before designing any solution.',
+        err: '✗ Not quite. The correct answer is "Analysis." The ADDIE model always begins with a thorough Analysis phase.'
+      },
+      q2: {
+        ok:  '✓ Correct! Skilled facilitators must remain adaptive, reading the room and adjusting their plan to serve real-time learner needs.',
+        err: '✗ Not quite. The answer is "False." Rigid adherence to a plan, regardless of what is happening in the room, is a hallmark of a novice facilitator, not an expert one.'
+      }
+    };
+
+    function checkQ(opt, qId, isCorrect) {
+      if (answered[qId]) return;
+      answered[qId] = true;
+
+      var qEl = document.getElementById(qId);
+      var fb  = document.getElementById(qId + 'fb');
+
+      // lock all options in this question
+      qEl.querySelectorAll('.q-opt').forEach(function (o) {
+        o.style.cursor        = 'default';
+        o.style.pointerEvents = 'none';
+        o.setAttribute('data-locked', 'true');
+        o.setAttribute('aria-disabled', 'true');
+        // reveal the correct answer
+        var lbl = o.querySelector('.q-label');
+        if (lbl && lbl.textContent.trim() === correctLabels[qId]) {
+          o.classList.add('q-correct');
+        }
+      });
+
+      if (isCorrect) {
+        opt.classList.add('q-correct');
+        opt.setAttribute('aria-checked', 'true');
+        fb.textContent = feedbackText[qId].ok;
+        fb.className   = 'q-fb ok';
+      } else {
+        opt.classList.add('q-wrong');
+        opt.setAttribute('aria-checked', 'true');
+        fb.textContent = feedbackText[qId].err;
+        fb.className   = 'q-fb err';
+      }
+    }
+
+
+    /* ── CERTIFICATE ──────────────────────────────────────── */
+    function getCertificate() {
+      alert(
+        '🏆 Congratulations!\n\n' +
+        'In a live deployment, your personalised Certificate of Completion would be ' +
+        'generated and downloaded here. This placeholder confirms the feature is wired ' +
+        'and ready for integration with your LMS or certificate generation service.'
+      );
+    }
+  </script>
+
+</body>
+</html>
