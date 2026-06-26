@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>FF Room — Live Polls by FFAcademy</title>
+<title>Pulse — Live Learning Tools</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
@@ -422,12 +422,12 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
 
 <!-- ════════════ HOME ════════════ -->
 <div class="view active" id="vh">
-  <div class="logo">FF ROOM</div>
-  <div class="logo-sub">POWERED BY FFACADEMY</div>
-  <p class="home-desc">Live polls, This-or-That, and Mentor Meters — all on your phone.</p>
+  <div class="logo">PULSE</div>
+  <div class="logo-sub">LIVE LEARNING TOOLS</div>
+  <p class="home-desc">Real-time polls, check-ins, and knowledge checks — right on every phone in the room.</p>
 
   <div class="home-actions">
-    <button class="btn btn-yellow" onclick="hostClick()">🎮 Host a Room</button>
+    <button class="btn btn-yellow" onclick="hostClick()">🎯 Host a Session</button>
     <div class="or-div">or join with a code</div>
     <input class="code-inp" id="h-code" maxlength="4" placeholder="ENTER CODE"
       oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
@@ -437,13 +437,13 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
   </div>
 
   <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:.8rem">
-    <a href="/" style="color:var(--muted);text-decoration:none">← FFAcademy Home</a>
+    <a href="/" style="color:var(--muted);text-decoration:none">← Home</a>
   </div>
 </div>
 
 <!-- ════════════ PLAYER: NAME ════════════ -->
 <div class="view" id="vpn">
-  <div class="display" style="font-size:1.4rem;letter-spacing:.15em;color:var(--muted)">JOINING ROOM</div>
+  <div class="display" style="font-size:1.4rem;letter-spacing:.15em;color:var(--muted)">JOINING SESSION</div>
   <div class="bigcode" id="pn-code">----</div>
   <input class="inp" id="pn-name" maxlength="20" placeholder="Pick a nickname…"
     style="text-align:center;font-size:1.15rem;max-width:320px;width:100%"
@@ -460,10 +460,10 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <div class="p-code" id="pl-code">––––</div>
   </div>
   <div class="wait-wrap">
-    <div class="wait-icon">🏈</div>
-    <div class="wait-title">Waiting for Host...</div>
-    <p class="muted small">Get ready! The game starts soon.</p>
-    <div class="live"><span class="dot"></span>You're in the room</div>
+    <div class="wait-icon">✏️</div>
+    <div class="wait-title">Session Starting Soon...</div>
+    <p class="muted small">Hold tight — the facilitator will launch shortly.</p>
+    <div class="live"><span class="dot"></span>You're connected</div>
   </div>
 </div>
 
@@ -520,9 +520,9 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
   </div>
   <div class="ans-wrap">
     <div class="ans-icon">✅</div>
-    <div class="display" style="font-size:2.2rem">Locked In!</div>
+    <div class="display" style="font-size:2.2rem">Response Submitted!</div>
     <div class="ans-choice" id="pa-choice">Your answer</div>
-    <p class="muted small">Waiting for the host to reveal…</p>
+    <p class="muted small">Waiting for the facilitator to reveal results…</p>
     <div class="spin" style="margin:.5rem auto"></div>
   </div>
 </div>
@@ -537,7 +537,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <div style="font-size:2.5rem" id="pr-icon">📊</div>
     <div class="display" style="font-size:1.4rem;letter-spacing:.1em;color:var(--muted)">RESULTS</div>
     <div id="pr-content" style="width:100%;max-width:400px"></div>
-    <p class="muted small" style="margin-top:.5rem">Waiting for next question…</p>
+    <p class="muted small" style="margin-top:.5rem">Waiting for the next prompt…</p>
   </div>
 </div>
 
@@ -547,7 +547,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <div class="display" style="font-size:.85rem;letter-spacing:.2em;color:var(--muted)">ROOM CODE</div>
     <div class="hl-code" id="hl-code">----</div>
     <div class="hl-url" id="hl-url">ffacademy.us.com/poll</div>
-    <div class="pc"><span class="dot"></span> <span id="hl-pc">0</span> players in room</div>
+    <div class="pc"><span class="dot"></span> <span id="hl-pc">0</span> participants joined</div>
   </div>
 
   <div class="lobby-grid">
@@ -563,8 +563,8 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
         </div>
       </div>
       <hr class="div">
-      <button class="btn btn-yellow" onclick="startGame()">🚀 Start Game</button>
-      <button class="btn btn-ghost btn-sm" onclick="endRoom()">End Room</button>
+      <button class="btn btn-yellow" onclick="startGame()">🚀 Start Session</button>
+      <button class="btn btn-ghost btn-sm" onclick="endRoom()">End Session</button>
     </div>
 
     <!-- Right panel: queue -->
@@ -672,22 +672,33 @@ const S = {
 
 /* ── PRESETS ── */
 const PRESETS = [
-  { t:'this-or-that', tx:'Run or Pass?',                  opts:['Run 🏃','Pass 🏈'] },
-  { t:'this-or-that', tx:'Consistency or Upside?',         opts:['Consistency 📈','Upside 🚀'] },
-  { t:'this-or-that', tx:'Safe floor or ceiling play?',    opts:['Safe Floor 🛡️','Ceiling Play 💣'] },
-  { t:'this-or-that', tx:'Start studs or stream matchup?', opts:['Always Start Studs','Stream for Matchup'] },
-  { t:'this-or-that', tx:'Load up RBs or Zero RB?',        opts:['Load Up RBs','Zero RB Strategy'] },
-  { t:'this-or-that', tx:'Trade for a star or stack depth?',opts:['Trade for a Star','Stack the Depth'] },
-  { t:'meter', tx:'How confident are you in your starting lineup?', lo:'Not at all', hi:'Very Confident' },
-  { t:'meter', tx:'How important are bye weeks when drafting?',     lo:"Doesn't matter", hi:'Very Important' },
-  { t:'meter', tx:'How much does coaching staff affect your picks?', lo:'Not much', hi:'A lot' },
-  { t:'meter', tx:'How confident are you reading defensive matchups?', lo:'Still Learning', hi:'Expert Level' },
-  { t:'meter', tx:'Rate today\'s session overall!', lo:'Needs Work', hi:'Excellent' },
-  { t:'poll', tx:'Which position wins championships?',    opts:['QB','RB','WR','TE'] },
-  { t:'poll', tx:'Most important stat for WRs?',          opts:['Targets','Air Yards','Snap %','Catch Rate'] },
-  { t:'poll', tx:'Best waiver wire strategy?',            opts:['Stream QBs','Handcuff RBs','Ride Schedule','Trending Players'] },
-  { t:'poll', tx:'Preferred draft strategy?',             opts:['Zero RB','Hero RB','Best Available','Position Scarcity'] },
-  { t:'poll', tx:'Biggest factor in fantasy success?',    opts:['Draft Prep','In-Season Moves','Schedule Luck','Injury Luck'] },
+  // ── This or That ──
+  { t:'this-or-that', tx:'Theory first or Hands-on first?',          opts:['Theory First 📚','Hands-On First 🛠️'] },
+  { t:'this-or-that', tx:'Solo focus or Group collaboration?',        opts:['Solo Focus 🎯','Group Work 👥'] },
+  { t:'this-or-that', tx:'Learn by doing or Learn by watching?',      opts:['Learn by Doing 🔨','Learn by Watching 👀'] },
+  { t:'this-or-that', tx:'Structured curriculum or Self-paced?',      opts:['Structured Path 🗺️','Self-Paced 🕐'] },
+  { t:'this-or-that', tx:'In-person or Remote training?',             opts:['In-Person 🏢','Remote 💻'] },
+  { t:'this-or-that', tx:'Hard skills or Soft skills focus?',         opts:['Hard Skills ⚙️','Soft Skills 🤝'] },
+  { t:'this-or-that', tx:'Apply it now or Understand it deeply first?',opts:['Apply Right Away ⚡','Understand First 🧠'] },
+  { t:'this-or-that', tx:'Short bursts or Deep focus sessions?',      opts:['Short Bursts ⚡','Deep Focus 🔬'] },
+  // ── Mentor Meter ──
+  { t:'meter', tx:'How confident are you applying today\'s concepts?', lo:'Not Yet', hi:'Completely Confident' },
+  { t:'meter', tx:'Rate your understanding of this topic before today.', lo:'Beginner', hi:'Expert' },
+  { t:'meter', tx:'How engaged were you during today\'s session?',     lo:'Checked Out', hi:'Fully Engaged' },
+  { t:'meter', tx:'How relevant is this content to your daily work?',  lo:'Not Relevant', hi:'Extremely Relevant' },
+  { t:'meter', tx:'How likely are you to apply what you learned?',     lo:'Unlikely', hi:'Starting Today' },
+  { t:'meter', tx:'How supported do you feel in your growth here?',    lo:'Unsupported', hi:'Fully Supported' },
+  { t:'meter', tx:'Rate your energy level right now.',                 lo:'Drained 🪫', hi:'Energized ⚡' },
+  { t:'meter', tx:'How well did this session meet your expectations?', lo:'Missed the Mark', hi:'Exceeded Them' },
+  // ── Poll ──
+  { t:'poll', tx:'How do you learn best?',                opts:['Watching & Listening','Reading','Doing & Practice','Teaching Others'] },
+  { t:'poll', tx:'What\'s your biggest learning barrier?', opts:['Not enough time','Staying motivated','Applying concepts','Getting support'] },
+  { t:'poll', tx:'Which skill do you most want to develop?', opts:['Leadership','Technical Skills','Communication','Problem-Solving'] },
+  { t:'poll', tx:'What motivates you most at work?',       opts:['Recognition','Growth','Making an Impact','Autonomy'] },
+  { t:'poll', tx:'How do you prefer to receive feedback?', opts:['In the moment','Regular check-ins','Written reviews','Peer feedback'] },
+  { t:'poll', tx:'What makes training actually stick?',    opts:['Repetition','Real examples','Accountability','Immediate practice'] },
+  { t:'poll', tx:'Preferred learning format?',            opts:['Live Workshop','E-Learning','On-the-Job','1-on-1 Coaching'] },
+  { t:'poll', tx:'Biggest challenge with new skills?',    opts:['Time to practice','Lack of support','Unclear expectations','Low confidence'] },
 ];
 
 /* ── HELPERS ── */
@@ -938,7 +949,7 @@ window.toLobby = async function() {
 };
 
 window.endRoom = async function() {
-  if (!confirm('End this room? All players will be disconnected.')) return;
+  if (!confirm('End this session? All participants will be disconnected.')) return;
   unsub();
   if (S.room) await updateDoc(doc(db,'rooms',S.room), { status:'ended' });
   S.room = S.mode = null; S.queue = [];
@@ -993,7 +1004,7 @@ function playerSubscribe() {
       if (!sn.exists()) return;
       const d = sn.data();
 
-      if (d.status === 'ended') { unsub(); toast('Host ended the room.'); showV('vh'); return; }
+      if (d.status === 'ended') { unsub(); toast('The facilitator ended the session.'); showV('vh'); return; }
 
       if (d.status === 'lobby') {
         S.myAns = null;
