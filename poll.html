@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>FF Room — Live Polls by FFAcademy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#0f0f1a;
+  --surface:#1a1a2e;
+  --card:#1e2040;
+  --border:#32325c;
+  --text:#f0f0ff;
+  --muted:#7a7aaa;
+  --primary:#7c6ff7;
+  --cyan:#00d4ff;
+  --yellow:#ffd60a;
+  --orange:#ff6b35;
+  --green:#39d353;
+  --red:#ff4757;
+  --pink:#ff6b9d;
+  --purple:#c44fff;
+  --oa:#00d4ff;
+  --ob:#ff6b35;
+  --oc:#39d353;
+  --od:#c44fff;
+}
+
+html,body{height:100%;overflow:hidden}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── VIEWS ── */
+.view{display:none;flex-direction:column;height:100%;overflow-y:auto;overflow-x:hidden}
+.view.active{display:flex}
+
+/* ── TYPE ── */
+.display{font-family:'Bebas Neue',sans-serif;letter-spacing:.05em}
+
+/* ── BUTTONS ── */
+.btn{
+  border:none;border-radius:14px;cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:.08em;
+  padding:.85rem 1.5rem;
+  transition:transform .12s,box-shadow .2s,opacity .2s;
+  display:flex;align-items:center;justify-content:center;gap:.5rem;
+  width:100%;text-decoration:none;line-height:1;
+}
+.btn:active{transform:scale(.96)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 20px rgba(124,111,247,.35)}
+.btn-primary:hover{box-shadow:0 6px 30px rgba(124,111,247,.55)}
+.btn-yellow{background:var(--yellow);color:#111;box-shadow:0 4px 20px rgba(255,214,10,.25)}
+.btn-yellow:hover{box-shadow:0 6px 28px rgba(255,214,10,.45)}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--primary);color:var(--text)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{font-size:1rem;padding:.5rem 1rem;width:auto;border-radius:10px}
+.btn-icon{width:auto;padding:.6rem .9rem;font-size:1.1rem}
+
+/* ── INPUTS ── */
+.inp{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:1rem;
+  padding:.75rem 1rem;outline:none;transition:border-color .2s;width:100%;
+}
+.inp:focus{border-color:var(--primary)}
+.inp::placeholder{color:var(--muted)}
+
+/* ── HOME ── */
+#vh{
+  align-items:center;justify-content:center;
+  padding:2rem 1.5rem;gap:2rem;text-align:center;
+  background:radial-gradient(ellipse at 50% -5%,#2b1b65 0%,var(--bg) 65%);
+}
+.logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.5rem,15vw,7rem);
+  color:var(--yellow);
+  text-shadow:0 0 50px rgba(255,214,10,.45);
+  line-height:1;
+}
+.logo-sub{
+  font-family:'Bebas Neue',sans-serif;font-size:.9rem;
+  letter-spacing:.25em;color:var(--cyan);margin-top:.2rem;
+}
+.home-desc{font-size:clamp(.9rem,2.5vw,1.1rem);color:var(--muted);max-width:360px}
+.home-actions{display:flex;flex-direction:column;gap:1rem;width:100%;max-width:340px}
+.or-div{
+  display:flex;align-items:center;gap:.75rem;
+  color:var(--muted);font-size:.8rem;width:100%;
+}
+.or-div::before,.or-div::after{content:'';flex:1;border-top:1px solid var(--border)}
+.code-inp{
+  background:var(--card);border:2px solid var(--border);border-radius:14px;
+  color:var(--yellow);font-family:'Bebas Neue',sans-serif;
+  font-size:2rem;letter-spacing:.3em;text-align:center;text-transform:uppercase;
+  padding:.7rem 1rem;outline:none;transition:border-color .2s;width:100%;
+}
+.code-inp:focus{border-color:var(--primary)}
+.code-inp::placeholder{color:var(--muted);font-size:1.1rem;letter-spacing:.1em}
+.err{color:var(--red);font-size:.85rem;font-weight:600;text-align:center;min-height:1.2em}
+
+/* ── PLAYER NAME ── */
+#vpn{align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center;
+  background:radial-gradient(ellipse at 50% -5%,#2b1b65 0%,var(--bg) 65%)}
+.bigcode{
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(4rem,18vw,7rem);
+  letter-spacing:.25em;color:var(--yellow);
+  text-shadow:0 0 40px rgba(255,214,10,.4);line-height:1;
+}
+
+/* ── PLAYER LOBBY ── */
+#vpl{padding:1.5rem;gap:1.25rem}
+.p-header{display:flex;justify-content:space-between;align-items:center}
+.p-name{font-weight:700;font-size:.9rem;color:var(--cyan)}
+.p-code{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;letter-spacing:.12em;color:var(--yellow)}
+.wait-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1.5rem}
+.wait-icon{font-size:4rem;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.wait-title{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--muted)}
+.live{display:flex;align-items:center;gap:.5rem;color:var(--green);font-size:.9rem;font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── PLAYER QUESTION ── */
+#vpq{padding:1.5rem;gap:1rem}
+.pq-text{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(1.7rem,5.5vw,2.8rem);
+  line-height:1.15;text-align:center;
+}
+
+/* TOT buttons */
+.tot-wrap{display:flex;flex-direction:column;gap:.85rem;flex:1}
+.tot-btn{
+  flex:1;border:none;border-radius:18px;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(1.8rem,7vw,2.4rem);
+  cursor:pointer;transition:transform .12s,box-shadow .2s;
+  min-height:90px;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:1rem;line-height:1.1;
+}
+.tot-btn:active{transform:scale(.95)}
+.btn-oa{background:var(--oa);color:#0a0a18;box-shadow:0 8px 28px rgba(0,212,255,.3)}
+.btn-ob{background:var(--ob);color:#0a0a18;box-shadow:0 8px 28px rgba(255,107,53,.3)}
+
+/* Poll buttons */
+.poll-wrap{display:flex;flex-direction:column;gap:.65rem;flex:1}
+.poll-btn{
+  border:none;border-radius:14px;
+  font-family:'Bebas Neue',sans-serif;font-size:1.5rem;
+  cursor:pointer;transition:transform .12s,box-shadow .2s;
+  padding:1rem 1.25rem;text-align:left;
+  display:flex;align-items:center;gap:.75rem;line-height:1.1;
+}
+.poll-btn:active{transform:scale(.97)}
+.poll-key{
+  background:rgba(0,0,0,.3);border-radius:8px;
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:1rem;
+}
+.btn-oc{background:var(--oc);color:#0a0a18}
+.btn-od{background:var(--od);color:#fff}
+
+/* Meter */
+.meter-wrap{flex:1;display:flex;flex-direction:column;gap:1.25rem;align-items:center;justify-content:center}
+.meter-val{
+  font-family:'Bebas Neue',sans-serif;font-size:8rem;line-height:1;
+  color:var(--yellow);text-shadow:0 0 40px rgba(255,214,10,.4);
+}
+.range{
+  -webkit-appearance:none;width:100%;height:14px;
+  border-radius:7px;background:var(--surface);border:1.5px solid var(--border);outline:none;
+}
+.range::-webkit-slider-thumb{
+  -webkit-appearance:none;width:42px;height:42px;border-radius:50%;
+  background:var(--yellow);cursor:pointer;box-shadow:0 0 20px rgba(255,214,10,.45);
+}
+.meter-labels{display:flex;justify-content:space-between;width:100%;color:var(--muted);font-size:.85rem;font-weight:600}
+
+/* ── PLAYER ANSWERED ── */
+#vpa{padding:1.5rem}
+.ans-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1rem}
+.ans-icon{font-size:5rem;animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+.ans-choice{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--green)}
+
+/* ── PLAYER REVEAL ── */
+#vpr{padding:1.5rem;gap:1rem}
+.reveal-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:1rem}
+
+/* ── HOST LOBBY ── */
+#vhl{
+  padding:1.5rem;gap:1.25rem;
+  background:radial-gradient(ellipse at 50% -10%,#2b1b65 0%,var(--bg) 60%);
+  overflow-y:auto;
+}
+.hl-head{display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.hl-code{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(4.5rem,18vw,9rem);
+  letter-spacing:.25em;color:var(--yellow);
+  text-shadow:0 0 50px rgba(255,214,10,.45);line-height:1;
+}
+.hl-url{font-size:.9rem;color:var(--cyan);font-weight:600}
+.pc{font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--green);letter-spacing:.05em}
+.lobby-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+@media(max-width:680px){.lobby-grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.25rem}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;color:var(--muted);margin-bottom:.6rem}
+.player-grid{display:flex;flex-wrap:wrap;gap:.6rem}
+.chip{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:50px;
+  padding:.35rem .9rem;font-size:.85rem;font-weight:600;
+  display:flex;align-items:center;gap:.45rem;
+  animation:popin .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popin{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.cdot{width:8px;height:8px;border-radius:50%}
+.qr-img{border-radius:10px;background:#fff;padding:6px;width:100px;height:100px;flex-shrink:0}
+.qr-img img{width:100%;height:100%}
+
+/* Queue */
+.q-queue{display:flex;flex-direction:column;gap:.55rem;max-height:320px;overflow-y:auto}
+.q-item{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:12px;
+  padding:.65rem .9rem;display:flex;align-items:center;gap:.65rem;cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.q-item:hover{border-color:var(--primary);background:rgba(124,111,247,.07)}
+.tbadge{
+  font-family:'Bebas Neue',sans-serif;font-size:.7rem;letter-spacing:.04em;
+  padding:.15rem .45rem;border-radius:6px;white-space:nowrap;flex-shrink:0;
+}
+.tb-tot{background:rgba(0,212,255,.18);color:var(--cyan)}
+.tb-meter{background:rgba(255,214,10,.18);color:var(--yellow)}
+.tb-poll{background:rgba(196,79,255,.18);color:var(--purple)}
+.q-text{flex:1;font-size:.82rem;line-height:1.3;color:var(--text)}
+.rm-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;padding:0 .2rem;flex-shrink:0}
+.rm-btn:hover{color:var(--red)}
+
+/* ── HOST QUESTION ── */
+#vhq{padding:0;overflow-y:auto}
+.hq-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.q-counter{font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.06em;color:var(--muted)}
+.ans-count{font-family:'Bebas Neue',sans-serif;font-size:1.5rem}
+.ans-count span{color:var(--green)}
+.stage{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2rem 1.5rem;gap:1.5rem;text-align:center;
+}
+.q-type-lbl{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:.15em;color:var(--cyan)}
+.q-text-big{font-family:'Bebas Neue',sans-serif;font-size:clamp(2rem,5vw,3.8rem);line-height:1.1;max-width:700px}
+.tot-host{display:grid;grid-template-columns:1fr 1fr;gap:1rem;width:100%;max-width:600px}
+.tot-opt{
+  border-radius:16px;padding:2rem 1rem;text-align:center;
+  font-family:'Bebas Neue',sans-serif;font-size:1.8rem;line-height:1.15;
+}
+.hopt-a{background:rgba(0,212,255,.12);border:3px solid var(--oa);color:var(--oa)}
+.hopt-b{background:rgba(255,107,53,.12);border:3px solid var(--ob);color:var(--ob)}
+.hopt-c{background:rgba(57,211,83,.12);border:3px solid var(--oc);color:var(--oc)}
+.hopt-d{background:rgba(196,79,255,.12);border:3px solid var(--od);color:var(--od)}
+.poll-host{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;width:100%;max-width:600px}
+.meter-host{
+  font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:var(--yellow);
+  display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap;
+}
+.ctrl-bar{display:flex;gap:.75rem;padding:1.25rem 1.5rem;flex-shrink:0;flex-wrap:wrap}
+.ctrl-bar .btn{width:auto;flex:1;min-width:120px}
+
+/* ── HOST REVEAL ── */
+#vhrev{overflow-y:auto}
+.hr-bar{
+  display:flex;align-items:center;gap:1rem;
+  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+  background:var(--surface);flex-shrink:0;
+}
+.hr-lbl{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:.08em;color:var(--muted)}
+.reveal-stage{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:1.5rem;gap:1.25rem;text-align:center;
+}
+.rev-q{font-family:'Bebas Neue',sans-serif;font-size:clamp(1.6rem,4vw,2.8rem);line-height:1.1;max-width:680px}
+.bar-rows{display:flex;flex-direction:column;gap:.75rem;width:100%;max-width:580px}
+.bar-row{display:flex;flex-direction:column;gap:.3rem}
+.bar-meta{display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;color:var(--text)}
+.bar-meta span:last-child{color:var(--muted)}
+.bar-track{height:34px;background:var(--surface);border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.bar-fill{height:100%;border-radius:8px;transition:width .9s cubic-bezier(.34,1.3,.64,1);width:0;display:flex;align-items:center;padding-left:.6rem;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(0,0,0,.8)}
+.meter-rev{display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.meter-avg-big{font-family:'Bebas Neue',sans-serif;font-size:7rem;line-height:1;color:var(--yellow);text-shadow:0 0 40px rgba(255,214,10,.35)}
+.dist-bars{display:flex;gap:.35rem;align-items:flex-end;height:90px;margin-top:.5rem}
+.db{border-radius:4px 4px 0 0;background:var(--primary);transition:height .7s ease;min-height:4px}
+
+/* ── MODAL ── */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);
+  z-index:1000;align-items:flex-end;justify-content:center;padding:0;
+}
+.overlay.open{display:flex}
+@media(min-width:520px){.overlay{align-items:center;padding:1rem}}
+.modal{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px 20px 0 0;
+  padding:1.5rem;width:100%;max-width:500px;
+  max-height:90vh;overflow-y:auto;
+  display:flex;flex-direction:column;gap:1rem;
+}
+@media(min-width:520px){.modal{border-radius:20px}}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:.04em}
+.form-row{display:flex;flex-direction:column;gap:.35rem}
+.form-lbl{font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.tabs{display:flex;gap:.45rem}
+.tab{
+  flex:1;padding:.55rem .3rem;border-radius:10px;border:1.5px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;
+  font-family:'Bebas Neue',sans-serif;font-size:.95rem;letter-spacing:.04em;
+  transition:all .2s;text-align:center;
+}
+.tab.on{border-color:var(--primary);background:rgba(124,111,247,.14);color:var(--text)}
+.preset-list{display:flex;flex-direction:column;gap:.4rem;max-height:260px;overflow-y:auto;margin-top:.5rem}
+.pr-item{
+  background:var(--surface);border:1.5px solid var(--border);border-radius:10px;
+  padding:.6rem .85rem;cursor:pointer;display:flex;align-items:flex-start;gap:.6rem;
+  transition:border-color .2s,background .2s;
+}
+.pr-item:hover{border-color:var(--primary);background:rgba(124,111,247,.07)}
+.pr-text{flex:1;font-size:.85rem;line-height:1.35}
+.opts-list{display:flex;flex-direction:column;gap:.4rem}
+.opt-row{display:flex;gap:.4rem;align-items:center}
+.opt-key{font-family:'Bebas Neue',sans-serif;color:var(--muted);width:18px;text-align:center;flex-shrink:0}
+
+/* ── UTILS ── */
+.flex{display:flex}.col{flex-direction:column}.center{align-items:center;justify-content:center}
+.between{justify-content:space-between}.gap-s{gap:.5rem}.gap-m{gap:.9rem}.gap-l{gap:1.25rem}
+.grow{flex:1}.w100{width:100%}.tx-c{text-align:center}.small{font-size:.82rem}
+.muted{color:var(--muted)}.bold{font-weight:700}
+hr.div{border:none;border-top:1px solid var(--border);margin:0}
+.spin{width:30px;height:30px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+#toast{
+  position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:.65rem 1.4rem;font-size:.88rem;font-weight:600;
+  z-index:9999;transition:transform .3s,opacity .3s;white-space:nowrap;pointer-events:none;opacity:0;
+}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:9998;overflow:hidden}
+.cp{position:absolute;top:-16px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+<!-- CONFETTI -->
+<div id="confetti"></div>
+
+<!-- ════════════ ADD QUESTION MODAL ════════════ -->
+<div class="overlay" id="mo-add">
+  <div class="modal">
+    <div class="flex between" style="align-items:center">
+      <div class="modal-title">Add Question</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-lbl">Question Type</div>
+      <div class="tabs">
+        <button class="tab on" data-t="this-or-that" onclick="setType(this,'this-or-that')">This or That</button>
+        <button class="tab" data-t="meter" onclick="setType(this,'meter')">Mentor Meter</button>
+        <button class="tab" data-t="poll" onclick="setType(this,'poll')">Poll</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <button class="btn btn-ghost btn-sm" style="width:auto" onclick="togglePresets()">
+        <span id="ptxt">📋 Use a Preset</span>
+      </button>
+      <div id="ppanel" style="display:none">
+        <div class="preset-list" id="plist"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-lbl">Question</div>
+      <input class="inp" id="q-inp" placeholder="Type your question…" />
+    </div>
+
+    <div id="opts-sec">
+      <div class="form-row">
+        <div class="form-lbl">Options</div>
+        <div class="opts-list" id="opts-list"></div>
+        <button class="btn btn-ghost btn-sm" id="add-opt" onclick="addOpt()" style="width:auto;margin-top:.35rem;display:none">+ Add Option</button>
+      </div>
+    </div>
+
+    <div id="meter-sec" style="display:none">
+      <div class="form-row">
+        <div class="form-lbl">End Labels (optional)</div>
+        <div class="flex gap-s">
+          <input class="inp" id="m-low" placeholder="Low label (e.g. Disagree)" />
+          <input class="inp" id="m-high" placeholder="High label (e.g. Agree)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-s">
+      <button class="btn btn-ghost grow" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary grow" onclick="saveQ()">Add to Queue ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HOME ════════════ -->
+<div class="view active" id="vh">
+  <div class="logo">FF ROOM</div>
+  <div class="logo-sub">POWERED BY FFACADEMY</div>
+  <p class="home-desc">Live polls, This-or-That, and Mentor Meters — all on your phone.</p>
+
+  <div class="home-actions">
+    <button class="btn btn-yellow" onclick="hostClick()">🎮 Host a Room</button>
+    <div class="or-div">or join with a code</div>
+    <input class="code-inp" id="h-code" maxlength="4" placeholder="ENTER CODE"
+      oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+      onkeydown="if(event.key==='Enter')joinStep1()" />
+    <button class="btn btn-primary" onclick="joinStep1()">Join Room →</button>
+    <div class="err" id="h-err"></div>
+  </div>
+
+  <div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:.8rem">
+    <a href="/" style="color:var(--muted);text-decoration:none">← FFAcademy Home</a>
+  </div>
+</div>
+
+<!-- ════════════ PLAYER: NAME ════════════ -->
+<div class="view" id="vpn">
+  <div class="display" style="font-size:1.4rem;letter-spacing:.15em;color:var(--muted)">JOINING ROOM</div>
+  <div class="bigcode" id="pn-code">----</div>
+  <input class="inp" id="pn-name" maxlength="20" placeholder="Pick a nickname…"
+    style="text-align:center;font-size:1.15rem;max-width:320px;width:100%"
+    onkeydown="if(event.key==='Enter')doJoin()" />
+  <button class="btn btn-primary" style="max-width:320px;width:100%" onclick="doJoin()">Let's Go →</button>
+  <div class="err" id="pn-err"></div>
+  <button class="btn btn-ghost btn-sm" style="max-width:320px;width:100%" onclick="showV('vh')">← Back</button>
+</div>
+
+<!-- ════════════ PLAYER: LOBBY ════════════ -->
+<div class="view" id="vpl">
+  <div class="p-header">
+    <div class="p-name" id="pl-name">–</div>
+    <div class="p-code" id="pl-code">––––</div>
+  </div>
+  <div class="wait-wrap">
+    <div class="wait-icon">🏈</div>
+    <div class="wait-title">Waiting for Host...</div>
+    <p class="muted small">Get ready! The game starts soon.</p>
+    <div class="live"><span class="dot"></span>You're in the room</div>
+  </div>
+</div>
+
+<!-- ════════════ PLAYER: QUESTION ════════════ -->
+<div class="view" id="vpq">
+  <div class="p-header">
+    <div class="p-name" id="pq-name">–</div>
+    <div class="p-code" id="pq-code">––––</div>
+  </div>
+
+  <div class="pq-text" id="pq-text">Question</div>
+
+  <!-- This or That -->
+  <div id="pq-tot" class="tot-wrap" style="display:none">
+    <button class="tot-btn btn-oa" id="tot-a" onclick="submitAns(0)">Option A</button>
+    <button class="tot-btn btn-ob" id="tot-b" onclick="submitAns(1)">Option B</button>
+  </div>
+
+  <!-- Poll -->
+  <div id="pq-poll" class="poll-wrap" style="display:none">
+    <button class="poll-btn btn-oa" id="pb-a" onclick="submitAns(0)">
+      <span class="poll-key">A</span><span id="pt-a">–</span>
+    </button>
+    <button class="poll-btn btn-ob" id="pb-b" onclick="submitAns(1)">
+      <span class="poll-key">B</span><span id="pt-b">–</span>
+    </button>
+    <button class="poll-btn btn-oc" id="pb-c" onclick="submitAns(2)" style="display:none">
+      <span class="poll-key">C</span><span id="pt-c">–</span>
+    </button>
+    <button class="poll-btn btn-od" id="pb-d" onclick="submitAns(3)" style="display:none">
+      <span class="poll-key">D</span><span id="pt-d">–</span>
+    </button>
+  </div>
+
+  <!-- Meter -->
+  <div id="pq-meter" class="meter-wrap" style="display:none">
+    <div class="meter-val" id="pq-mval">5</div>
+    <input type="range" class="range" id="pq-slider" min="1" max="10" value="5"
+      oninput="document.getElementById('pq-mval').textContent=this.value" />
+    <div class="meter-labels">
+      <span id="m-lbl-lo">Low</span>
+      <span id="m-lbl-hi">High</span>
+    </div>
+    <button class="btn btn-yellow" style="max-width:260px;margin:0 auto"
+      onclick="submitAns(+document.getElementById('pq-slider').value)">Lock In →</button>
+  </div>
+</div>
+
+<!-- ════════════ PLAYER: ANSWERED ════════════ -->
+<div class="view" id="vpa">
+  <div class="p-header">
+    <div class="p-name" id="pa-name">–</div>
+    <div class="p-code" id="pa-code">––––</div>
+  </div>
+  <div class="ans-wrap">
+    <div class="ans-icon">✅</div>
+    <div class="display" style="font-size:2.2rem">Locked In!</div>
+    <div class="ans-choice" id="pa-choice">Your answer</div>
+    <p class="muted small">Waiting for the host to reveal…</p>
+    <div class="spin" style="margin:.5rem auto"></div>
+  </div>
+</div>
+
+<!-- ════════════ PLAYER: REVEAL ════════════ -->
+<div class="view" id="vpr">
+  <div class="p-header">
+    <div class="p-name" id="pr-name">–</div>
+    <div class="p-code" id="pr-code">––––</div>
+  </div>
+  <div class="reveal-wrap">
+    <div style="font-size:2.5rem" id="pr-icon">📊</div>
+    <div class="display" style="font-size:1.4rem;letter-spacing:.1em;color:var(--muted)">RESULTS</div>
+    <div id="pr-content" style="width:100%;max-width:400px"></div>
+    <p class="muted small" style="margin-top:.5rem">Waiting for next question…</p>
+  </div>
+</div>
+
+<!-- ════════════ HOST: LOBBY ════════════ -->
+<div class="view" id="vhl">
+  <div class="hl-head">
+    <div class="display" style="font-size:.85rem;letter-spacing:.2em;color:var(--muted)">ROOM CODE</div>
+    <div class="hl-code" id="hl-code">----</div>
+    <div class="hl-url" id="hl-url">ffacademy.us.com/poll</div>
+    <div class="pc"><span class="dot"></span> <span id="hl-pc">0</span> players in room</div>
+  </div>
+
+  <div class="lobby-grid">
+    <!-- Left panel -->
+    <div class="card flex col gap-m">
+      <div class="flex gap-m" style="align-items:flex-start">
+        <div class="qr-img"><img id="hl-qr" src="" alt="QR code" /></div>
+        <div style="flex:1;min-width:0">
+          <div class="sec-title">Players</div>
+          <div class="player-grid" id="hl-players">
+            <span class="muted small">Waiting…</span>
+          </div>
+        </div>
+      </div>
+      <hr class="div">
+      <button class="btn btn-yellow" onclick="startGame()">🚀 Start Game</button>
+      <button class="btn btn-ghost btn-sm" onclick="endRoom()">End Room</button>
+    </div>
+
+    <!-- Right panel: queue -->
+    <div class="card flex col gap-m">
+      <div class="flex between" style="align-items:center">
+        <div class="sec-title" style="margin:0">Queue (<span id="hl-qc">0</span>)</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add</button>
+      </div>
+      <div class="q-queue" id="hl-queue">
+        <span class="muted small">No questions yet — add some!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HOST: QUESTION ════════════ -->
+<div class="view" id="vhq">
+  <div class="hq-bar">
+    <div class="q-counter">Q <span id="hq-num">1</span> / <span id="hq-tot">?</span></div>
+    <div class="ans-count"><span id="hq-ans">0</span> / <span id="hq-ply">0</span> answered</div>
+  </div>
+
+  <div class="stage">
+    <div class="q-type-lbl" id="hq-lbl">THIS OR THAT</div>
+    <div class="q-text-big" id="hq-text">Question</div>
+
+    <!-- TOT -->
+    <div id="hq-tot" class="tot-host" style="display:none">
+      <div class="tot-opt hopt-a" id="hq-ta">A</div>
+      <div class="tot-opt hopt-b" id="hq-tb">B</div>
+    </div>
+
+    <!-- Poll -->
+    <div id="hq-poll" class="poll-host" style="display:none">
+      <div class="tot-opt hopt-a" id="hq-pa">A</div>
+      <div class="tot-opt hopt-b" id="hq-pb">B</div>
+      <div class="tot-opt hopt-c" id="hq-pc" style="display:none">C</div>
+      <div class="tot-opt hopt-d" id="hq-pd" style="display:none">D</div>
+    </div>
+
+    <!-- Meter -->
+    <div id="hq-meter" style="display:none">
+      <div class="meter-host">
+        <span>1️⃣</span><span>2️⃣</span><span>3️⃣</span><span>4️⃣</span><span>5️⃣</span>
+        <span>6️⃣</span><span>7️⃣</span><span>8️⃣</span><span>9️⃣</span><span>🔟</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctrl-bar">
+    <button class="btn btn-yellow" onclick="doReveal()">📊 Reveal Results</button>
+    <button class="btn btn-ghost" onclick="toLobby()">← Lobby</button>
+  </div>
+</div>
+
+<!-- ════════════ HOST: REVEAL ════════════ -->
+<div class="view" id="vhrev">
+  <div class="hr-bar">
+    <div class="hr-lbl">RESULTS</div>
+    <div style="flex:1"></div>
+    <div class="muted small" id="rev-lbl">Question 1</div>
+  </div>
+
+  <div class="reveal-stage">
+    <div class="rev-q" id="rev-text">–</div>
+    <div id="rev-results" style="width:100%;max-width:580px"></div>
+  </div>
+
+  <div class="ctrl-bar">
+    <button class="btn btn-primary" id="rev-next" onclick="nextQ()">Next Question →</button>
+    <button class="btn btn-ghost" onclick="toLobby()">← Lobby</button>
+  </div>
+</div>
+
+<!-- ════════════ FIREBASE + APP ════════════ -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {
+  getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc,
+  onSnapshot, collection, getDocs, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const app = initializeApp({
+  apiKey:            "AIzaSyCTUBCIvj1AvaCLJZg40fml0c7bG9bJU30",
+  authDomain:        "ffacademy-4e565.firebaseapp.com",
+  projectId:         "ffacademy-4e565",
+  storageBucket:     "ffacademy-4e565.firebasestorage.app",
+  messagingSenderId: "355277532374",
+  appId:             "1:355277532374:web:3d4c21047aa8402633ed77"
+});
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+/* ── STATE ── */
+const S = {
+  uid: null, mode: null,
+  room: null, name: null,
+  queue: [], qIdx: 0,
+  unsubs: [], players: {}, answers: {},
+  myAns: null, curQ: null
+};
+
+/* ── PRESETS ── */
+const PRESETS = [
+  { t:'this-or-that', tx:'Run or Pass?',                  opts:['Run 🏃','Pass 🏈'] },
+  { t:'this-or-that', tx:'Consistency or Upside?',         opts:['Consistency 📈','Upside 🚀'] },
+  { t:'this-or-that', tx:'Safe floor or ceiling play?',    opts:['Safe Floor 🛡️','Ceiling Play 💣'] },
+  { t:'this-or-that', tx:'Start studs or stream matchup?', opts:['Always Start Studs','Stream for Matchup'] },
+  { t:'this-or-that', tx:'Load up RBs or Zero RB?',        opts:['Load Up RBs','Zero RB Strategy'] },
+  { t:'this-or-that', tx:'Trade for a star or stack depth?',opts:['Trade for a Star','Stack the Depth'] },
+  { t:'meter', tx:'How confident are you in your starting lineup?', lo:'Not at all', hi:'Very Confident' },
+  { t:'meter', tx:'How important are bye weeks when drafting?',     lo:"Doesn't matter", hi:'Very Important' },
+  { t:'meter', tx:'How much does coaching staff affect your picks?', lo:'Not much', hi:'A lot' },
+  { t:'meter', tx:'How confident are you reading defensive matchups?', lo:'Still Learning', hi:'Expert Level' },
+  { t:'meter', tx:'Rate today\'s session overall!', lo:'Needs Work', hi:'Excellent' },
+  { t:'poll', tx:'Which position wins championships?',    opts:['QB','RB','WR','TE'] },
+  { t:'poll', tx:'Most important stat for WRs?',          opts:['Targets','Air Yards','Snap %','Catch Rate'] },
+  { t:'poll', tx:'Best waiver wire strategy?',            opts:['Stream QBs','Handcuff RBs','Ride Schedule','Trending Players'] },
+  { t:'poll', tx:'Preferred draft strategy?',             opts:['Zero RB','Hero RB','Best Available','Position Scarcity'] },
+  { t:'poll', tx:'Biggest factor in fantasy success?',    opts:['Draft Prep','In-Season Moves','Schedule Luck','Injury Luck'] },
+];
+
+/* ── HELPERS ── */
+window.showV = function(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+};
+
+function toast(msg, ms=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function code4() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return Array.from({length:4}, () => c[Math.floor(Math.random()*c.length)]).join('');
+}
+
+function unsub() { S.unsubs.forEach(u => u()); S.unsubs = []; }
+
+function rndColor() {
+  const cs = ['#00d4ff','#ff6b35','#39d353','#c44fff','#ffd60a','#ff6b9d','#7c6ff7'];
+  return cs[Math.floor(Math.random()*cs.length)];
+}
+
+function confetti() {
+  const cs = ['#00d4ff','#ff6b35','#39d353','#c44fff','#ffd60a','#ff6b9d'];
+  const el = document.getElementById('confetti');
+  for (let i = 0; i < 50; i++) {
+    const p = document.createElement('div');
+    p.className = 'cp';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      width:${Math.random()*10+5}px;height:${Math.random()*10+5}px;
+      background:${cs[Math.floor(Math.random()*cs.length)]};
+      border-radius:${Math.random()>.5?'50%':'3px'};
+      animation-duration:${Math.random()*2+2}s;
+      animation-delay:${Math.random()*.5}s;
+      opacity:1;
+    `;
+    el.appendChild(p);
+    setTimeout(() => p.remove(), 3500);
+  }
+}
+
+const setLabels = (ids, val) => ids.forEach(id => { const e = document.getElementById(id); if(e) e.textContent = val; });
+
+/* ── AUTH ── */
+onAuthStateChanged(auth, u => {
+  if (u) {
+    S.uid = u.uid;
+    const params = new URLSearchParams(location.search);
+    const r = params.get('room');
+    if (r) { document.getElementById('h-code').value = r.toUpperCase().slice(0,4); }
+  }
+});
+signInAnonymously(auth).catch(console.error);
+
+/* ══════════════════════════════════════════
+   HOST FLOW
+══════════════════════════════════════════ */
+window.hostClick = async function() {
+  if (!S.uid) { toast('Still connecting, try again…'); return; }
+  let code, tries = 0;
+  do {
+    code = code4();
+    const sn = await getDoc(doc(db,'rooms',code));
+    if (!sn.exists()) break;
+  } while (++tries < 10);
+
+  S.room = code; S.mode = 'host'; S.queue = []; S.qIdx = 0;
+
+  await setDoc(doc(db,'rooms',code), {
+    hostId: S.uid, status:'lobby',
+    currentQuestion: null, questionIndex: 0,
+    created: serverTimestamp()
+  });
+
+  hostSubscribe();
+
+  const joinUrl = `${location.origin}/poll?room=${code}`;
+  document.getElementById('hl-code').textContent = code;
+  document.getElementById('hl-url').textContent = `${location.hostname}/poll`;
+  document.getElementById('hl-qr').src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=ffffff&color=111111&data=${encodeURIComponent(joinUrl)}`;
+
+  renderQueue(); showV('vhl');
+};
+
+function hostSubscribe() {
+  S.unsubs.push(
+    onSnapshot(collection(db,'rooms',S.room,'players'), sn => {
+      S.players = {};
+      sn.forEach(d => { S.players[d.id] = d.data(); });
+      renderPlayers();
+    }),
+    onSnapshot(collection(db,'rooms',S.room,'answers'), sn => {
+      S.answers = {};
+      sn.forEach(d => { S.answers[d.id] = d.data(); });
+      updateAnsCount();
+    })
+  );
+}
+
+function renderPlayers() {
+  const ct = Object.keys(S.players).length;
+  document.getElementById('hl-pc').textContent = ct;
+  const g = document.getElementById('hl-players');
+  g.innerHTML = ct === 0
+    ? '<span class="muted small">Waiting…</span>'
+    : Object.values(S.players).map(p =>
+        `<div class="chip"><span class="cdot" style="background:${p.color||'#39d353'}"></span>${p.name}</div>`
+      ).join('');
+}
+
+function updateAnsCount() {
+  document.getElementById('hq-ans').textContent = Object.keys(S.answers).length;
+  document.getElementById('hq-ply').textContent = Object.keys(S.players).length;
+}
+
+window.startGame = function() {
+  if (S.queue.length === 0) { toast('Add at least one question first!'); return; }
+  S.qIdx = 0;
+  launchQ(0);
+};
+
+async function launchQ(idx) {
+  const q = S.queue[idx];
+  if (!q) { toast('No more questions!'); toLobby(); return; }
+  S.curQ = q;
+
+  // Clear old answers
+  const sn = await getDocs(collection(db,'rooms',S.room,'answers'));
+  await Promise.all(sn.docs.map(d => deleteDoc(d.ref)));
+  S.answers = {};
+
+  await updateDoc(doc(db,'rooms',S.room), {
+    status: 'question',
+    currentQuestion: { ...q },
+    questionIndex: idx
+  });
+
+  showHostQ(q, idx);
+  showV('vhq');
+}
+
+const TYPE_LBL = { 'this-or-that':'THIS OR THAT', meter:'MENTOR METER', poll:'POLL' };
+
+function showHostQ(q, idx) {
+  document.getElementById('hq-num').textContent  = idx + 1;
+  document.getElementById('hq-tot').textContent  = S.queue.length;
+  document.getElementById('hq-text').textContent = q.tx;
+  document.getElementById('hq-lbl').textContent  = TYPE_LBL[q.t] || '';
+
+  ['hq-tot','hq-poll','hq-meter'].forEach(id => document.getElementById(id).style.display = 'none');
+
+  if (q.t === 'this-or-that') {
+    document.getElementById('hq-tot').style.display  = 'grid';
+    document.getElementById('hq-ta').textContent = q.opts[0];
+    document.getElementById('hq-tb').textContent = q.opts[1];
+  } else if (q.t === 'poll') {
+    document.getElementById('hq-poll').style.display = 'grid';
+    ['hq-pa','hq-pb','hq-pc','hq-pd'].forEach((id,i) => {
+      const el = document.getElementById(id);
+      el.textContent = q.opts[i] || '';
+      el.style.display = q.opts[i] ? 'flex' : 'none';
+    });
+  } else {
+    document.getElementById('hq-meter').style.display = 'block';
+  }
+  updateAnsCount();
+}
+
+window.doReveal = async function() {
+  await updateDoc(doc(db,'rooms',S.room), { status:'reveal' });
+  showHostReveal();
+};
+
+function showHostReveal() {
+  const q = S.curQ;
+  document.getElementById('rev-text').textContent = q.tx;
+  document.getElementById('rev-lbl').textContent  = `Q ${S.qIdx+1} of ${S.queue.length}`;
+  document.getElementById('rev-next').style.display = S.qIdx+1 < S.queue.length ? 'flex' : 'none';
+
+  const ans = Object.values(S.answers);
+  const el  = document.getElementById('rev-results');
+
+  q.t === 'meter' ? renderMeterRev(el, ans) : renderBarRev(el, q, ans);
+  showV('vhrev');
+  confetti();
+}
+
+const OPT_COLS = ['#00d4ff','#ff6b35','#39d353','#c44fff'];
+
+function renderBarRev(el, q, ans) {
+  const cnt = {}, tot = ans.length || 1;
+  ans.forEach(a => { cnt[a.v] = (cnt[a.v]||0) + 1; });
+
+  el.innerHTML = `<div class="bar-rows">${q.opts.map((opt,i) => {
+    const c = cnt[i]||0, pct = Math.round(c/tot*100);
+    return `<div class="bar-row">
+      <div class="bar-meta"><span>${opt}</span><span>${c} vote${c!==1?'s':''} · ${pct}%</span></div>
+      <div class="bar-track">
+        <div class="bar-fill" id="bf${i}" style="background:${OPT_COLS[i]};width:0">
+          ${pct>10?pct+'%':''}
+        </div>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+
+  requestAnimationFrame(() => {
+    q.opts.forEach((_,i) => {
+      const c = cnt[i]||0, pct = Math.round(c/tot*100);
+      const bf = document.getElementById(`bf${i}`);
+      if (bf) setTimeout(() => bf.style.width = pct+'%', 60);
+    });
+  });
+}
+
+function renderMeterRev(el, ans) {
+  const vals = ans.map(a => a.v).filter(v => typeof v === 'number');
+  const avg  = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0;
+  const dist = Array(10).fill(0);
+  vals.forEach(v => { if (v>=1&&v<=10) dist[v-1]++; });
+  const mx = Math.max(...dist, 1);
+
+  el.innerHTML = `<div class="meter-rev">
+    <div class="meter-avg-big">${avg.toFixed(1)}</div>
+    <div class="muted small">Average · ${vals.length} response${vals.length!==1?'s':''}</div>
+    <div class="dist-bars">
+      ${dist.map((c,i) => `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.2rem;flex:1">
+          <div class="db" style="width:100%;height:${Math.round(c/mx*78)}px;opacity:${c>0?1:.2}"></div>
+          <div style="font-size:.65rem;color:var(--muted)">${i+1}</div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+window.nextQ = function() { S.qIdx++; launchQ(S.qIdx); };
+
+window.toLobby = async function() {
+  if (S.room) await updateDoc(doc(db,'rooms',S.room), { status:'lobby' });
+  showV('vhl');
+};
+
+window.endRoom = async function() {
+  if (!confirm('End this room? All players will be disconnected.')) return;
+  unsub();
+  if (S.room) await updateDoc(doc(db,'rooms',S.room), { status:'ended' });
+  S.room = S.mode = null; S.queue = [];
+  showV('vh');
+};
+
+/* ══════════════════════════════════════════
+   PLAYER FLOW
+══════════════════════════════════════════ */
+window.joinStep1 = async function() {
+  const code = (document.getElementById('h-code').value||'').trim().toUpperCase();
+  document.getElementById('h-err').textContent = '';
+  if (code.length !== 4) { document.getElementById('h-err').textContent = 'Enter a 4-letter room code.'; return; }
+
+  try {
+    const sn = await getDoc(doc(db,'rooms',code));
+    if (!sn.exists() || sn.data().status === 'ended') {
+      document.getElementById('h-err').textContent = 'Room not found — check the code!'; return;
+    }
+    S.room = code; S.mode = 'player';
+    document.getElementById('pn-code').textContent = code;
+    document.getElementById('pn-err').textContent  = '';
+    document.getElementById('pn-name').value = '';
+    showV('vpn');
+  } catch(e) {
+    document.getElementById('h-err').textContent = 'Connection error — try again.';
+  }
+};
+
+window.doJoin = async function() {
+  const name = (document.getElementById('pn-name').value||'').trim();
+  if (!name) { document.getElementById('pn-err').textContent = 'Pick a nickname!'; return; }
+  if (!S.uid){ document.getElementById('pn-err').textContent = 'Still connecting…'; return; }
+
+  S.name = name;
+  const color = rndColor();
+
+  await setDoc(doc(db,'rooms',S.room,'players',S.uid), {
+    name, color, joinedAt: serverTimestamp()
+  });
+
+  setLabels(['pl-name','pq-name','pa-name','pr-name'], name);
+  setLabels(['pl-code','pq-code','pa-code','pr-code'], S.room);
+
+  playerSubscribe();
+  showV('vpl');
+};
+
+function playerSubscribe() {
+  S.unsubs.push(
+    onSnapshot(doc(db,'rooms',S.room), sn => {
+      if (!sn.exists()) return;
+      const d = sn.data();
+
+      if (d.status === 'ended') { unsub(); toast('Host ended the room.'); showV('vh'); return; }
+
+      if (d.status === 'lobby') {
+        S.myAns = null;
+        showV('vpl');
+        return;
+      }
+
+      if (d.status === 'question') {
+        const q = d.currentQuestion;
+        if (!S.curQ || S.curQ.id !== q.id) {
+          S.curQ = q; S.myAns = null;
+          renderPlayerQ(q);
+          showV('vpq');
+        } else if (S.myAns !== null) {
+          showV('vpa');
+        }
+        return;
+      }
+
+      if (d.status === 'reveal') {
+        renderPlayerReveal(d.currentQuestion).then(() => showV('vpr'));
+        return;
+      }
+    })
+  );
+}
+
+function renderPlayerQ(q) {
+  document.getElementById('pq-text').textContent = q.tx;
+  ['pq-tot','pq-poll','pq-meter'].forEach(id => document.getElementById(id).style.display = 'none');
+
+  if (q.t === 'this-or-that') {
+    document.getElementById('pq-tot').style.display = 'flex';
+    document.getElementById('tot-a').textContent = q.opts[0];
+    document.getElementById('tot-b').textContent = q.opts[1];
+  } else if (q.t === 'poll') {
+    document.getElementById('pq-poll').style.display = 'flex';
+    ['pt-a','pt-b','pt-c','pt-d'].forEach((id,i) => document.getElementById(id).textContent = q.opts[i]||'');
+    document.getElementById('pb-c').style.display = q.opts[2] ? 'flex' : 'none';
+    document.getElementById('pb-d').style.display = q.opts[3] ? 'flex' : 'none';
+  } else {
+    document.getElementById('pq-meter').style.display = 'flex';
+    document.getElementById('pq-slider').value = 5;
+    document.getElementById('pq-mval').textContent = '5';
+    document.getElementById('m-lbl-lo').textContent = q.lo || 'Low';
+    document.getElementById('m-lbl-hi').textContent = q.hi || 'High';
+  }
+}
+
+window.submitAns = async function(val) {
+  if (S.myAns !== null) return;
+  S.myAns = val;
+
+  await setDoc(doc(db,'rooms',S.room,'answers',S.uid), {
+    v: val, at: serverTimestamp()
+  });
+
+  const q = S.curQ;
+  let display = '';
+  if (q.t === 'this-or-that' || q.t === 'poll') display = q.opts[val] || 'Answered';
+  else display = `You rated: ${val} / 10`;
+
+  document.getElementById('pa-choice').textContent = display;
+  document.getElementById('pa-name').textContent   = S.name;
+  document.getElementById('pa-code').textContent   = S.room;
+  showV('vpa');
+};
+
+async function renderPlayerReveal(q) {
+  const sn  = await getDocs(collection(db,'rooms',S.room,'answers'));
+  const ans = [];
+  sn.forEach(d => ans.push(d.data()));
+
+  const el = document.getElementById('pr-content');
+
+  if (q.t === 'meter') {
+    const vals = ans.map(a => a.v).filter(v => typeof v === 'number');
+    const avg  = vals.length ? vals.reduce((s,v)=>s+v,0)/vals.length : 0;
+    const myV  = S.myAns, diff = Math.abs(myV - avg).toFixed(1);
+    document.getElementById('pr-icon').textContent = parseFloat(diff)<1.5 ? '🎯' : '📊';
+    el.innerHTML = `
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:4.5rem;color:var(--yellow);text-align:center">${avg.toFixed(1)}</div>
+      <div class="muted small tx-c">Average · ${vals.length} players</div>
+      <div style="margin-top:.75rem;text-align:center">
+        <div class="small muted">You rated <strong style="color:var(--text)">${myV}</strong></div>
+        ${parseFloat(diff)<1.5
+          ? '<div style="color:var(--green);font-weight:700;margin-top:.4rem">Close to the crowd! 🎯</div>'
+          : `<div class="muted small" style="margin-top:.4rem">${diff} pts from avg</div>`}
+      </div>`;
+  } else {
+    const cnt = {}, tot = ans.length || 1;
+    ans.forEach(a => { cnt[a.v] = (cnt[a.v]||0)+1; });
+    document.getElementById('pr-icon').textContent = (cnt[S.myAns]||0)/tot >= .5 ? '🏆' : '🤝';
+    el.innerHTML = q.opts.filter(Boolean).map((opt,i) => {
+      const c = cnt[i]||0, pct = Math.round(c/tot*100), mine = i===S.myAns;
+      return `<div style="margin-bottom:.55rem">
+        <div style="display:flex;justify-content:space-between;font-size:.85rem;font-weight:${mine?700:400};color:${mine?'#fff':'var(--muted)'}">
+          <span>${opt}${mine?' ← you':''}</span><span>${pct}%</span>
+        </div>
+        <div style="height:22px;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border);margin-top:.2rem">
+          <div style="height:100%;width:${pct}%;background:${OPT_COLS[i]};opacity:${mine?1:.55};border-radius:6px;transition:width .6s ease"></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+/* ══════════════════════════════════════════
+   QUESTION QUEUE UI
+══════════════════════════════════════════ */
+function renderQueue() {
+  const el = document.getElementById('hl-queue');
+  document.getElementById('hl-qc').textContent = S.queue.length;
+  if (!S.queue.length) { el.innerHTML = '<span class="muted small">No questions yet — add some!</span>'; return; }
+
+  const TB = { 'this-or-that':'tb-tot T/T', meter:'tb-meter METER', poll:'tb-poll POLL' };
+  el.innerHTML = S.queue.map((q,i) => {
+    const [cls,lbl] = TB[q.t].split(' ');
+    return `<div class="q-item">
+      <span class="tbadge ${cls}">${lbl}</span>
+      <span class="q-text">${q.tx}</span>
+      <button class="rm-btn" onclick="rmQ(${i})" title="Remove">✕</button>
+    </div>`;
+  }).join('');
+}
+
+window.rmQ = function(i) { S.queue.splice(i,1); renderQueue(); };
+
+/* ══════════════════════════════════════════
+   ADD QUESTION MODAL
+══════════════════════════════════════════ */
+let qType = 'this-or-that', optCnt = 2, presetsOpen = false;
+
+window.openModal = function() {
+  qType = 'this-or-that'; optCnt = 2; presetsOpen = false;
+  document.getElementById('q-inp').value = '';
+  document.getElementById('m-low').value = '';
+  document.getElementById('m-high').value = '';
+  document.getElementById('ppanel').style.display = 'none';
+  document.getElementById('ptxt').textContent = '📋 Use a Preset';
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.t==='this-or-that'));
+  applyType('this-or-that');
+  document.getElementById('mo-add').classList.add('open');
+};
+
+window.closeModal = function() { document.getElementById('mo-add').classList.remove('open'); };
+
+window.setType = function(btn, t) {
+  qType = t;
+  document.querySelectorAll('.tab').forEach(el => el.classList.toggle('on', el.dataset.t===t));
+  applyType(t);
+  if (presetsOpen) renderPresets();
+};
+
+function applyType(t) {
+  const os = document.getElementById('opts-sec');
+  const ms = document.getElementById('meter-sec');
+  const ao = document.getElementById('add-opt');
+  if (t === 'meter') {
+    os.style.display = 'none'; ms.style.display = 'block'; ao.style.display = 'none';
+  } else {
+    os.style.display = 'block'; ms.style.display = 'none';
+    optCnt = t === 'this-or-that' ? 2 : 3;
+    ao.style.display = t === 'this-or-that' ? 'none' : 'block';
+    renderOpts();
+  }
+}
+
+const PH = {
+  'this-or-that': ['Option A (e.g. Run 🏃)','Option B (e.g. Pass 🏈)'],
+  poll:           ['Option A','Option B','Option C','Option D']
+};
+
+function renderOpts() {
+  const lbl = ['A','B','C','D'];
+  const ph  = PH[qType] || PH.poll;
+  document.getElementById('opts-list').innerHTML = Array.from({length:optCnt},(_,i) => `
+    <div class="opt-row">
+      <span class="opt-key">${lbl[i]}</span>
+      <input class="inp oi" id="oi${i}" placeholder="${ph[i]||'Option '+lbl[i]}" style="flex:1" />
+      ${optCnt>2&&i>1 ? `<button onclick="rmOpt(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem">✕</button>` : ''}
+    </div>
+  `).join('');
+  document.getElementById('add-opt').style.display = optCnt >= 4 ? 'none' : 'block';
+}
+
+window.addOpt = function() { if (optCnt<4) { optCnt++; renderOpts(); } };
+window.rmOpt  = function(i) { optCnt--; renderOpts(); };
+
+window.togglePresets = function() {
+  presetsOpen = !presetsOpen;
+  document.getElementById('ppanel').style.display = presetsOpen ? 'block' : 'none';
+  document.getElementById('ptxt').textContent = presetsOpen ? '📋 Hide Presets' : '📋 Use a Preset';
+  if (presetsOpen) renderPresets();
+};
+
+function renderPresets() {
+  const TB = { 'this-or-that':'tb-tot T/T', meter:'tb-meter METER', poll:'tb-poll POLL' };
+  document.getElementById('plist').innerHTML = PRESETS
+    .filter(p => p.t === qType)
+    .map((p,i) => {
+      const [cls,lbl] = TB[p.t].split(' ');
+      const gi = PRESETS.indexOf(p);
+      return `<div class="pr-item" onclick="applyPreset(${gi})">
+        <span class="tbadge ${cls}">${lbl}</span>
+        <span class="pr-text">${p.tx}</span>
+      </div>`;
+    }).join('');
+}
+
+window.applyPreset = function(i) {
+  const p = PRESETS[i];
+  document.getElementById('q-inp').value = p.tx;
+  if (p.opts) p.opts.forEach((o,j) => { const e = document.getElementById(`oi${j}`); if(e) e.value=o; });
+  if (p.lo) document.getElementById('m-low').value  = p.lo;
+  if (p.hi) document.getElementById('m-high').value = p.hi;
+  presetsOpen = false;
+  document.getElementById('ppanel').style.display = 'none';
+  document.getElementById('ptxt').textContent = '📋 Use a Preset';
+};
+
+window.saveQ = function() {
+  const tx = (document.getElementById('q-inp').value||'').trim();
+  if (!tx) { toast('Enter a question!'); return; }
+  const q = { id: Date.now()+'', t: qType, tx };
+
+  if (qType === 'this-or-that' || qType === 'poll') {
+    const opts = Array.from(document.querySelectorAll('.oi'))
+      .map(e => e.value.trim()).filter(Boolean);
+    if (opts.length < 2) { toast('Add at least 2 options!'); return; }
+    q.opts = opts;
+  }
+
+  if (qType === 'meter') {
+    q.lo = document.getElementById('m-low').value.trim()  || 'Low';
+    q.hi = document.getElementById('m-high').value.trim() || 'High';
+  }
+
+  S.queue.push(q);
+  renderQueue();
+  closeModal();
+  toast('Question added ✅');
+};
+
+// Close modal on backdrop click
+document.getElementById('mo-add').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// Init
+renderOpts();
+</script>
+</body>
+</html>
