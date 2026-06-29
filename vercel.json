@@ -2,6 +2,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/lxp",  "destination": "/lxp.html"  },
-    { "source": "/poll", "destination": "/poll.html" }
+    { "source": "/poll", "destination": "/poll.html" },
+    { "source": "/play", "destination": "/poll.html" }
   ]
 }
