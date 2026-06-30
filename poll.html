@@ -103,6 +103,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .code-inp:focus{border-color:var(--primary)}
 .code-inp::placeholder{color:var(--muted);font-size:1.1rem;letter-spacing:.1em}
 .err{color:var(--red);font-size:.85rem;font-weight:600;text-align:center;min-height:1.2em}
+.status-msg{color:var(--muted);font-size:.82rem;font-weight:600;text-align:center;min-height:1.2em}
 
 /* ── PLAYER NAME ── */
 #vpn{align-items:center;justify-content:center;padding:2rem;gap:1.5rem;text-align:center;
@@ -415,6 +416,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
 
 /* New type badges */
 .tb-quip{background:rgba(255,107,157,.18);color:var(--pink)}
+.tb-idea{background:rgba(0,212,255,.18);color:var(--cyan)}
 .tb-trivia{background:rgba(57,211,83,.18);color:var(--green)}
 .tb-storm{background:rgba(124,111,247,.18);color:var(--primary)}
 .tb-hottake{background:rgba(255,214,10,.18);color:var(--yellow)}
@@ -446,6 +448,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
         <button class="tab on" data-t="this-or-that" onclick="setType(this,'this-or-that')">T/T</button>
         <button class="tab" data-t="meter" onclick="setType(this,'meter')">Meter</button>
         <button class="tab" data-t="poll" onclick="setType(this,'poll')">Poll</button>
+        <button class="tab" data-t="idea-vote" onclick="setType(this,'idea-vote')">Idea Vote</button>
         <button class="tab" data-t="quiplash" onclick="setType(this,'quiplash')">Quiplash</button>
         <button class="tab" data-t="trivia" onclick="setType(this,'trivia')">Trivia</button>
         <button class="tab" data-t="wordstorm" onclick="setType(this,'wordstorm')">Storm</button>
@@ -508,10 +511,11 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
   <div class="home-actions">
     <button class="btn btn-yellow" onclick="hostClick()">🎯 Host a Session</button>
     <div class="or-div">or join with a code</div>
-    <input class="code-inp" id="h-code" maxlength="4" placeholder="ENTER CODE"
-      oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+    <input class="code-inp" id="h-code" maxlength="4" placeholder="ENTER CODE" autocomplete="off" autocapitalize="characters" inputmode="text"
+      oninput="cleanRoomCode(this);document.getElementById('h-err').textContent='';document.getElementById('h-status').textContent=''"
       onkeydown="if(event.key==='Enter')joinStep1()" />
-    <button class="btn btn-primary" onclick="joinStep1()">Join Room →</button>
+    <button class="btn btn-primary" id="join-btn" onclick="joinStep1()">Join Room →</button>
+    <div class="status-msg" id="h-status"></div>
     <div class="err" id="h-err"></div>
   </div>
 
@@ -524,10 +528,13 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
 <div class="view" id="vpn">
   <div class="display" style="font-size:1.4rem;letter-spacing:.15em;color:var(--muted)">JOINING SESSION</div>
   <div class="bigcode" id="pn-code">----</div>
+  <p class="muted small" style="max-width:320px">Add the name you want the facilitator and other players to see.</p>
   <input class="inp" id="pn-name" maxlength="20" placeholder="Pick a nickname…"
     style="text-align:center;font-size:1.15rem;max-width:320px;width:100%"
+    oninput="document.getElementById('pn-err').textContent='';document.getElementById('pn-status').textContent=''"
     onkeydown="if(event.key==='Enter')doJoin()" />
-  <button class="btn btn-primary" style="max-width:320px;width:100%" onclick="doJoin()">Let's Go →</button>
+  <button class="btn btn-primary" id="name-btn" style="max-width:320px;width:100%" onclick="doJoin()">Let's Go →</button>
+  <div class="status-msg" id="pn-status"></div>
   <div class="err" id="pn-err"></div>
   <button class="btn btn-ghost btn-sm" style="max-width:320px;width:100%" onclick="showV('vh')">← Back</button>
 </div>
@@ -595,7 +602,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <textarea class="quip-ta" id="quip-ans" maxlength="120" placeholder="Type your answer…"
       oninput="document.getElementById('quip-cc').textContent=(120-this.value.length)+' left'"></textarea>
     <div class="char-count" id="quip-cc">120 left</div>
-    <button class="btn btn-primary" onclick="submitQuip()">Submit Answer →</button>
+    <button class="btn btn-primary" id="quip-submit" onclick="submitQuip()">Submit Answer →</button>
   </div>
 
   <!-- Trivia -->
@@ -794,15 +801,15 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
   </div>
 </div>
 
-<!-- ════════════ PLAYER: VOTE (Quiplash) ════════════ -->
+<!-- ════════════ PLAYER: VOTE ════════════ -->
 <div class="view" id="vpvote">
   <div class="p-header">
     <div class="p-name" id="pv-name">–</div>
     <div class="p-code" id="pv-code">––––</div>
   </div>
   <div style="text-align:center;padding:.5rem 0">
-    <div class="display" style="font-size:1.4rem;letter-spacing:.1em;color:var(--cyan)">VOTE FOR YOUR FAVE</div>
-    <div class="muted small">Tap the best answer — you can't vote for your own</div>
+    <div class="display" id="pv-title" style="font-size:1.4rem;letter-spacing:.1em;color:var(--cyan)">VOTE FOR YOUR FAVE</div>
+    <div class="muted small" id="pv-help">Tap the best answer — you can't vote for your own</div>
   </div>
   <div class="vote-grid" id="pv-cards"></div>
 </div>
@@ -822,7 +829,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
 <!-- ════════════ HOST: VOTE PHASE ════════════ -->
 <div class="view" id="vhvote">
   <div class="hq-bar">
-    <div class="q-counter">QUIPLASH — VOTING</div>
+    <div class="q-counter" id="hvt-mode">QUIPLASH — VOTING</div>
     <div class="ans-count"><span id="hvt-cnt">0</span> votes cast</div>
   </div>
   <div class="stage">
@@ -901,6 +908,15 @@ const PRESETS = [
   { t:'poll', tx:'What makes training actually stick?',    opts:['Repetition','Real examples','Accountability','Immediate practice'] },
   { t:'poll', tx:'Preferred learning format?',            opts:['Live Workshop','E-Learning','On-the-Job','1-on-1 Coaching'] },
   { t:'poll', tx:'Biggest challenge with new skills?',    opts:['Time to practice','Lack of support','Unclear expectations','Low confidence'] },
+  // ── Meeting Idea Vote ──
+  { t:'idea-vote', tx:'What idea should we prioritize next?' },
+  { t:'idea-vote', tx:'What would make this process easier for the team?' },
+  { t:'idea-vote', tx:'What should we test in the next sprint?' },
+  { t:'idea-vote', tx:'What is one improvement worth trying this month?' },
+  { t:'idea-vote', tx:'What topic should our next working session focus on?' },
+  { t:'idea-vote', tx:'What is the biggest blocker we should solve first?' },
+  { t:'idea-vote', tx:'What customer problem deserves more attention?' },
+  { t:'idea-vote', tx:'What quick win would create the most momentum?' },
   // ── Quiplash ──
   { t:'quiplash', tx:'The real reason most meetings could have been an email: ___.' },
   { t:'quiplash', tx:'If your job title was 100% honest, it would be: ___.' },
@@ -964,6 +980,25 @@ function rndColor() {
   return cs[Math.floor(Math.random()*cs.length)];
 }
 
+function cleanRoomCode(input) {
+  input.value = (input.value || '').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+}
+
+function setButtonBusy(id, busy, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  if (!btn.dataset.readyLabel) btn.dataset.readyLabel = btn.textContent;
+  btn.disabled = busy;
+  btn.textContent = busy ? label : btn.dataset.readyLabel;
+}
+
+function setFieldMessage(base, type, msg) {
+  const err = document.getElementById(`${base}-err`);
+  const status = document.getElementById(`${base}-status`);
+  if (err) err.textContent = type === 'error' ? msg : '';
+  if (status) status.textContent = type === 'status' ? msg : '';
+}
+
 function confetti() {
   const cs = ['#00d4ff','#ff6b35','#39d353','#c44fff','#ffd60a','#ff6b9d'];
   const el = document.getElementById('confetti');
@@ -986,13 +1021,47 @@ function confetti() {
 
 const setLabels = (ids, val) => ids.forEach(id => { const e = document.getElementById(id); if(e) e.textContent = val; });
 
+const VOTE_TYPES = ['quiplash','idea-vote'];
+const isVoteType = q => VOTE_TYPES.includes(typeof q === 'string' ? q : q?.t);
+
+function voteCopy(q) {
+  return q?.t === 'idea-vote'
+    ? {
+        type: 'IDEA VOTE',
+        hostVoting: 'IDEA VOTE — VOTING',
+        playerVoteTitle: 'VOTE FOR AN IDEA',
+        playerVoteHelp: "Tap the strongest idea — you can't vote for your own",
+        answerPlaceholder: 'Share one idea...',
+        answerToast: 'Share an idea first!',
+        submittedLabel: 'Idea submitted',
+        revealIcon: '💡',
+        revealFor: 'for your idea',
+      }
+    : {
+        type: 'QUIPLASH',
+        hostVoting: 'QUIPLASH — VOTING',
+        playerVoteTitle: 'VOTE FOR YOUR FAVE',
+        playerVoteHelp: "Tap the best answer — you can't vote for your own",
+        answerPlaceholder: 'Type your answer...',
+        answerToast: 'Write something first!',
+        submittedLabel: 'Answer submitted',
+        revealIcon: '🎭',
+        revealFor: 'for your answer',
+      };
+}
+
 /* ── AUTH ── */
 onAuthStateChanged(auth, u => {
   if (u) {
     S.uid = u.uid;
     const params = new URLSearchParams(location.search);
     const r = params.get('room');
-    if (r) { document.getElementById('h-code').value = r.toUpperCase().slice(0,4); }
+    if (r && !S.room) {
+      const codeInput = document.getElementById('h-code');
+      codeInput.value = r;
+      cleanRoomCode(codeInput);
+      if (codeInput.value.length === 4) setTimeout(() => joinStep1(), 150);
+    }
   }
 });
 signInAnonymously(auth).catch(console.error);
@@ -1040,7 +1109,7 @@ function hostSubscribe() {
       sn.forEach(d=>{S.answers[d.id]=d.data();});
       updateAnsCount();
       if(S.curQ){
-        if(S.curQ.t==='quiplash') updateQuipDisplay();
+        if(isVoteType(S.curQ)) updateQuipDisplay();
         if(S.curQ.t==='wordstorm') updateWordCloud();
         if(S.curQ.t==='hottake') updateHotTakeCounts();
       }
@@ -1113,7 +1182,7 @@ async function launchQ(idx) {
   showHostQ(q,idx); showV('vhq');
 }
 
-const TYPE_LBL={'this-or-that':'THIS OR THAT',meter:'MENTOR METER',poll:'POLL',quiplash:'QUIPLASH',trivia:'TRIVIA',wordstorm:'WORD STORM',hottake:'HOT TAKE'};
+const TYPE_LBL={'this-or-that':'THIS OR THAT',meter:'MENTOR METER',poll:'POLL','idea-vote':'IDEA VOTE',quiplash:'QUIPLASH',trivia:'TRIVIA',wordstorm:'WORD STORM',hottake:'HOT TAKE'};
 
 function showHostQ(q,idx){
   document.getElementById('hq-num').textContent=idx+1;
@@ -1130,7 +1199,7 @@ function showHostQ(q,idx){
     ['hq-pa','hq-pb','hq-pc','hq-pd'].forEach((id,i)=>{const e=document.getElementById(id);e.textContent=q.opts[i]||'';e.style.display=q.opts[i]?'flex':'none';});
   }else if(q.t==='meter'){
     document.getElementById('hq-meter').style.display='block';
-  }else if(q.t==='quiplash'){
+  }else if(isVoteType(q)){
     const e=document.getElementById('hq-quip');if(e){e.style.display='flex';updateQuipDisplay();}
   }else if(q.t==='trivia'){
     document.getElementById('hq-trivia').style.display='grid';
@@ -1144,9 +1213,11 @@ function showHostQ(q,idx){
 }
 
 window.doReveal = async function() {
-  if(S.curQ&&S.curQ.t==='quiplash'){
+  if(S.curQ&&isVoteType(S.curQ)){
     await updateDoc(doc(db,'rooms',S.room),{status:'voting'});
+    const copy = voteCopy(S.curQ);
     document.getElementById('hvt-text').textContent=S.curQ.tx;
+    document.getElementById('hvt-mode').textContent=copy.hostVoting;
     updateQuipDisplay();
     showV('vhvote');
     return;
@@ -1228,7 +1299,7 @@ function showHostReveal(){
   const ans=Object.values(S.answers);
   const el=document.getElementById('rev-results');
   if(q.t==='meter') renderMeterRev(el,ans);
-  else if(q.t==='quiplash') renderQuiplashRev(el,ans);
+  else if(isVoteType(q)) renderQuiplashRev(el,ans);
   else if(q.t==='trivia') renderTriviaRev(el,q,ans);
   else if(q.t==='wordstorm') renderWordStormRev(el,ans);
   else if(q.t==='hottake') renderHotTakeRev(el,ans);
@@ -1337,39 +1408,89 @@ window.endRoom = async function() {
    PLAYER FLOW
 ══════════════════════════════════════════ */
 window.joinStep1 = async function() {
-  const code = (document.getElementById('h-code').value||'').trim().toUpperCase();
-  document.getElementById('h-err').textContent = '';
-  if (code.length !== 4) { document.getElementById('h-err').textContent = 'Enter a 4-letter room code.'; return; }
+  if (S.joiningRoom) return;
+  const codeInput = document.getElementById('h-code');
+  cleanRoomCode(codeInput);
+  const code = codeInput.value;
+  setFieldMessage('h','status','');
+  setFieldMessage('h','error','');
+  if (code.length !== 4) {
+    setFieldMessage('h','error','Enter the 4-letter room code from the host screen.');
+    codeInput.focus();
+    return;
+  }
 
   try {
+    S.joiningRoom = true;
+    setButtonBusy('join-btn', true, 'Checking...');
+    setFieldMessage('h','status','Looking for that room...');
     const sn = await getDoc(doc(db,'rooms',code));
     if (!sn.exists() || sn.data().status === 'ended') {
-      document.getElementById('h-err').textContent = 'Room not found — check the code!'; return;
+      setFieldMessage('h','error','No active room found for that code.');
+      codeInput.focus();
+      codeInput.select();
+      return;
     }
     S.room = code; S.mode = 'player';
     document.getElementById('pn-code').textContent = code;
-    document.getElementById('pn-err').textContent  = '';
-    document.getElementById('pn-name').value = '';
+    setFieldMessage('pn','error','');
+    setFieldMessage('pn','status','');
+    const nameInput = document.getElementById('pn-name');
+    nameInput.value = localStorage.getItem('pulseName') || '';
     showV('vpn');
+    setTimeout(() => {
+      nameInput.focus();
+      if (nameInput.value) nameInput.select();
+    }, 80);
   } catch(e) {
-    document.getElementById('h-err').textContent = 'Connection error — try again.';
+    setFieldMessage('h','error','Connection hiccup. Check your signal and try again.');
+  } finally {
+    S.joiningRoom = false;
+    setButtonBusy('join-btn', false);
+    setFieldMessage('h','status','');
   }
 };
 
 window.doJoin = async function() {
+  if (S.joiningPlayer) return;
   const name = (document.getElementById('pn-name').value||'').trim();
-  if (!name) { document.getElementById('pn-err').textContent = 'Pick a nickname!'; return; }
-  if (!S.uid){ document.getElementById('pn-err').textContent = 'Still connecting…'; return; }
+  setFieldMessage('pn','status','');
+  setFieldMessage('pn','error','');
+  if (!name) {
+    setFieldMessage('pn','error','Add a nickname to join.');
+    document.getElementById('pn-name').focus();
+    return;
+  }
+  if (!S.uid){
+    setFieldMessage('pn','status','Connecting securely...');
+    return;
+  }
+  if (!S.room) {
+    setFieldMessage('pn','error','The room code was lost. Go back and enter it again.');
+    return;
+  }
 
   S.name = name;
   const color = rndColor();
 
-  await setDoc(doc(db,'rooms',S.room,'players',S.uid),{name,color,score:0,joinedAt:serverTimestamp()});
-  setLabels(['pl-name','pq-name','pa-name','pr-name','pv-name','pld-name'],name);
-  setLabels(['pl-code','pq-code','pa-code','pr-code','pv-code','pld-code'],S.room);
+  try {
+    S.joiningPlayer = true;
+    setButtonBusy('name-btn', true, 'Joining...');
+    setFieldMessage('pn','status','Saving your spot...');
+    await setDoc(doc(db,'rooms',S.room,'players',S.uid),{name,color,score:0,joinedAt:serverTimestamp()});
+    localStorage.setItem('pulseName', name);
+    setLabels(['pl-name','pq-name','pa-name','pr-name','pv-name','pld-name'],name);
+    setLabels(['pl-code','pq-code','pa-code','pr-code','pv-code','pld-code'],S.room);
 
-  playerSubscribe();
-  showV('vpl');
+    playerSubscribe();
+    showV('vpl');
+  } catch(e) {
+    setFieldMessage('pn','error','Could not join yet. Try again in a moment.');
+  } finally {
+    S.joiningPlayer = false;
+    setButtonBusy('name-btn', false);
+    setFieldMessage('pn','status','');
+  }
 };
 
 function playerSubscribe(){
@@ -1399,6 +1520,9 @@ async function renderVoteCards(){
   const cards=[];sn.forEach(d=>{if(d.id!==S.uid)cards.push({uid:d.id,txt:d.data().v});});
   for(let i=cards.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}
   const el=document.getElementById('pv-cards');
+  const copy = voteCopy(S.curQ);
+  document.getElementById('pv-title').textContent = copy.playerVoteTitle;
+  document.getElementById('pv-help').textContent = copy.playerVoteHelp;
   el.innerHTML=cards.length?cards.map(c=>`<div class="vote-card" onclick="castVote('${c.uid}',this)">${c.txt}</div>`).join(''):'<p class="muted small tx-c">No other answers to vote on!</p>';
 }
 
@@ -1436,9 +1560,12 @@ function renderPlayerQ(q){
     document.getElementById('pq-mval').textContent='5';
     document.getElementById('m-lbl-lo').textContent=q.lo||'Low';
     document.getElementById('m-lbl-hi').textContent=q.hi||'High';
-  }else if(q.t==='quiplash'){
+  }else if(isVoteType(q)){
+    const copy = voteCopy(q);
     document.getElementById('pq-quip').style.display='flex';
     document.getElementById('quip-ans').value='';
+    document.getElementById('quip-ans').placeholder=copy.answerPlaceholder;
+    document.getElementById('quip-submit').textContent=q.t==='idea-vote'?'Submit Idea →':'Submit Answer →';
     document.getElementById('quip-cc').textContent='120 left';
   }else if(q.t==='trivia'){
     const wrap=document.getElementById('pq-trivia');
@@ -1459,10 +1586,11 @@ function renderPlayerQ(q){
 window.submitQuip=async function(){
   if(S.myAns!==null)return;
   const txt=(document.getElementById('quip-ans').value||'').trim();
-  if(!txt){toast('Write something first!');return;}
+  const copy = voteCopy(S.curQ);
+  if(!txt){toast(copy.answerToast);return;}
   S.myAns=txt;
   await setDoc(doc(db,'rooms',S.room,'answers',S.uid),{v:txt,at:serverTimestamp()});
-  document.getElementById('pa-choice').textContent=`"${txt}"`;
+  document.getElementById('pa-choice').textContent=S.curQ?.t==='idea-vote'?copy.submittedLabel:`"${txt}"`;
   showV('vpa');
 };
 
@@ -1537,11 +1665,12 @@ async function renderPlayerReveal(q){
     const ok=S.myAns===q.correct;
     icon.textContent=ok?'🏆':'😅';
     el.innerHTML=`<div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;color:${ok?'var(--green)':'var(--red)'};margin-bottom:.4rem">${ok?'CORRECT! ✓':'WRONG! ✗'}</div><div class="muted small">Correct: <strong style="color:var(--green)">${q.opts[q.correct]}</strong></div><div class="muted small" style="margin-top:.3rem">${ans.filter(a=>a.v===q.correct).length}/${ans.length} players got it</div></div>`;
-  }else if(q.t==='quiplash'){
-    icon.textContent='🎭';
+  }else if(isVoteType(q)){
+    const copy = voteCopy(q);
+    icon.textContent=copy.revealIcon;
     const voteSn=await getDocs(collection(db,'rooms',S.room,'votes'));
     let myVotes=0;voteSn.forEach(d=>{if(d.data().targetUid===S.uid)myVotes++;});
-    el.innerHTML=`<div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--yellow)">${myVotes} vote${myVotes!==1?'s':''}</div><div class="muted small">for your answer</div>${S.myAns?`<div style="margin-top:.65rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;font-style:italic">"${S.myAns}"</div>`:''}</div>`;
+    el.innerHTML=`<div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--yellow)">${myVotes} vote${myVotes!==1?'s':''}</div><div class="muted small">${copy.revealFor}</div>${S.myAns?`<div style="margin-top:.65rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;font-style:italic">"${S.myAns}"</div>`:''}</div>`;
   }else if(q.t==='wordstorm'){
     icon.textContent='🌪️';
     const words=ans.map(a=>a.v?.toLowerCase()).filter(Boolean);
@@ -1566,7 +1695,7 @@ async function renderPlayerReveal(q){
 /* ══════════════════════════════════════════
    QUESTION QUEUE UI
 ══════════════════════════════════════════ */
-const TB={'this-or-that':['tb-tot','T/T'],meter:['tb-meter','METER'],poll:['tb-poll','POLL'],quiplash:['tb-quip','QUIP'],trivia:['tb-trivia','TRIVIA'],wordstorm:['tb-storm','STORM'],hottake:['tb-hottake','HOT']};
+const TB={'this-or-that':['tb-tot','T/T'],meter:['tb-meter','METER'],poll:['tb-poll','POLL'],'idea-vote':['tb-idea','IDEA'],quiplash:['tb-quip','QUIP'],trivia:['tb-trivia','TRIVIA'],wordstorm:['tb-storm','STORM'],hottake:['tb-hottake','HOT']};
 
 function renderQueue(){
   const el=document.getElementById('hl-queue');
@@ -1615,7 +1744,7 @@ function applyType(t){
     os.style.display='block';cs.style.display='block';
     optCnt=4;ao.style.display='none';
     renderOpts();renderCorrectSel();
-  }else if(t==='quiplash'||t==='wordstorm'||t==='hottake'){
+  }else if(t==='idea-vote'||t==='quiplash'||t==='wordstorm'||t==='hottake'){
     // no options needed
   }else{
     os.style.display='block';
