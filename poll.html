@@ -1380,8 +1380,9 @@ function playerSubscribe(){
     if(d.status==='lobby'){S.myAns=null;S.myReact=null;showV('vpl');return;}
     if(d.status==='answering'){
       const q=d.currentQuestion;
-      if(!S.curQ||S.curQ.id!==q.id){S.curQ=q;S.myAns=null;S.myReact=null;renderPlayerQ(q);showV('vpq');}
-      else if(S.myAns!==null) showV('vpa');
+      if(!q) return;
+      if(!S.curQ||S.curQ.id!==q.id){S.curQ=q;S.myAns=null;S.myReact=null;renderPlayerQ(q);}
+      showV(S.myAns!==null?'vpa':'vpq');
       return;
     }
     if(d.status==='voting'){
