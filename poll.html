@@ -126,6 +126,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);displ
 .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
 
+/* ── READY STATE ── */
+.ready-bar{display:flex;align-items:center;gap:.6rem;font-size:.85rem;font-weight:600;padding:.4rem .75rem;border-radius:8px;background:rgba(57,211,83,.1);color:var(--green);border:1px solid rgba(57,211,83,.25)}
+.ready-bar .rb-count{font-family:'Bebas Neue',sans-serif;font-size:1.1rem}
+.ready-bar.go{background:rgba(57,211,83,.2);border-color:var(--green)}
+.chip.ready{border:1px solid var(--green);color:var(--green)}
+.chip.ready .cdot{box-shadow:0 0 5px var(--green)}
+
 /* ── PLAYER QUESTION ── */
 #vpq{padding:1.5rem;gap:1rem}
 .pq-text{
@@ -544,6 +551,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <p class="muted small">Hold tight — the facilitator will launch shortly.</p>
     <div class="live"><span class="dot"></span>You're connected</div>
   </div>
+  <button class="btn btn-primary" id="pl-ready-btn" onclick="readyUp()" style="max-width:260px;margin:0 auto">✋ I'm Ready</button>
 </div>
 
 <!-- ════════════ PLAYER: QUESTION ════════════ -->
@@ -664,6 +672,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
     <div class="hl-code" id="hl-code">----</div>
     <div class="hl-url" id="hl-url">ffacademy.us.com/poll</div>
     <div class="pc"><span class="dot"></span> <span id="hl-pc">0</span> participants joined</div>
+    <div class="ready-bar" id="hl-ready" style="display:none"><span class="rb-count" id="hl-rc">0</span>/<span class="rb-count" id="hl-rt">0</span> ready</div>
   </div>
 
   <div class="lobby-grid">
@@ -679,7 +688,7 @@ hr.div{border:none;border-top:1px solid var(--border);margin:0}
         </div>
       </div>
       <hr class="div">
-      <button class="btn btn-yellow" onclick="startGame()">🚀 Start Session</button>
+      <button class="btn btn-yellow" id="hl-start-btn" onclick="startGame()">🚀 Start Session</button>
       <button class="btn btn-ghost btn-sm" onclick="endRoom()">End Session</button>
     </div>
 
@@ -1082,13 +1091,28 @@ function updateHotTakeCounts(){
 }
 
 function renderPlayers() {
-  const ct = Object.keys(S.players).length;
+  const players = Object.values(S.players);
+  const ct = players.length;
+  const readyCt = players.filter(p=>p.ready).length;
   document.getElementById('hl-pc').textContent = ct;
+  const rdEl = document.getElementById('hl-ready');
+  const startBtn = document.getElementById('hl-start-btn');
+  if(ct > 0){
+    rdEl.style.display='flex';
+    document.getElementById('hl-rc').textContent=readyCt;
+    document.getElementById('hl-rt').textContent=ct;
+    const pct=Math.round(readyCt/ct*100);
+    rdEl.classList.toggle('go', pct>=80);
+    if(startBtn) startBtn.textContent = pct>=80 ? `🚀 ${pct}% Ready — Start!` : '🚀 Start Session';
+  } else {
+    rdEl.style.display='none';
+    if(startBtn) startBtn.textContent='🚀 Start Session';
+  }
   const g = document.getElementById('hl-players');
   g.innerHTML = ct === 0
     ? '<span class="muted small">Waiting…</span>'
-    : Object.values(S.players).map(p =>
-        `<div class="chip"><span class="cdot" style="background:${p.color||'#39d353'}"></span>${p.name}</div>`
+    : players.map(p =>
+        `<div class="chip${p.ready?' ready':''}"><span class="cdot" style="background:${p.color||'#39d353'}"></span>${p.name}${p.ready?' ✓':''}</div>`
       ).join('');
 }
 
@@ -1364,7 +1388,7 @@ window.doJoin = async function() {
   S.name = name;
   const color = rndColor();
 
-  await setDoc(doc(db,'rooms',S.room,'players',S.uid),{name,color,score:0,joinedAt:serverTimestamp()});
+  await setDoc(doc(db,'rooms',S.room,'players',S.uid),{name,color,score:0,ready:false,joinedAt:serverTimestamp()});
   setLabels(['pl-name','pq-name','pa-name','pr-name','pv-name','pld-name'],name);
   setLabels(['pl-code','pq-code','pa-code','pr-code','pv-code','pld-code'],S.room);
 
@@ -1372,12 +1396,19 @@ window.doJoin = async function() {
   showV('vpl');
 };
 
+window.readyUp = async function() {
+  const btn = document.getElementById('pl-ready-btn');
+  btn.disabled = true;
+  btn.textContent = '✅ Ready!';
+  await updateDoc(doc(db,'rooms',S.room,'players',S.uid),{ready:true});
+};
+
 function playerSubscribe(){
   S.unsubs.push(onSnapshot(doc(db,'rooms',S.room),sn=>{
     if(!sn.exists())return;
     const d=sn.data();
     if(d.status==='ended'){unsub();toast('The facilitator ended the session.');showV('vh');return;}
-    if(d.status==='lobby'){S.myAns=null;S.myReact=null;showV('vpl');return;}
+    if(d.status==='lobby'){S.myAns=null;S.myReact=null;const rb=document.getElementById('pl-ready-btn');if(rb){rb.disabled=false;rb.textContent='✋ I\'m Ready';}showV('vpl');return;}
     if(d.status==='answering'){
       const q=d.currentQuestion;
       if(!q) return;
