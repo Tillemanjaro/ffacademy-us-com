@@ -215,13 +215,49 @@
 
   .hero {
     min-height: calc(100vh - 114px);
-    background:
-      linear-gradient(90deg, rgba(8,20,35,0.92) 0%, rgba(13,35,58,0.82) 40%, rgba(13,35,58,0.25) 70%, rgba(13,35,58,0.12) 100%),
-      url("assets/watergate-hero.png") center right / cover no-repeat;
     color: var(--white);
     display: flex;
     align-items: stretch;
     position: relative;
+    overflow: hidden;
+    background: #0d233a;
+  }
+
+  .hero-slideshow {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .hero-slide {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0;
+    animation: heroSlideFade 24s infinite;
+    will-change: opacity, transform;
+  }
+
+  .hero-slide-1 { background-image: url("assets/hero/hero-1-exterior.jpg"); animation-delay: 0s; }
+  .hero-slide-2 { background-image: url("assets/hero/hero-2-frontdoor.jpg"); animation-delay: 6s; }
+  .hero-slide-3 { background-image: url("assets/hero/hero-3-greatroom.jpg"); animation-delay: 12s; }
+  .hero-slide-4 { background-image: url("assets/hero/hero-4-neptune.jpg"); animation-delay: 18s; }
+
+  @keyframes heroSlideFade {
+    0%      { opacity: 0; transform: scale(1.06); }
+    3%      { opacity: 1; }
+    22%     { opacity: 1; transform: scale(1.14); }
+    26%     { opacity: 0; transform: scale(1.16); }
+    100%    { opacity: 0; }
+  }
+
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(8,20,35,0.92) 0%, rgba(13,35,58,0.84) 40%, rgba(13,35,58,0.45) 70%, rgba(13,35,58,0.22) 100%);
   }
 
   .hero::after {
@@ -231,6 +267,12 @@
     height: 140px;
     background: linear-gradient(0deg, rgba(250,246,238,1), rgba(250,246,238,0));
     pointer-events: none;
+    z-index: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-slide { animation: none; opacity: 0; }
+    .hero-slide-1 { opacity: 1; }
   }
 
   .hero-grid {
@@ -908,9 +950,9 @@
     .brand-sub { font-size: 10px; }
     .hero {
       min-height: auto;
-      background:
-        linear-gradient(180deg, rgba(8,20,35,0.9), rgba(13,35,58,0.78)),
-        url("assets/watergate-hero.png") center / cover no-repeat;
+    }
+    .hero-scrim {
+      background: linear-gradient(180deg, rgba(8,20,35,0.92), rgba(13,35,58,0.82));
     }
     .hero-grid { padding: 58px 0 74px; }
     .hero h1 {
@@ -983,6 +1025,13 @@
 
 <main id="main">
   <section class="hero" aria-label="Watergate Painting hero">
+    <div class="hero-slideshow" aria-hidden="true">
+      <div class="hero-slide hero-slide-1"></div>
+      <div class="hero-slide hero-slide-2"></div>
+      <div class="hero-slide hero-slide-3"></div>
+      <div class="hero-slide hero-slide-4"></div>
+    </div>
+    <div class="hero-scrim" aria-hidden="true"></div>
     <div class="container hero-grid">
       <div>
         <div class="eyebrow reveal">Family-owned since 1983</div>
