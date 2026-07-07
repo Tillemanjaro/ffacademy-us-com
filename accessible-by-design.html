@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Accessibility Taste Test — Nick Tillem · TechLearn 2026 Test Kitchen</title>
-<meta name="description" content="A hands-on demo: try to finish a 90-second e-learning task with a simulated barrier, flip one switch, and feel what Accessible by Design changes. From Nick Tillem's Innovations in Training Test Kitchen demo at TechLearn 2026.">
+<meta name="description" content="You're already the 1 in 4. Check off the barriers you have right now — a loud room, one busy hand, glare, no sleep — then take a 90-second course that trips over every one of them. Flip one switch and feel what Accessible by Design changes. From Nick Tillem's Test Kitchen demo at TechLearn 2026.">
 <meta property="og:title" content="The Accessibility Taste Test">
-<meta property="og:description" content="Experience your training the way 1 in 4 learners do — then flip the Accessible by Design switch.">
+<meta property="og:description" content="Everyone encounters barriers. Find yours, feel your training trip over it, then flip the Accessible by Design switch.">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍋</text></svg>">
 <style>
@@ -104,7 +104,7 @@ main{max-width:1060px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,
 h1{font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:800;line-height:1.12;margin:18px 0 14px;letter-spacing:-.01em}
 h1 .accent{color:var(--orange-deep)}
 h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-bottom:10px}
-.lede{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--ink-soft);max-width:46ch}
+.lede{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--ink-soft);max-width:48ch}
 
 .hero{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(20px,4vw,52px);align-items:center}
 @media (max-width:820px){.hero{grid-template-columns:1fr}}
@@ -126,7 +126,29 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 .plate p{font-weight:700;margin-top:10px}
 .plate small{color:var(--ink-soft);font-weight:600}
 
-/* ── menu of barriers ── */
+/* ── check-in (which is true for you right now) ── */
+.checkin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:26px}
+.situation{
+  display:flex;align-items:flex-start;gap:14px;text-align:left;
+  background:var(--card);border:3px solid var(--line);border-radius:var(--radius);
+  padding:16px 18px;cursor:pointer;font-family:inherit;color:var(--ink);
+  transition:border-color .15s ease, transform .15s ease;
+}
+.situation:hover{transform:translateY(-3px);border-color:var(--orange)}
+.situation[aria-pressed="true"]{border-color:var(--teal);background:#EAF6F4;box-shadow:inset 0 0 0 2px var(--teal)}
+.situation .emoji{font-size:1.9rem;line-height:1.2}
+.situation h3{font-size:1rem;font-weight:800;line-height:1.3}
+.situation p{font-size:.8rem;color:var(--ink-soft);line-height:1.45}
+.situation .tick{
+  margin-left:auto;flex:none;width:28px;height:28px;border-radius:50%;
+  border:3px solid var(--line);display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:transparent;
+}
+.situation[aria-pressed="true"] .tick{background:var(--teal);border-color:var(--teal);color:#fff}
+.checkin-foot{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:26px}
+.checkin-note{font-size:.9rem;color:var(--ink-soft);font-weight:600;flex-basis:100%}
+
+/* ── bonus menu of borrowed barriers ── */
 .menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:16px;margin-top:26px}
 .barrier-card{
   background:var(--card);border:3px solid var(--line);border-radius:var(--radius);
@@ -148,7 +170,7 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 }
 .mode-pill{
   display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem;
-  padding:8px 18px;border-radius:999px;color:#fff;
+  padding:8px 18px;border-radius:999px;color:#fff;max-width:100%;
 }
 .mode-pill.barrier{background:var(--orange-deep)}
 .mode-pill.accessible{background:var(--teal)}
@@ -169,26 +191,25 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 .steps-dots i.done{background:var(--teal)}
 .steps-dots i.now{background:var(--orange)}
 
-/* barrier filters applied to the inner stage only */
+/* stage filters are set from JS so effects can stack (blur + grayscale etc.) */
 .stage{position:relative}
-.sandbox.fx-blur .stage{filter:blur(2.4px) contrast(.72) brightness(1.05)}
-.sandbox.fx-gray .stage{filter:grayscale(1)}
 .glare{
   position:absolute;inset:0;pointer-events:none;display:none;border-radius:var(--radius);
   background:radial-gradient(ellipse 60% 45% at 68% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 62%);
   z-index:5;
 }
-.sandbox.fx-blur .glare{display:block}
+.sandbox.has-glare .glare{display:block}
 
-/* jitter for motor mode */
+/* jitter (busy / shaky hand) — persists in accessible mode; the design compensates */
 @keyframes jitter{
   0%{transform:translate(0,0)}20%{transform:translate(2px,-2px)}40%{transform:translate(-2px,2px)}
   60%{transform:translate(2px,2px)}80%{transform:translate(-2px,-2px)}100%{transform:translate(0,0)}
 }
-.sandbox.fx-motor .stage{animation:jitter .5s infinite steps(2)}
-@media (prefers-reduced-motion: reduce){.sandbox.fx-motor .stage{animation:none}}
-.sandbox.fx-motor .t-btn{font-size:.68rem;padding:3px 8px;min-height:0}
-.sandbox.fx-motor .tile{width:56px;height:56px}
+.sandbox.fx-jitter .stage{animation:jitter .5s infinite steps(2)}
+@media (prefers-reduced-motion: reduce){.sandbox.fx-jitter .stage{animation:none}}
+/* tiny targets only in barrier mode */
+.sandbox.fx-tiny .t-btn{font-size:.68rem;padding:3px 8px;min-height:0}
+.sandbox.fx-tiny .tile{width:56px;height:56px}
 
 /* overload clutter */
 .ticker{
@@ -212,7 +233,7 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 .sandbox.fx-load .countdown{display:block}
 .countdown i{display:block;height:100%;background:#f03e3e;width:100%;transition:width .25s linear}
 
-/* fake audio player for captions mode */
+/* fake audio player (loud room / captions) */
 .audio-fake{
   display:flex;align-items:center;gap:12px;background:#f1f3f5;border:2px solid #dee2e6;
   border-radius:12px;padding:10px 14px;margin-bottom:14px;
@@ -321,12 +342,19 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 .bar-fill.f-barrier{background:#C2410C}
 .bar-fill.f-access{background:#0D9488}
 
+.no-fit{
+  background:var(--card);border:2px solid var(--line);border-left:8px solid var(--orange);
+  border-radius:var(--radius);padding:20px 24px;margin-bottom:26px;
+}
+.no-fit h3{font-size:1.05rem;margin-bottom:6px}
+.no-fit p{color:var(--ink-soft);font-weight:600;font-size:.95rem}
+
 .punchline{
   text-align:center;background:var(--ink);color:var(--cream);border-radius:24px;
   padding:clamp(26px,5vw,48px);margin:30px 0;
 }
-.punchline p{font-size:clamp(1.4rem,3.4vw,2.2rem);font-weight:800;line-height:1.3}
-.punchline small{display:block;margin-top:12px;font-size:1rem;color:#cfc7b2;font-weight:600}
+.punchline p{font-size:clamp(1.3rem,3.2vw,2.05rem);font-weight:800;line-height:1.35}
+.punchline small{display:block;margin-top:14px;font-size:1.02rem;color:#cfc7b2;font-weight:600}
 
 /* ── recipe card ── */
 .recipe-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:8px}
@@ -423,16 +451,16 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     <div class="hero">
       <div>
         <span class="kicker">TechLearn 2026 · Innovations in Training Test Kitchen · Austin, TX</span>
-        <h1 id="h-start" tabindex="-1">The Accessibility <span class="accent">Taste&nbsp;Test</span></h1>
-        <p class="lede">Try to finish a 90‑second e‑learning task the way <strong>1 in 4 of your learners</strong> experiences it. Then flip one switch — <strong>Accessible by Design</strong> — and taste the difference.</p>
+        <h1 id="h-start" tabindex="-1">You’re already <span class="accent">the 1 in 4</span></h1>
+        <p class="lede">Everyone at this table is hitting a barrier <em>right now</em> — a loud room, one busy hand, glare, no sleep. Check off yours, take a 90‑second course that trips over every one of them, then flip <strong>one switch</strong> and taste the difference.</p>
         <div class="hero-cta">
-          <button class="btn btn-primary" id="btn-start" type="button">🍽️ Start the taste test</button>
+          <button class="btn btn-primary" id="btn-start" type="button">🍽️ Find my barriers</button>
           <button class="btn btn-ghost" id="btn-skip-recipe" type="button">Skip to the recipe card</button>
         </div>
         <div class="stat-strip">
           <div class="stat"><b>1 in 4</b><span>US adults report a disability (CDC)</span></div>
-          <div class="stat"><b>3 kinds</b><span>of barriers: permanent, temporary, situational</span></div>
-          <div class="stat"><b>0 extra steps</b><span>“It’s steps you’ve missed.” — @NickTillem</span></div>
+          <div class="stat"><b>4 in 4</b><span>people encounter barriers — permanent, temporary, situational</span></div>
+          <div class="stat"><b>No</b><span>single fix covers them. Accessibility isn’t one‑size‑fits‑all.</span></div>
         </div>
       </div>
       <div class="plate" aria-hidden="true">
@@ -443,37 +471,78 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     </div>
   </section>
 
-  <!-- ════════ MENU ════════ -->
+  <!-- ════════ CHECK-IN ════════ -->
+  <section class="screen" id="screen-checkin" aria-labelledby="h-checkin">
+    <span class="kicker">Course 1 of 3 · Right now, at this table</span>
+    <h2 id="h-checkin" tabindex="-1">Which of these is true for you <em>right now</em>?</h2>
+    <p class="lede">No pretending, no role‑play. Just notice your actual situation. Pick everything that applies — barriers stack, that’s life.</p>
+
+    <div class="checkin-grid">
+      <button class="situation" type="button" data-effect="mute" aria-pressed="false">
+        <span class="emoji" aria-hidden="true">🔊</span>
+        <span><h3>It’s loud in here</h3><p>Expo hall, open office, crying toddler — audio is useless to you.</p></span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+      <button class="situation" type="button" data-effect="glare" aria-pressed="false">
+        <span class="emoji" aria-hidden="true">☀️</span>
+        <span><h3>There’s glare on my screen</h3><p>Convention lighting, a sunny window, brightness turned down to save battery.</p></span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+      <button class="situation" type="button" data-effect="hand" aria-pressed="false">
+        <span class="emoji" aria-hidden="true">☕</span>
+        <span><h3>One hand is busy</h3><p>Coffee, tote bag, phone, baby — you’re tapping with a thumb while standing.</p></span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+      <button class="situation" type="button" data-effect="load" aria-pressed="false">
+        <span class="emoji" aria-hidden="true">🌀</span>
+        <span><h3>I’m distracted or underslept</h3><p>Conference brain, 6 a.m. flight, 40 unread Slacks. Focus is rationed.</p></span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+      <button class="situation" type="button" data-effect="gray" aria-pressed="false">
+        <span class="emoji" aria-hidden="true">🔋</span>
+        <span><h3>My screen’s washed out</h3><p>Power‑save grayscale, night shift mode, a cheap projector at the front.</p></span>
+        <span class="tick" aria-hidden="true">✓</span>
+      </button>
+    </div>
+
+    <div class="checkin-foot">
+      <button class="btn btn-primary" id="btn-serve" type="button" disabled>🍽️ Serve my course with <span id="serve-count">0 barriers</span></button>
+      <button class="btn btn-ghost" id="btn-perfect" type="button">😇 I’m at 100% — let me borrow someone else’s day</button>
+      <p class="checkin-note" id="checkin-note">Pick at least one — or admit you’re superhuman and borrow a barrier instead.</p>
+    </div>
+  </section>
+
+  <!-- ════════ BONUS MENU (borrowed barriers) ════════ -->
   <section class="screen" id="screen-menu" aria-labelledby="h-menu">
-    <span class="kicker">Course 1 of 3 · Pick your seasoning</span>
-    <h2 id="h-menu" tabindex="-1">Choose a barrier to taste</h2>
-    <p class="lede">Every barrier below can be <strong>permanent, temporary, or situational</strong> — that’s the social model of disability in one menu. Pick one. You’ll take the same 3‑step mini‑course with it switched on.</p>
+    <span class="kicker">Bonus round · Borrow someone else’s day</span>
+    <h2 id="h-menu" tabindex="-1">Taste a barrier that isn’t yours today</h2>
+    <p class="lede">Every one of these can be <strong>permanent, temporary, or situational</strong> — the same design fix serves all three. That’s the social model of disability in one menu.</p>
     <div class="menu-grid" role="list">
-      <button class="barrier-card" type="button" data-barrier="blur" role="listitem">
+      <button class="barrier-card" type="button" data-effect="glare" role="listitem">
         <span class="emoji" aria-hidden="true">👁️</span>
         <h3>Blur &amp; Glare</h3>
         <p>Low contrast text under a bright light. Squint away.</p>
         <span class="chips"><span class="chip">Low vision</span><span class="chip">Eye surgery</span><span class="chip">Sun on screen</span></span>
       </button>
-      <button class="barrier-card" type="button" data-barrier="gray" role="listitem">
+      <button class="barrier-card" type="button" data-effect="gray" role="listitem">
         <span class="emoji" aria-hidden="true">🎨</span>
         <h3>Color Only</h3>
         <p>Everything is grayscale — but the course speaks in color.</p>
         <span class="chips"><span class="chip">Color blindness</span><span class="chip">Old monitor</span><span class="chip">Cheap projector</span></span>
       </button>
-      <button class="barrier-card" type="button" data-barrier="motor" role="listitem">
+      <button class="barrier-card" type="button" data-effect="hand" role="listitem">
         <span class="emoji" aria-hidden="true">🖐️</span>
         <h3>Shaky Pointer</h3>
         <p>Tiny targets on a trembling screen. Good luck, mouse.</p>
         <span class="chips"><span class="chip">Tremor</span><span class="chip">Broken arm</span><span class="chip">Holding a baby</span></span>
       </button>
-      <button class="barrier-card" type="button" data-barrier="load" role="listitem">
+      <button class="barrier-card" type="button" data-effect="load" role="listitem">
         <span class="emoji" aria-hidden="true">🧠</span>
         <h3>Overload</h3>
         <p>Jargon, popups, a ticker, and a countdown. Breathe.</p>
         <span class="chips"><span class="chip">ADHD</span><span class="chip">Stress</span><span class="chip">Noisy expo hall</span></span>
       </button>
-      <button class="barrier-card" type="button" data-barrier="mute" role="listitem">
+      <button class="barrier-card" type="button" data-effect="mute" role="listitem">
         <span class="emoji" aria-hidden="true">🔇</span>
         <h3>No Captions</h3>
         <p>The instructions are audio‑only. Your sound is “broken.”</p>
@@ -486,7 +555,7 @@ footer.site a{color:var(--teal-deep);font-weight:700}
   <section class="screen" id="screen-task" aria-labelledby="h-task">
     <div class="taskbar">
       <div>
-        <span class="mode-pill barrier" id="mode-pill">🌶️ Barrier ON</span>
+        <span class="mode-pill barrier" id="mode-pill">🌶️ Your barriers ON</span>
         <h2 id="h-task" tabindex="-1" style="margin-top:8px">Mini‑course: <em>Safety Sprint</em></h2>
       </div>
       <div class="run-timer" id="run-timer" role="timer" aria-label="Task timer">0:00</div>
@@ -518,26 +587,26 @@ footer.site a{color:var(--teal-deep);font-weight:700}
   <section class="screen" id="screen-flip" aria-labelledby="h-flip">
     <div class="flip-stage">
       <span class="kicker">Course 2 of 3 · The secret sauce</span>
-      <h2 id="h-flip" tabindex="-1">That was the barrier.<br>Now flip <em>one</em> switch.</h2>
-      <p class="lede" style="margin:10px auto 0;max-width:52ch">Same course. Same three steps. The only change: it was <strong>designed for the barrier from the start</strong> — visible labels, color + words + icons, big targets, plain language, captions.</p>
+      <h2 id="h-flip" tabindex="-1">Your barriers aren’t going anywhere.<br>Now flip <em>one</em> switch.</h2>
+      <p class="lede" style="margin:10px auto 0;max-width:54ch">The room stays loud. Your hand stays busy. The glare stays. The only thing that changes is the <strong>design</strong> — built for your barriers from the start: captions on by default, real contrast, big targets, plain language, color that never works alone.</p>
       <br>
       <button class="big-switch" id="big-switch" type="button" aria-pressed="false">
         <span>Accessible by Design</span>
         <span class="track" aria-hidden="true"><span class="knob"></span></span>
         <span id="switch-state">OFF</span>
       </button>
-      <p class="lede" style="margin:0 auto;max-width:44ch">Your barrier stays on. The design changes. That’s the whole point.</p>
+      <p class="lede" style="margin:0 auto;max-width:44ch">Fix the design, not the person. That’s the whole point.</p>
     </div>
   </section>
 
   <!-- ════════ RESULTS ════════ -->
   <section class="screen" id="screen-results" aria-labelledby="h-results">
     <span class="kicker">Course 3 of 3 · Taste the difference</span>
-    <h2 id="h-results" tabindex="-1">Same you. Same barrier. Different design.</h2>
+    <h2 id="h-results" tabindex="-1">Same you. Same barriers. Different design.</h2>
 
     <div class="result-grid">
       <div class="result-tile r-barrier">
-        <h3>🌶️ Barrier design</h3>
+        <h3>🌶️ Designed for a “perfect” user</h3>
         <div class="time" id="res-barrier-time">–</div>
         <div class="sub" id="res-barrier-sub">–</div>
       </div>
@@ -552,7 +621,7 @@ footer.site a{color:var(--teal-deep);font-weight:700}
       <h3 id="chart-title">Time to finish the same 3‑step course</h3>
       <div role="img" aria-labelledby="chart-title" aria-describedby="chart-desc">
         <div class="bar-row">
-          <span class="bar-label">Barrier design</span>
+          <span class="bar-label">“Perfect user” design</span>
           <div class="bar-track"><div class="bar-fill f-barrier" id="bar-barrier" style="width:100%">0:00</div></div>
         </div>
         <div class="bar-row">
@@ -564,14 +633,20 @@ footer.site a{color:var(--teal-deep);font-weight:700}
       <p style="font-size:.88rem;color:var(--ink-soft);font-weight:600" id="delta-line"></p>
     </div>
 
+    <div class="no-fit">
+      <h3>🍜 Now look around your table</h3>
+      <p id="no-fit-line">Your neighbors checked different boxes than you did. Same course, different barriers, different fixes — <strong>accessibility isn’t one‑size‑fits‑all.</strong> That’s why it starts as a conversation, not a checklist. The recipe card shows how to open it.</p>
+    </div>
+
     <div class="punchline">
-      <p>“Accessibility isn’t extra steps.<br>It’s steps you’ve missed.”</p>
-      <small>Nick Tillem · Accessible by Design</small>
+      <p>You didn’t become disabled in the last 90 seconds.<br>The design just stopped assuming you were perfect.</p>
+      <small>“Accessibility isn’t extra steps — it’s steps you’ve missed.” · Nick Tillem</small>
     </div>
 
     <div class="hero-cta" style="justify-content:center">
       <button class="btn btn-primary" id="btn-to-recipe" type="button">🧾 Get the recipe card</button>
-      <button class="btn btn-ghost" id="btn-again" type="button">↺ Taste another barrier</button>
+      <button class="btn btn-ghost" id="btn-borrow" type="button">🔄 Borrow someone else’s day</button>
+      <button class="btn btn-ghost" id="btn-again" type="button">↺ Re‑check my barriers</button>
     </div>
   </section>
 
@@ -579,9 +654,9 @@ footer.site a{color:var(--teal-deep);font-weight:700}
   <section class="screen" id="screen-recipe" aria-labelledby="h-recipe">
     <div class="recipe-head">
       <div>
-        <span class="kicker">Take‑home · The secret sauce</span>
-        <h2 id="h-recipe" tabindex="-1">Recipe: Accessible by Design</h2>
-        <p class="lede">Five ingredients you can use this week — no budget approval required.</p>
+        <span class="kicker">Take‑home · Not one‑size‑fits‑all</span>
+        <h2 id="h-recipe" tabindex="-1">Recipe: start the conversation</h2>
+        <p class="lede">Everyone’s barriers are different, so no checklist covers them. These five ingredients open — and keep open — the conversation. Ingredient one starts it.</p>
       </div>
       <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-teal btn-small" id="btn-print" type="button">🖨️ Print / save PDF</button>
@@ -590,41 +665,41 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     </div>
 
     <details class="ingredient" open>
-      <summary><span class="num" aria-hidden="true">1</span> Reframe with the social model <span class="chev" aria-hidden="true">▾</span></summary>
+      <summary><span class="num" aria-hidden="true">1</span> Open the conversation: write an accessibility mission statement <span class="chev" aria-hidden="true">▾</span></summary>
       <div class="body">
-        <p>Disability isn’t a person’s “problem” to fix — it’s a mismatch between a person and an environment. Fix the environment. Every barrier shows up three ways, so you’re always designing for more people than you think:</p>
-        <table class="pts">
-          <caption class="sr-only">Examples of permanent, temporary, and situational barriers</caption>
-          <thead><tr><th scope="col">Permanent</th><th scope="col">Temporary</th><th scope="col">Situational</th></tr></thead>
-          <tbody>
-            <tr><td>Blindness</td><td>Eye surgery</td><td>Glare on a phone outside</td></tr>
-            <tr><td>One arm</td><td>Broken wrist</td><td>Holding a baby</td></tr>
-            <tr><td>Deafness</td><td>Ear infection</td><td>Muted phone on the bus</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </details>
-
-    <details class="ingredient">
-      <summary><span class="num" aria-hidden="true">2</span> Empathy‑map before you build <span class="chev" aria-hidden="true">▾</span></summary>
-      <div class="body">
-        <p>Before storyboarding, map one real learner with a barrier: what do they <strong>say, think, see, hear, feel, and do</strong> while taking your course? Ten minutes of empathy mapping catches the “steps you’ve missed” while they’re still cheap to fix. Better yet — survey your people and form a small advisory board of learners with disabilities.</p>
-      </div>
-    </details>
-
-    <details class="ingredient">
-      <summary><span class="num" aria-hidden="true">3</span> Write an accessibility mission statement <span class="chev" aria-hidden="true">▾</span></summary>
-      <div class="body">
-        <p>One or two sentences, public, updated, with leadership buy‑in — like Barclays (“accessible by design… designing for difference means designing for everyone”) or OXO. Concise but clear, an invitation to connect, and reviewed yearly. Use AI <em>and</em> your brain — start with this prompt:</p>
+        <p>Before tools, before audits, before budget: put a sentence on the table that says who you design for. One or two sentences, public, updated yearly, with leadership buy‑in — like Barclays (“accessible by design… designing for difference means designing for everyone”) or OXO (“it’s not extra steps”). The statement isn’t the finish line; it’s the <strong>conversation opener</strong> — the thing you point to in every design review, vendor call, and kickoff. Use AI <em>and</em> your brain — start with this prompt:</p>
         <div class="prompt-box" id="ai-prompt">I work for a [your industry] company and I want to develop an accessibility mission statement. Ask me questions one at a time to make sure you understand my company, our learners, and our values — then help me draft a statement that is concise, invites people to connect, and can be shared publicly.</div>
         <button class="btn btn-ghost btn-small copy-btn no-print" id="btn-copy-prompt" type="button">📋 Copy this prompt</button>
       </div>
     </details>
 
     <details class="ingredient">
-      <summary><span class="num" aria-hidden="true">4</span> Run the UDL 3‑question check <span class="chev" aria-hidden="true">▾</span></summary>
+      <summary><span class="num" aria-hidden="true">2</span> Remember: everyone encounters barriers <span class="chev" aria-hidden="true">▾</span></summary>
       <div class="body">
-        <p>Universal Design for Learning, pocket edition. Ask of every module:</p>
+        <p>Disability isn’t a person’s “problem” to fix — it’s a mismatch between a person and an environment. Fix the environment. Every barrier shows up three ways, and the same design fix serves all three — which means you’re always designing for far more people than “the 1 in 4”:</p>
+        <table class="pts">
+          <caption class="sr-only">Examples of permanent, temporary, and situational barriers</caption>
+          <thead><tr><th scope="col">Permanent</th><th scope="col">Temporary</th><th scope="col">Situational</th></tr></thead>
+          <tbody>
+            <tr><td>Blindness</td><td>Eye surgery</td><td>Glare on a phone outside</td></tr>
+            <tr><td>One arm</td><td>Broken wrist</td><td>Holding a baby (or a coffee)</td></tr>
+            <tr><td>Deafness</td><td>Ear infection</td><td>A loud expo hall — like this one</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">3</span> Find YOUR people’s barriers — don’t guess <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>One‑size‑fits‑all fails precisely because your learners’ barriers aren’t your barriers. Survey your people. Form a small advisory board of learners with disabilities. Before storyboarding, empathy‑map one real learner: what do they <strong>say, think, see, hear, feel, and do</strong> while taking your course? Ten minutes of empathy mapping catches the “steps you’ve missed” while they’re still cheap to fix.</p>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">4</span> Design multiple ways in: the UDL 3‑question check <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>Universal Design for Learning, pocket edition — the antidote to one‑size‑fits‑all is <em>multiple means</em>. Ask of every module:</p>
         <ul>
           <li><strong>Engagement (the WHY):</strong> do learners have more than one reason and way to care?</li>
           <li><strong>Representation (the WHAT):</strong> is every key idea available in more than one format — text, audio, visual?</li>
@@ -635,7 +710,7 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     </details>
 
     <details class="ingredient">
-      <summary><span class="num" aria-hidden="true">5</span> Hold your vendors accountable <span class="chev" aria-hidden="true">▾</span></summary>
+      <summary><span class="num" aria-hidden="true">5</span> Bring vendors into the conversation <span class="chev" aria-hidden="true">▾</span></summary>
       <div class="body">
         <p>Your LMS and authoring tools are ingredients too. Before you buy (or renew), ask three questions and expect real answers:</p>
         <ul>
@@ -670,11 +745,11 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     </div>
     <h3 style="font-size:1rem">Run of show</h3>
     <ol class="runlist">
-      <li><b>0:00–1:30</b><span>Hook: “1 in 4 of your learners…” — volunteer picks a barrier</span></li>
-      <li><b>1:30–5:00</b><span>Taste test: group coaches the volunteer through the barrier run</span></li>
-      <li><b>5:00–8:00</b><span>The flip: switch ON, same person re‑runs it — react to the delta</span></li>
-      <li><b>8:00–11:00</b><span>Recipe card: walk the 5 ingredients, copy the AI prompt</span></li>
-      <li><b>11:00–12:00</b><span>QR code up — “it’s steps you’ve missed” — reset for next group</span></li>
+      <li><b>0:00–1:30</b><span>Show of hands: “Who’s in a loud room right now? Holding coffee? Slept badly?” — everyone is the 1 in 4</span></li>
+      <li><b>1:30–5:00</b><span>Check‑in + taste test: table (or phones via QR) runs the course against their own barriers</span></li>
+      <li><b>5:00–8:00</b><span>The flip: barriers stay, design changes — react to the delta together</span></li>
+      <li><b>8:00–11:00</b><span>“Look around — different boxes, different fixes.” Recipe card: mission statement first, copy the AI prompt</span></li>
+      <li><b>11:00–12:00</b><span>QR up — “you didn’t become disabled in the last 90 seconds” — reset for next group</span></li>
     </ol>
     <div class="dlg-row" style="margin-top:14px">
       <button class="btn btn-ghost btn-small" id="btn-qr" type="button" aria-expanded="false">📱 Show QR for this page</button>
@@ -697,29 +772,42 @@ footer.site a{color:var(--teal-deep);font-weight:700}
 (function(){
 "use strict";
 
-/* ───────────────────────── state ───────────────────────── */
+/* ───────────────────────── state ─────────────────────────
+   effects: which barriers are active. From the check-in these are the
+   user's real situations (they can stack); from the bonus menu it's a
+   single borrowed barrier. */
 var state = {
-  barrier: null,          // 'blur' | 'gray' | 'motor' | 'load' | 'mute'
+  effects: [],            // subset of: 'glare','gray','hand','load','mute'
+  borrowed: false,        // true when the effect came from the bonus menu
   mode: 'barrier',        // 'barrier' | 'accessible'
   step: 0,
   errors: 0,
   ccOn: false,
   runStart: 0,
   timerId: null,
-  results: { barrier: null, accessible: null } // {ms, errors, assists}
+  results: { barrier: null, accessible: null }
 };
 var assists = 0;
 
-var BARRIER_NAMES = {
-  blur:'Blur & Glare', gray:'Color Only', motor:'Shaky Pointer', load:'Overload', mute:'No Captions'
+var EFFECT_NAMES = {
+  glare:'Glare & blur', gray:'Washed-out color', hand:'One busy hand', load:'Overload', mute:'Loud room'
+};
+var BORROWED_NAMES = {
+  glare:'Blur & Glare', gray:'Color Only', hand:'Shaky Pointer', load:'Overload', mute:'No Captions'
 };
 var LESSONS = {
-  blur:'<b>What fixed it:</b> real contrast (4.5:1+), bigger type, and layouts that survive a squint. Glare and low vision are the same design problem.',
-  gray:'<b>What fixed it:</b> never color alone. Words + icons + patterns ride along with color, so “the green one” still works in gray.',
-  motor:'<b>What fixed it:</b> big targets (44px+), space between them, and full keyboard support. Tab and Enter beat a shaky mouse every time.',
-  load:'<b>What fixed it:</b> plain language, one job per screen, no fake urgency. Cognitive load is a design choice — you chose it.',
-  mute:'<b>What fixed it:</b> captions and a transcript, on by default. Audio-only instruction locks out deaf learners, and everyone on a quiet bus.'
+  glare:'<b>Glare & blur:</b> real contrast (4.5:1+), bigger type, and layouts that survive a squint. Low vision and a sunny patio are the same design problem.',
+  gray:'<b>Color:</b> never color alone. Words + icons + patterns ride along with color, so “the green one” still works washed out.',
+  hand:'<b>Busy hands:</b> big targets (44px+), space between them, and full keyboard support. Tab and Enter beat a shaky thumb every time.',
+  load:'<b>Overload:</b> plain language, one job per screen, no fake urgency. Cognitive load is a design choice — the designer chose it.',
+  mute:'<b>Sound:</b> captions and a transcript, on by default. Audio-only instruction locks out deaf learners — and everyone in this expo hall.'
 };
+
+function has(fx){ return state.effects.indexOf(fx) !== -1; }
+function effectLabel(){
+  var names = state.borrowed ? BORROWED_NAMES : EFFECT_NAMES;
+  return state.effects.map(function(e){ return names[e]; }).join(' + ');
+}
 
 /* ───────────────────────── helpers ───────────────────────── */
 function $(id){ return document.getElementById(id); }
@@ -761,12 +849,12 @@ function endRun(){
 var acc = function(){ return state.mode === 'accessible'; };
 
 function audioBlock(spokenText){
-  // Fake audio player used in 'mute' barrier mode. CC button reveals transcript.
+  // Fake audio player used when 'mute' is active. CC button reveals transcript.
   var wrap = document.createElement('div');
   var bar = document.createElement('div');
   bar.className = 'audio-fake';
   bar.innerHTML =
-    '<button class="play" type="button" aria-label="Play instructions (audio is simulated as broken)">▶</button>' +
+    '<button class="play" type="button" aria-label="Play instructions (the room is too loud to hear them)">▶</button>' +
     '<span class="wave" aria-hidden="true"></span>' +
     '<button class="cc" type="button" aria-pressed="'+(state.ccOn?'true':'false')+'" aria-label="Toggle captions">CC</button>';
   var transcript = document.createElement('p');
@@ -774,7 +862,7 @@ function audioBlock(spokenText){
   transcript.textContent = '🗨️ ' + spokenText;
   transcript.hidden = !state.ccOn;
   bar.querySelector('.play').addEventListener('click', function(){
-    announce('Audio is playing, but your sound is broken. Try the CC button.');
+    announce('Audio is playing, but the room is too loud to hear it. Try the CC button.');
     this.textContent = this.textContent === '▶' ? '⏸' : '▶';
   });
   bar.querySelector('.cc').addEventListener('click', function(){
@@ -797,32 +885,36 @@ function errText(el, msg){
 
 /* STEP 1 — sign in */
 function renderStep1(stage){
-  var mute = state.barrier === 'mute' && !acc();
+  var mute = has('mute') && !acc();
   var frag = document.createElement('div');
 
   if(acc()){
     frag.innerHTML =
       '<p class="t-instr">Step 1 of 3 — Sign in. Two quick fields, no tricks.</p>';
+    if(has('mute')){
+      frag.appendChild(audioBlock('Welcome to Safety Sprint! To begin, type the team password — it is the word LEMON — and choose your role.'));
+    }
   } else if(mute){
     frag.appendChild(audioBlock('Welcome to Safety Sprint! To begin, type the team password — it is the word LEMON — and choose your role.'));
-  } else if(state.barrier === 'load'){
+  } else if(has('load')){
     frag.innerHTML =
       '<p class="jargon">Pursuant to onboarding directive 7.4.2(b), all associate-adjacent stakeholders must effectuate identity verification via the designated nomenclature field herein, whereupon role-based taxonomical self-classification shall be operationalized prior to module ingress, notwithstanding provisions in the aforementioned synergy framework.</p>';
   } else {
     frag.innerHTML = '<p class="t-instr vague">Complete verification to proceed</p>';
   }
 
+  var needPassword = has('mute'); // password flow whenever the loud-room barrier is in play
   var f1 = document.createElement('div');
   f1.className = 'field' + (acc() ? '' : ' mean');
-  var label1 = mute ? 'Team password' : 'Your name';
+  var label1 = needPassword ? 'Team password' : 'Your name';
   if(acc()){
     f1.innerHTML = '<label for="t-name">'+ label1 +'</label>' +
       '<input type="text" id="t-name" autocomplete="off">' +
-      (mute || state.barrier === 'mute' ? '<span class="hint">The transcript above tells you the password: LEMON.</span>' : '<span class="hint">Any nickname works.</span>') +
+      (needPassword ? '<span class="hint">The transcript above tells you the password: LEMON.</span>' : '<span class="hint">Any nickname works.</span>') +
       '<span class="err-text" role="alert"></span>';
   } else {
     f1.innerHTML = '<label class="sr-only" for="t-name">'+ label1 +'</label>' +
-      '<input type="text" id="t-name" autocomplete="off" placeholder="'+ (mute ? 'Enter password from audio' : 'Enter designation') +'">' +
+      '<input type="text" id="t-name" autocomplete="off" placeholder="'+ (needPassword ? 'Enter password from audio' : 'Enter designation') +'">' +
       '<span class="err-text" role="alert"></span>';
   }
 
@@ -843,14 +935,14 @@ function renderStep1(stage){
     var name = $('t-name').value.trim();
     var role = $('t-role').value;
     var bad = false;
-    if(mute && !acc() && name.toUpperCase() !== 'LEMON'){
+    if(needPassword && name.toUpperCase() !== 'LEMON'){
       state.errors++;
       errText(f1, acc() ? 'The password is LEMON (see the transcript).' : 'Incorrect.');
       bad = true;
-    } else if(!name){
+    } else if(!needPassword && !name){
       state.errors++;
-      errText(f1, acc() ? 'Please enter your name — any nickname works.' : '');
-      if(!acc()){ f1.classList.add('error'); }  // color-only error in barrier mode
+      if(acc()){ errText(f1, 'Please enter your name — any nickname works.'); }
+      else { f1.classList.add('error'); }  // color-only error in barrier mode
       bad = true;
     }
     if(!role){
@@ -872,11 +964,14 @@ function renderStep1(stage){
 
 /* STEP 2 — pick the safe zone tile */
 function renderStep2(stage){
-  var mute = state.barrier === 'mute' && !acc();
+  var mute = has('mute') && !acc();
   var frag = document.createElement('div');
 
   if(acc()){
     frag.innerHTML = '<p class="t-instr">Step 2 of 3 — Select the <strong>Safe zone</strong> tile. It’s labeled, green, and marked with a ✓.</p>';
+    if(has('mute')){
+      frag.appendChild(audioBlock('Select the tile labeled Safe zone — it has a check mark.'));
+    }
   } else if(mute){
     frag.appendChild(audioBlock('Select the GREEN tile to mark the safe assembly zone.'));
   } else {
@@ -910,7 +1005,7 @@ function renderStep2(stage){
       state.errors++;
       b.classList.add('wrong-flash');
       setTimeout(function(){ b.classList.remove('wrong-flash'); }, 600);
-      announce(acc() ? 'Not that one — the Safe zone tile is labeled with a check mark.' : 'Wrong tile. In grayscale, color-only instructions are a guessing game.');
+      announce(acc() ? 'Not that one — the Safe zone tile is labeled with a check mark.' : 'Wrong tile. Color-only instructions on a washed-out screen are a guessing game.');
     });
     row.appendChild(b);
   });
@@ -920,7 +1015,7 @@ function renderStep2(stage){
 
 /* STEP 3 — confirm & finish */
 function renderStep3(stage){
-  var mute = state.barrier === 'mute' && !acc();
+  var mute = has('mute') && !acc();
   var frag = document.createElement('div');
 
   if(acc()){
@@ -951,13 +1046,11 @@ function renderStep3(stage){
     if(!$('t-ack').checked){
       state.errors++;
       announce(acc() ? 'Please tick the checkbox first — it’s the big one on the left.' : 'Nothing happened. No error message. Nothing.');
-      if(acc()){
+      if(acc() && !chk.querySelector('.err-text')){
         var e = document.createElement('p');
-        if(!chk.querySelector('.err-text')){
-          e.className = 'err-text show'; e.setAttribute('role','alert');
-          e.innerHTML = '⚠️ Check the box to confirm, then press Finish.';
-          chk.appendChild(e);
-        }
+        e.className = 'err-text show'; e.setAttribute('role','alert');
+        e.innerHTML = '⚠️ Check the box to confirm, then press Finish.';
+        chk.appendChild(e);
       }
       return;
     }
@@ -988,12 +1081,12 @@ function renderStep(){
     dots[i].className = i < state.step ? 'done' : (i === state.step ? 'now' : '');
   }
   STEP_RENDERERS[state.step](stage);
-  applyOverloadClutter(stage);
+  applyOverloadClutter();
   announce((acc() ? 'Accessible mode. ' : '') + 'Step ' + (state.step+1) + ' of 3.');
 }
 
-function applyOverloadClutter(stage){
-  if(state.barrier !== 'load' || acc()) return;
+function applyOverloadClutter(){
+  if(!has('load') || acc()) return;
   // popups
   var p1 = document.createElement('div');
   p1.className = 'popup'; p1.style.top = '18%'; p1.style.right = '4%';
@@ -1037,30 +1130,47 @@ function nextStep(){
   renderStep();
 }
 
+/* Apply the active effects to the sandbox. Filters are composed in JS so
+   glare-blur and grayscale can stack. In accessible mode the person's
+   barriers persist — grayscale and glare stay, the jitter stays — but the
+   design compensates, so the "mean" parts (blur-contrast, tiny targets,
+   clutter) go away. */
+function applyEffects(mode){
+  var sb = $('sandbox');
+  sb.className = 'sandbox';
+  var stage = $('stage');
+  var filters = [];
+
+  if(has('gray')) filters.push('grayscale(1)');           // stays in both modes
+  if(has('glare')){
+    sb.classList.add('has-glare');                        // the light stays on
+    if(mode === 'barrier') filters.push('blur(2.4px)','contrast(.72)','brightness(1.05)');
+  }
+  if(has('hand')){
+    sb.classList.add('fx-jitter');                        // the hand stays busy
+    if(mode === 'barrier') sb.classList.add('fx-tiny');   // ...but targets grow in accessible mode
+  }
+  if(has('load') && mode === 'barrier') sb.classList.add('fx-load');
+
+  stage.style.filter = filters.join(' ');
+}
+
 function startTask(mode){
   state.mode = mode;
   state.step = 0;
-  state.ccOn = mode === 'accessible' ? true : false;
+  state.ccOn = mode === 'accessible';
   overloadExpired = false;
   if(mode === 'barrier') assists = 0;
 
-  var sb = $('sandbox');
-  sb.className = 'sandbox';
-  if(mode === 'barrier'){
-    var fx = {blur:'fx-blur', gray:'fx-gray', motor:'fx-motor', load:'fx-load'}[state.barrier];
-    if(fx) sb.classList.add(fx);
-  } else if(state.barrier === 'gray'){
-    // the person's barrier doesn't go away — the design compensates
-    sb.classList.add('fx-gray');
-  }
+  applyEffects(mode);
 
   var pill = $('mode-pill');
   if(mode === 'barrier'){
     pill.className = 'mode-pill barrier';
-    pill.textContent = '🌶️ Barrier ON — ' + BARRIER_NAMES[state.barrier];
+    pill.textContent = (state.borrowed ? '🌶️ Borrowed barrier ON — ' : '🌶️ Your barriers ON — ') + effectLabel();
   } else {
     pill.className = 'mode-pill accessible';
-    pill.textContent = '🥗 Accessible by Design — barrier still on';
+    pill.textContent = '🥗 Accessible by Design — ' + effectLabel() + ' still on';
   }
 
   $('lesson-box').hidden = true;
@@ -1095,10 +1205,13 @@ function finishRun(){
 /* "I'm stuck" — dignified exit that counts as the lesson landing */
 $('btn-stuck').addEventListener('click', function(){
   assists++;
+  var lessonHtml = state.effects.map(function(e){ return '<p style="margin-top:8px">' + LESSONS[e] + '</p>'; }).join('');
   var box = $('lesson-box');
-  box.innerHTML = '<p><b>That’s the point.</b> You just felt “' + BARRIER_NAMES[state.barrier] +
-    '” — a barrier some learner hits in your courses every day, silently. ' +
-    LESSONS[state.barrier] + '</p>' +
+  box.innerHTML = '<p><b>That’s the point.</b> You just felt “' + effectLabel() +
+    '” — ' + (state.borrowed
+      ? 'a day some learner has every day, silently.'
+      : 'and it wasn’t a simulation. That was your actual situation meeting a design that assumed you were perfect.') + '</p>' +
+    lessonHtml +
     '<p style="margin-top:10px"><button class="btn btn-teal btn-small" id="btn-stuck-continue" type="button">Skip ahead to the flip →</button></p>';
   box.hidden = false;
   $('btn-stuck-continue').addEventListener('click', function(){ finishRun(); });
@@ -1111,60 +1224,100 @@ function showResults(){
   if(!b || !a) return;
   $('res-barrier-time').textContent = fmt(b.ms);
   $('res-barrier-sub').textContent = b.errors + ' error' + (b.errors===1?'':'s') +
-    (b.assists ? ' · needed help ' + b.assists + '×' : '') + ' · ' + BARRIER_NAMES[state.barrier];
+    (b.assists ? ' · needed help ' + b.assists + '×' : '') + ' · ' + effectLabel();
   $('res-access-time').textContent = fmt(a.ms);
-  $('res-access-sub').textContent = a.errors + ' error' + (a.errors===1?'':'s') + ' · same barrier, better design';
+  $('res-access-sub').textContent = a.errors + ' error' + (a.errors===1?'':'s') + ' · same barriers, better design';
 
   var max = Math.max(b.ms, a.ms, 1);
   $('bar-barrier').style.width = Math.max(12, b.ms/max*100) + '%';
   $('bar-barrier').textContent = fmt(b.ms);
   $('bar-access').style.width = Math.max(12, a.ms/max*100) + '%';
   $('bar-access').textContent = fmt(a.ms);
-  $('chart-desc').textContent = 'Bar chart. Barrier design: ' + fmt(b.ms) + '. Accessible design: ' + fmt(a.ms) + '.';
+  $('chart-desc').textContent = 'Bar chart. Perfect-user design: ' + fmt(b.ms) + '. Accessible design: ' + fmt(a.ms) + '.';
 
   var line;
   if(a.ms < b.ms){
     var pct = Math.round((1 - a.ms/b.ms) * 100);
-    line = 'Same person, same barrier — ' + pct + '% faster and ' + Math.max(0, b.errors - a.errors) + ' fewer errors, because the design did the work.';
+    line = 'Same person, same barriers — ' + pct + '% faster and ' + Math.max(0, b.errors - a.errors) + ' fewer errors, because the design did the work.';
   } else {
     line = 'Nearly identical times — now imagine the run WITHOUT the fixes for a learner who can’t just squint harder.';
   }
   $('delta-line').textContent = line;
+
+  $('no-fit-line').innerHTML = state.borrowed
+    ? 'You borrowed <strong>' + effectLabel() + '</strong> for 90 seconds. Someone at your table has it all day — and their fix isn’t your fix. Same course, different barriers, different fixes — <strong>accessibility isn’t one‑size‑fits‑all.</strong> That’s why it starts as a conversation, not a checklist.'
+    : 'You checked <strong>' + effectLabel() + '</strong>. Your neighbors checked different boxes — same course, different barriers, different fixes. <strong>Accessibility isn’t one‑size‑fits‑all.</strong> That’s why it starts as a conversation, not a checklist. The recipe card shows how to open it.';
+
   show('screen-results');
 }
 
-/* ───────────────────────── wiring ───────────────────────── */
-$('btn-start').addEventListener('click', function(){ show('screen-menu'); });
-$('btn-skip-recipe').addEventListener('click', function(){ show('screen-recipe'); });
-$('btn-recipe-nav').addEventListener('click', function(){ show('screen-recipe'); });
-$('btn-to-recipe').addEventListener('click', function(){ show('screen-recipe'); });
-$('btn-again').addEventListener('click', function(){ resetDemo(); show('screen-menu'); });
-$('btn-restart').addEventListener('click', function(){ resetDemo(); show('screen-start'); });
+/* ───────────────────────── check-in wiring ───────────────────────── */
+function updateServeButton(){
+  var n = document.querySelectorAll('.situation[aria-pressed="true"]').length;
+  $('serve-count').textContent = n + ' barrier' + (n===1?'':'s');
+  $('btn-serve').disabled = n === 0;
+  $('checkin-note').textContent =
+    n === 0 ? 'Pick at least one — or admit you’re superhuman and borrow a barrier instead.' :
+    n === 1 ? 'One barrier. Very manageable… until the design ignores it.' :
+    n >= 3  ? n + ' barriers stacked. Welcome to an ordinary Tuesday.' :
+              'Barriers stack — that’s an ordinary day, not an edge case.';
+}
+document.querySelectorAll('.situation').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var on = btn.getAttribute('aria-pressed') === 'true';
+    btn.setAttribute('aria-pressed', on ? 'false' : 'true');
+    updateServeButton();
+  });
+});
+$('btn-serve').addEventListener('click', function(){
+  state.effects = Array.prototype.map.call(
+    document.querySelectorAll('.situation[aria-pressed="true"]'),
+    function(b){ return b.dataset.effect; }
+  );
+  state.borrowed = false;
+  startTask('barrier');
+});
+$('btn-perfect').addEventListener('click', function(){ show('screen-menu'); });
 
 document.querySelectorAll('.barrier-card').forEach(function(card){
   card.addEventListener('click', function(){
-    state.barrier = card.dataset.barrier;
+    state.effects = [card.dataset.effect];
+    state.borrowed = true;
     startTask('barrier');
   });
 });
 
+/* ───────────────────────── nav wiring ───────────────────────── */
+$('btn-start').addEventListener('click', function(){ show('screen-checkin'); });
+$('btn-skip-recipe').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-recipe-nav').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-to-recipe').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-borrow').addEventListener('click', function(){ resetRuns(); show('screen-menu'); });
+$('btn-again').addEventListener('click', function(){ resetRuns(); show('screen-checkin'); });
+$('btn-restart').addEventListener('click', function(){ resetDemo(); show('screen-start'); });
+
 $('big-switch').addEventListener('click', function(){
   this.setAttribute('aria-pressed','true');
   $('switch-state').textContent = 'ON';
-  var self = this;
   setTimeout(function(){ startTask('accessible'); }, reducedMotion() ? 50 : 450);
 });
 
-function resetDemo(){
+function resetRuns(){
   clearPopups();
   clearInterval(state.timerId);
   clearTimeout(startTask._stuckT);
-  state.barrier = null; state.step = 0; state.errors = 0; state.ccOn = false;
+  state.step = 0; state.errors = 0; state.ccOn = false;
   state.results = { barrier:null, accessible:null };
   assists = 0;
   $('run-timer').textContent = '0:00';
   $('lesson-box').hidden = true;
   $('btn-stuck').hidden = true;
+}
+function resetDemo(){
+  resetRuns();
+  state.effects = []; state.borrowed = false;
+  document.querySelectorAll('.situation').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+  updateServeButton();
 }
 
 /* recipe actions */
@@ -1237,6 +1390,7 @@ $('btn-qr').addEventListener('click', function(){
 });
 
 facilPaint();
+updateServeButton();
 })();
 </script>
 </body>
