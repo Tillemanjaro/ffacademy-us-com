@@ -589,7 +589,7 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     <h2 id="h-spectrum" tabindex="-1">Every barrier lives on a spectrum</h2>
     <p class="lede" id="spectrum-lede">Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. Here’s where you sit on each barrier you picked — and who else lives there.</p>
     <div id="spectrum-list"><!-- cards injected here --></div>
-    <p class="spectrum-moral">Design for the <b>permanent</b> end of the spectrum, and the temporary and situational cases get it <b>free</b>. That’s why fixing the design beats “accommodating” one person at a time.</p>
+    <p class="spectrum-moral">Read the row again — that’s <b>one barrier</b> wearing three faces, and <b>one fix</b> serves all three. What they need for life is what saves you today. Design for the <b>permanent</b> end, and the rest of the spectrum rides <b>free</b>.</p>
     <div class="hero-cta">
       <button class="btn btn-primary" id="btn-spectrum-go" type="button">🍽️ Got it — serve my course</button>
     </div>
@@ -849,26 +849,26 @@ var LESSONS = {
 
 /* one barrier, three durations — Microsoft-style persona spectrum */
 var SPECTRUM = {
-  mute:  { emoji:'🔊', title:'Can’t use sound',
-    perm:{what:'Deafness',                note:'~11M Americans are deaf or seriously hard of hearing'},
-    temp:{what:'Ear infection',           note:'a week of muffled everything'},
-    sit: {what:'A loud expo hall',        note:'or a muted phone on the bus'} },
-  glare: { emoji:'👁️', title:'Can’t see the screen well',
-    perm:{what:'Low vision',              note:'contrast and type size are everything'},
-    temp:{what:'Eye surgery / dilated pupils', note:'try reading after the optometrist'},
-    sit: {what:'Glare on your screen',    note:'convention lighting, sunny patio, battery-saver dimness'} },
-  hand:  { emoji:'🖐️', title:'Can’t use both hands steadily',
-    perm:{what:'One arm, or a tremor',    note:'Parkinson’s alone affects ~1M Americans'},
-    temp:{what:'A broken wrist',          note:'six weeks of one-handed everything'},
-    sit: {what:'Holding coffee or a baby',note:'tapping with a thumb while standing'} },
-  load:  { emoji:'🧠', title:'Can’t spare full attention',
-    perm:{what:'ADHD, dyslexia',          note:'jargon walls cost these learners the most'},
-    temp:{what:'Concussion, grief, stress', note:'focus rationed by life'},
-    sit: {what:'Conference brain',        note:'6 a.m. flight, 40 unread Slacks'} },
-  gray:  { emoji:'🎨', title:'Can’t rely on color',
-    perm:{what:'Color blindness',         note:'1 in 12 men, 1 in 200 women'},
-    temp:{what:'Cataracts pre-surgery',   note:'colors wash toward yellow'},
-    sit: {what:'Power-save grayscale',    note:'or the cheap projector up front'} }
+  mute:  { emoji:'🔊', title:'Hearing the instructions',
+    perm:{what:'Marcus, who is Deaf',            note:'one of 11 million — captions aren’t extra, they’re the interface'},
+    temp:{what:'Priya, ear infection',           note:'everything sounds underwater this week'},
+    sit: {what:'You, in this expo hall',         note:'the audio is playing — it might as well not be'} },
+  glare: { emoji:'👁️', title:'Reading the screen',
+    perm:{what:'Elena, low vision',              note:'thin gray text simply isn’t there'},
+    temp:{what:'Sam, pupils dilated',            note:'try reading your phone in the eye-doctor parking lot'},
+    sit: {what:'You, under convention lighting', note:'brightness at 40% to make the battery last'} },
+  hand:  { emoji:'🖐️', title:'Hitting the button',
+    perm:{what:'Ruth, who has a tremor',         note:'every tiny target takes three tries'},
+    temp:{what:'Jordan, wrist in a cast',        note:'six weeks of one-thumb everything'},
+    sit: {what:'You, coffee in one hand',        note:'standing up, bag on shoulder, phone in the other'} },
+  load:  { emoji:'🧠', title:'Holding focus',
+    perm:{what:'Theo, who has ADHD',             note:'a jargon wall costs him the whole module'},
+    temp:{what:'Ana, post-concussion',           note:'focus is rationed by the hour'},
+    sit: {what:'You, conference brain',          note:'6 a.m. flight, 40 unread messages'} },
+  gray:  { emoji:'🎨', title:'Telling colors apart',
+    perm:{what:'Miguel, red‑green colorblind',   note:'1 in 12 men — “the green one” means nothing'},
+    temp:{what:'June, cataracts forming',        note:'the whole world washes toward yellow'},
+    sit: {what:'You, in power-save grayscale',   note:'or squinting at the cheap projector up front'} }
 };
 
 function buildSpectrum(){
@@ -894,8 +894,8 @@ function buildSpectrum(){
     list.appendChild(card);
   });
   $('spectrum-lede').innerHTML = state.borrowed
-    ? 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. You’re borrowing the <strong>permanent</strong> end for 90 seconds — someone lives there. And notice: the fix is identical all the way across.'
-    : 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. Here’s where you sit on each barrier you picked — and who else lives there. Same barrier, same fix, whole spectrum.';
+    ? 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. For the next 90 seconds you’re borrowing the <strong>permanent</strong> end — meet the person who doesn’t give it back. The fix is identical all the way across.'
+    : 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong> — same barrier, different durations. You’re on the right‑hand end today. Meet the people further down the row.';
 }
 
 function has(fx){ return state.effects.indexOf(fx) !== -1; }
