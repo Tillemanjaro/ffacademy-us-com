@@ -163,6 +163,38 @@ h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-b
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:6px}
 .chip{font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--cream-2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--ink-soft)}
 
+/* ── spectrum (permanent / temporary / situational) ── */
+.spectrum-card{
+  background:var(--card);border:2px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;margin-top:16px;
+}
+.spectrum-card h3{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.spectrum-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media (max-width:640px){.spectrum-row{grid-template-columns:1fr}}
+.spec-cell{
+  border:2px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--cream-2);
+  position:relative;
+}
+.spec-cell .spec-kind{
+  display:block;font-size:.68rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;
+}
+.spec-cell .spec-what{font-weight:700;font-size:.95rem;line-height:1.35}
+.spec-cell .spec-note{display:block;font-size:.8rem;color:var(--ink-soft);font-weight:500;margin-top:4px}
+.spec-cell.you{
+  background:#EAF6F4;border-color:var(--teal);box-shadow:inset 0 0 0 2px var(--teal);
+}
+.spec-cell.you::after{
+  content:'YOU, RIGHT NOW';
+  position:absolute;top:-12px;right:10px;background:var(--teal);color:#fff;
+  font-size:.62rem;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;
+}
+.spec-cell.you.borrowed::after{content:'YOU, FOR 90 SECONDS'}
+.spectrum-moral{
+  background:var(--ink);color:var(--cream);border-radius:var(--radius);
+  padding:20px 24px;margin-top:22px;font-weight:700;font-size:1.05rem;text-align:center;
+}
+.spectrum-moral b{color:#F8C471}
+
 /* ── task sandbox ── */
 .taskbar{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
@@ -551,6 +583,18 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     </div>
   </section>
 
+  <!-- ════════ SPECTRUM ════════ -->
+  <section class="screen" id="screen-spectrum" aria-labelledby="h-spectrum">
+    <span class="kicker">One barrier · Three durations</span>
+    <h2 id="h-spectrum" tabindex="-1">Every barrier lives on a spectrum</h2>
+    <p class="lede" id="spectrum-lede">Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. Here’s where you sit on each barrier you picked — and who else lives there.</p>
+    <div id="spectrum-list"><!-- cards injected here --></div>
+    <p class="spectrum-moral">Design for the <b>permanent</b> end of the spectrum, and the temporary and situational cases get it <b>free</b>. That’s why fixing the design beats “accommodating” one person at a time.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" id="btn-spectrum-go" type="button">🍽️ Got it — serve my course</button>
+    </div>
+  </section>
+
   <!-- ════════ TASK ════════ -->
   <section class="screen" id="screen-task" aria-labelledby="h-task">
     <div class="taskbar">
@@ -746,7 +790,7 @@ footer.site a{color:var(--teal-deep);font-weight:700}
     <h3 style="font-size:1rem">Run of show</h3>
     <ol class="runlist">
       <li><b>0:00–1:30</b><span>Show of hands: “Who’s in a loud room right now? Holding coffee? Slept badly?” — everyone is the 1 in 4</span></li>
-      <li><b>1:30–5:00</b><span>Check‑in + taste test: table (or phones via QR) runs the course against their own barriers</span></li>
+      <li><b>1:30–5:00</b><span>Check‑in → spectrum (“your situational barrier is someone’s permanent one”) → taste test on phones via QR</span></li>
       <li><b>5:00–8:00</b><span>The flip: barriers stay, design changes — react to the delta together</span></li>
       <li><b>8:00–11:00</b><span>“Look around — different boxes, different fixes.” Recipe card: mission statement first, copy the AI prompt</span></li>
       <li><b>11:00–12:00</b><span>QR up — “you didn’t become disabled in the last 90 seconds” — reset for next group</span></li>
@@ -802,6 +846,57 @@ var LESSONS = {
   load:'<b>Overload:</b> plain language, one job per screen, no fake urgency. Cognitive load is a design choice — the designer chose it.',
   mute:'<b>Sound:</b> captions and a transcript, on by default. Audio-only instruction locks out deaf learners — and everyone in this expo hall.'
 };
+
+/* one barrier, three durations — Microsoft-style persona spectrum */
+var SPECTRUM = {
+  mute:  { emoji:'🔊', title:'Can’t use sound',
+    perm:{what:'Deafness',                note:'~11M Americans are deaf or seriously hard of hearing'},
+    temp:{what:'Ear infection',           note:'a week of muffled everything'},
+    sit: {what:'A loud expo hall',        note:'or a muted phone on the bus'} },
+  glare: { emoji:'👁️', title:'Can’t see the screen well',
+    perm:{what:'Low vision',              note:'contrast and type size are everything'},
+    temp:{what:'Eye surgery / dilated pupils', note:'try reading after the optometrist'},
+    sit: {what:'Glare on your screen',    note:'convention lighting, sunny patio, battery-saver dimness'} },
+  hand:  { emoji:'🖐️', title:'Can’t use both hands steadily',
+    perm:{what:'One arm, or a tremor',    note:'Parkinson’s alone affects ~1M Americans'},
+    temp:{what:'A broken wrist',          note:'six weeks of one-handed everything'},
+    sit: {what:'Holding coffee or a baby',note:'tapping with a thumb while standing'} },
+  load:  { emoji:'🧠', title:'Can’t spare full attention',
+    perm:{what:'ADHD, dyslexia',          note:'jargon walls cost these learners the most'},
+    temp:{what:'Concussion, grief, stress', note:'focus rationed by life'},
+    sit: {what:'Conference brain',        note:'6 a.m. flight, 40 unread Slacks'} },
+  gray:  { emoji:'🎨', title:'Can’t rely on color',
+    perm:{what:'Color blindness',         note:'1 in 12 men, 1 in 200 women'},
+    temp:{what:'Cataracts pre-surgery',   note:'colors wash toward yellow'},
+    sit: {what:'Power-save grayscale',    note:'or the cheap projector up front'} }
+};
+
+function buildSpectrum(){
+  var list = $('spectrum-list');
+  list.innerHTML = '';
+  state.effects.forEach(function(fx){
+    var s = SPECTRUM[fx];
+    if(!s) return;
+    var youKind = state.borrowed ? 'perm' : 'sit';
+    var card = document.createElement('div');
+    card.className = 'spectrum-card';
+    card.innerHTML = '<h3><span aria-hidden="true">' + s.emoji + '</span> ' + s.title + '</h3>' +
+      '<div class="spectrum-row">' +
+      [['perm','Permanent'],['temp','Temporary'],['sit','Situational']].map(function(k){
+        var isYou = k[0] === youKind;
+        return '<div class="spec-cell' + (isYou ? ' you' + (state.borrowed ? ' borrowed' : '') : '') + '">' +
+          (isYou ? '<span class="sr-only">' + (state.borrowed ? 'You are borrowing this for 90 seconds: ' : 'This is you, right now: ') + '</span>' : '') +
+          '<span class="spec-kind">' + k[1] + '</span>' +
+          '<span class="spec-what">' + s[k[0]].what + '</span>' +
+          '<span class="spec-note">' + s[k[0]].note + '</span>' +
+          '</div>';
+      }).join('') + '</div>';
+    list.appendChild(card);
+  });
+  $('spectrum-lede').innerHTML = state.borrowed
+    ? 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. You’re borrowing the <strong>permanent</strong> end for 90 seconds — someone lives there. And notice: the fix is identical all the way across.'
+    : 'Disability can be <strong>permanent</strong>, <strong>temporary</strong>, or <strong>situational</strong>. Here’s where you sit on each barrier you picked — and who else lives there. Same barrier, same fix, whole spectrum.';
+}
 
 function has(fx){ return state.effects.indexOf(fx) !== -1; }
 function effectLabel(){
@@ -1275,7 +1370,8 @@ $('btn-serve').addEventListener('click', function(){
     function(b){ return b.dataset.effect; }
   );
   state.borrowed = false;
-  startTask('barrier');
+  buildSpectrum();
+  show('screen-spectrum');
 });
 $('btn-perfect').addEventListener('click', function(){ show('screen-menu'); });
 
@@ -1283,9 +1379,12 @@ document.querySelectorAll('.barrier-card').forEach(function(card){
   card.addEventListener('click', function(){
     state.effects = [card.dataset.effect];
     state.borrowed = true;
-    startTask('barrier');
+    buildSpectrum();
+    show('screen-spectrum');
   });
 });
+
+$('btn-spectrum-go').addEventListener('click', function(){ startTask('barrier'); });
 
 /* ───────────────────────── nav wiring ───────────────────────── */
 $('btn-start').addEventListener('click', function(){ show('screen-checkin'); });
