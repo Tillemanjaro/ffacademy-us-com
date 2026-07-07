@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Accessibility Taste Test — Nick Tillem · TechLearn 2026 Test Kitchen</title>
+<meta name="description" content="A hands-on demo: try to finish a 90-second e-learning task with a simulated barrier, flip one switch, and feel what Accessible by Design changes. From Nick Tillem's Innovations in Training Test Kitchen demo at TechLearn 2026.">
+<meta property="og:title" content="The Accessibility Taste Test">
+<meta property="og:description" content="Experience your training the way 1 in 4 learners do — then flip the Accessible by Design switch.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍋</text></svg>">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+:root{
+  --cream:#FBF3DE;
+  --cream-2:#F6EBCE;
+  --ink:#26221B;
+  --ink-soft:#57503F;
+  --orange:#E8590C;
+  --orange-deep:#C2410C;
+  --teal:#0D9488;
+  --teal-deep:#0B6E66;
+  --card:#FFFCF2;
+  --line:#E3D5AE;
+  --focus:#1D4ED8;
+  --radius:18px;
+  --shadow:0 10px 30px rgba(38,34,27,.10);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important}
+}
+
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:'Poppins',system-ui,-apple-system,Segoe UI,sans-serif;
+  line-height:1.6;
+  min-height:100vh;
+}
+
+.skip-link{
+  position:absolute;left:-9999px;top:0;
+  background:var(--ink);color:var(--cream);
+  padding:12px 20px;border-radius:0 0 12px 0;z-index:1000;font-weight:600;
+}
+.skip-link:focus{left:0}
+
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+
+/* ── header ── */
+header.site{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px clamp(16px,4vw,40px);
+  border-bottom:2px solid var(--line);
+  background:var(--cream);
+  position:sticky;top:0;z-index:50;
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.02rem;letter-spacing:.02em}
+.brand .dot{width:12px;height:12px;border-radius:50%;background:var(--orange);display:inline-block}
+.brand small{display:block;font-weight:600;color:var(--ink-soft);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
+.header-actions{display:flex;gap:10px;align-items:center}
+@media (max-width:560px){
+  .brand small{display:none}
+  .brand{font-size:.92rem}
+  .btn-small{font-size:.8rem;padding:8px 13px}
+}
+
+/* ── buttons ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:inherit;font-weight:700;font-size:1.05rem;
+  padding:14px 26px;border-radius:999px;border:3px solid transparent;
+  cursor:pointer;text-decoration:none;line-height:1.2;
+  transition:transform .12s ease, box-shadow .12s ease;
+  min-height:48px;
+}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--orange);color:#fff}
+.btn-primary:hover{background:var(--orange-deep);box-shadow:var(--shadow)}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-teal:hover{background:var(--teal-deep);box-shadow:var(--shadow)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-ghost:hover{background:var(--ink);color:var(--cream)}
+.btn-small{font-size:.9rem;padding:9px 18px;min-height:40px}
+
+/* ── screens ── */
+main{max-width:1060px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,40px) 80px}
+.screen{display:none}
+.screen.active{display:block;animation:fadeUp .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+.kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--cream-2);border:2px solid var(--line);
+  padding:6px 16px;border-radius:999px;
+  font-size:.8rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
+}
+h1{font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:800;line-height:1.12;margin:18px 0 14px;letter-spacing:-.01em}
+h1 .accent{color:var(--orange-deep)}
+h2{font-size:clamp(1.5rem,3.4vw,2.2rem);font-weight:800;line-height:1.2;margin-bottom:10px}
+.lede{font-size:clamp(1.05rem,2vw,1.25rem);color:var(--ink-soft);max-width:46ch}
+
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(20px,4vw,52px);align-items:center}
+@media (max-width:820px){.hero{grid-template-columns:1fr}}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:26px}
+
+.stat-strip{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+.stat{
+  background:var(--card);border:2px solid var(--line);border-radius:var(--radius);
+  padding:14px 20px;min-width:150px;flex:1;
+}
+.stat b{display:block;font-size:1.5rem;color:var(--orange-deep);line-height:1.2}
+.stat span{font-size:.85rem;color:var(--ink-soft);font-weight:600}
+
+.plate{
+  background:var(--card);border:2px solid var(--line);border-radius:24px;
+  box-shadow:var(--shadow);padding:26px;text-align:center;
+}
+.plate .big-emoji{font-size:5rem;line-height:1}
+.plate p{font-weight:700;margin-top:10px}
+.plate small{color:var(--ink-soft);font-weight:600}
+
+/* ── menu of barriers ── */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:16px;margin-top:26px}
+.barrier-card{
+  background:var(--card);border:3px solid var(--line);border-radius:var(--radius);
+  padding:20px 16px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  display:flex;flex-direction:column;gap:8px;min-height:100%;
+}
+.barrier-card:hover{transform:translateY(-4px);border-color:var(--orange);box-shadow:var(--shadow)}
+.barrier-card .emoji{font-size:2.2rem;line-height:1}
+.barrier-card h3{font-size:1.06rem;font-weight:800;line-height:1.25}
+.barrier-card p{font-size:.82rem;color:var(--ink-soft);line-height:1.45}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:auto;padding-top:6px}
+.chip{font-size:.66rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--cream-2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--ink-soft)}
+
+/* ── task sandbox ── */
+.taskbar{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:14px;
+}
+.mode-pill{
+  display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem;
+  padding:8px 18px;border-radius:999px;color:#fff;
+}
+.mode-pill.barrier{background:var(--orange-deep)}
+.mode-pill.accessible{background:var(--teal)}
+.run-timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:1.25rem}
+
+.sandbox-wrap{position:relative}
+.sandbox{
+  background:#fff;border:3px solid var(--line);border-radius:var(--radius);
+  padding:clamp(18px,3.5vw,34px);position:relative;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.sandbox .course-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid #eee;padding-bottom:12px;margin-bottom:18px}
+.sandbox .course-head .logo{width:34px;height:34px;border-radius:8px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.sandbox .course-head b{font-size:1rem}
+.sandbox .course-head span{font-size:.78rem;color:#666;display:block}
+.steps-dots{margin-left:auto;display:flex;gap:6px}
+.steps-dots i{width:10px;height:10px;border-radius:50%;background:#ddd}
+.steps-dots i.done{background:var(--teal)}
+.steps-dots i.now{background:var(--orange)}
+
+/* barrier filters applied to the inner stage only */
+.stage{position:relative}
+.sandbox.fx-blur .stage{filter:blur(2.4px) contrast(.72) brightness(1.05)}
+.sandbox.fx-gray .stage{filter:grayscale(1)}
+.glare{
+  position:absolute;inset:0;pointer-events:none;display:none;border-radius:var(--radius);
+  background:radial-gradient(ellipse 60% 45% at 68% 18%, rgba(255,255,255,.92), rgba(255,255,255,0) 62%);
+  z-index:5;
+}
+.sandbox.fx-blur .glare{display:block}
+
+/* jitter for motor mode */
+@keyframes jitter{
+  0%{transform:translate(0,0)}20%{transform:translate(2px,-2px)}40%{transform:translate(-2px,2px)}
+  60%{transform:translate(2px,2px)}80%{transform:translate(-2px,-2px)}100%{transform:translate(0,0)}
+}
+.sandbox.fx-motor .stage{animation:jitter .5s infinite steps(2)}
+@media (prefers-reduced-motion: reduce){.sandbox.fx-motor .stage{animation:none}}
+.sandbox.fx-motor .t-btn{font-size:.68rem;padding:3px 8px;min-height:0}
+.sandbox.fx-motor .tile{width:56px;height:56px}
+
+/* overload clutter */
+.ticker{
+  display:none;white-space:nowrap;overflow:hidden;background:#111;color:#ffe066;
+  font-size:.8rem;font-weight:700;padding:6px 0;border-radius:8px;margin-bottom:12px;
+}
+.sandbox.fx-load .ticker{display:block}
+.ticker span{display:inline-block;padding-left:100%;animation:tick 11s linear infinite}
+@keyframes tick{to{transform:translateX(-100%)}}
+@media (prefers-reduced-motion: reduce){.ticker span{animation:none;padding-left:0}}
+.popup{
+  display:none;position:absolute;z-index:6;background:#fff;border:2px solid #f03e3e;border-radius:10px;
+  padding:10px 12px;font-size:.78rem;max-width:210px;box-shadow:0 8px 20px rgba(0,0,0,.25);
+}
+.sandbox.fx-load .popup{display:block}
+.popup b{color:#c92a2a}
+.popup .x{float:right;border:0;background:none;font-weight:800;cursor:pointer;font-size:.9rem;padding:2px 6px}
+.countdown{
+  display:none;height:10px;border-radius:99px;background:#eee;overflow:hidden;margin-bottom:14px;
+}
+.sandbox.fx-load .countdown{display:block}
+.countdown i{display:block;height:100%;background:#f03e3e;width:100%;transition:width .25s linear}
+
+/* fake audio player for captions mode */
+.audio-fake{
+  display:flex;align-items:center;gap:12px;background:#f1f3f5;border:2px solid #dee2e6;
+  border-radius:12px;padding:10px 14px;margin-bottom:14px;
+}
+.audio-fake .play{width:38px;height:38px;border-radius:50%;background:var(--ink);color:#fff;border:0;font-size:1rem;cursor:pointer;flex:none}
+.audio-fake .wave{flex:1;height:20px;background:repeating-linear-gradient(90deg,#adb5bd 0 3px,transparent 3px 6px);border-radius:4px;min-width:60px}
+.audio-fake .cc{
+  border:2px solid var(--ink);background:#fff;border-radius:8px;font-weight:800;
+  padding:6px 12px;cursor:pointer;font-family:inherit;font-size:.85rem;flex:none;
+}
+.audio-fake .cc[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.transcript{
+  background:var(--cream-2);border-left:5px solid var(--teal);border-radius:8px;
+  padding:10px 14px;margin-bottom:14px;font-weight:600;
+}
+
+/* task internals */
+.t-instr{font-weight:700;font-size:1.05rem;margin-bottom:14px}
+.t-instr.vague{font-weight:400;font-size:.8rem;color:#999;margin-bottom:8px}
+.jargon{font-size:.74rem;color:#777;line-height:1.5;margin-bottom:12px;text-align:justify}
+.field{margin-bottom:16px}
+.field label{display:block;font-weight:700;margin-bottom:6px}
+.field .hint{font-size:.85rem;color:var(--ink-soft);font-weight:500;margin-top:4px;display:block}
+.field input[type=text],.field select{
+  font-family:inherit;font-size:1rem;padding:12px 14px;border:2px solid #ced4da;border-radius:10px;width:100%;max-width:380px;background:#fff;color:var(--ink);
+}
+.field.mean input[type=text],.field.mean select{font-size:.78rem;padding:6px 8px;max-width:220px;border-color:#e9ecef}
+.field.error input,.field.error select{border-color:#e03131}
+.err-text{display:none;color:#c2251d;font-weight:700;font-size:.92rem;margin-top:6px}
+.field.error .err-text.show{display:flex;align-items:center;gap:6px}
+
+.tile-row{display:flex;flex-wrap:wrap;gap:14px;margin:8px 0 18px}
+.tile{
+  width:110px;height:110px;border-radius:14px;border:3px solid rgba(0,0,0,.14);cursor:pointer;
+  font-family:inherit;font-weight:700;color:#fff;font-size:.82rem;line-height:1.25;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px;text-align:center;
+}
+.tile .ic{font-size:1.5rem}
+.tile.wrong-flash{border-color:#e03131;box-shadow:0 0 0 4px rgba(224,49,49,.35)}
+.t-btn{
+  font-family:inherit;font-weight:700;font-size:1rem;padding:12px 26px;border-radius:10px;border:0;cursor:pointer;
+  background:var(--teal);color:#fff;min-height:46px;
+}
+.t-btn.mean{background:#adb5bd;color:#fff;font-size:.74rem;padding:5px 12px;min-height:0;border-radius:6px}
+.t-btn:hover{filter:brightness(.94)}
+.decoy{font-size:.8rem;margin-bottom:14px}
+.decoy a{color:#4263eb}
+.check-row{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px;max-width:52ch}
+.check-row input{width:22px;height:22px;margin-top:4px;flex:none}
+.check-row.mean input{width:11px;height:11px;margin-top:2px}
+.check-row.mean label{font-size:.72rem;color:#888}
+
+.stuck-bar{display:flex;justify-content:flex-end;margin-top:14px}
+.stuck-btn{
+  background:none;border:2px dashed var(--ink-soft);color:var(--ink-soft);border-radius:999px;
+  font-family:inherit;font-weight:700;font-size:.85rem;padding:8px 16px;cursor:pointer;
+}
+.stuck-btn:hover{border-style:solid;color:var(--ink);border-color:var(--ink)}
+
+.lesson{
+  background:var(--cream-2);border:2px solid var(--line);border-radius:var(--radius);
+  padding:18px 22px;margin-top:16px;
+}
+.lesson b{color:var(--orange-deep)}
+
+/* ── flip screen ── */
+.flip-stage{text-align:center;padding:20px 0}
+.big-switch{
+  display:inline-flex;align-items:center;gap:18px;margin:30px 0;
+  background:var(--card);border:3px solid var(--line);border-radius:999px;padding:16px 30px;
+  cursor:pointer;font-family:inherit;font-size:1.15rem;font-weight:800;color:var(--ink);
+  transition:border-color .2s ease;
+}
+.big-switch:hover{border-color:var(--teal)}
+.big-switch .track{
+  width:84px;height:44px;border-radius:99px;background:#cbc4ae;position:relative;flex:none;transition:background .25s ease;
+}
+.big-switch .knob{
+  position:absolute;top:4px;left:4px;width:36px;height:36px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);transition:left .25s ease;
+}
+.big-switch[aria-pressed="true"] .track{background:var(--teal)}
+.big-switch[aria-pressed="true"] .knob{left:44px}
+
+/* ── results ── */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0}
+@media (max-width:640px){.result-grid{grid-template-columns:1fr}}
+.result-tile{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:20px 24px}
+.result-tile h3{font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.result-tile .time{font-size:2.6rem;font-weight:800;line-height:1.15;font-variant-numeric:tabular-nums}
+.result-tile.r-barrier .time{color:var(--orange-deep)}
+.result-tile.r-access .time{color:var(--teal-deep)}
+.result-tile .sub{font-size:.9rem;color:var(--ink-soft);font-weight:600}
+
+.compare-chart{background:var(--card);border:2px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:26px}
+.compare-chart h3{font-size:1rem;margin-bottom:14px}
+.bar-row{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:12px;margin-bottom:12px}
+@media (max-width:520px){.bar-row{grid-template-columns:1fr}.bar-row .bar-label{margin-bottom:-6px}}
+.bar-label{font-weight:700;font-size:.92rem}
+.bar-track{position:relative;height:30px}
+.bar-fill{
+  height:100%;border-radius:0 6px 6px 0;display:flex;align-items:center;justify-content:flex-end;
+  padding-right:10px;color:#fff;font-weight:800;font-variant-numeric:tabular-nums;font-size:.9rem;
+  min-width:64px;transition:width .8s ease;
+}
+.bar-fill.f-barrier{background:#C2410C}
+.bar-fill.f-access{background:#0D9488}
+
+.punchline{
+  text-align:center;background:var(--ink);color:var(--cream);border-radius:24px;
+  padding:clamp(26px,5vw,48px);margin:30px 0;
+}
+.punchline p{font-size:clamp(1.4rem,3.4vw,2.2rem);font-weight:800;line-height:1.3}
+.punchline small{display:block;margin-top:12px;font-size:1rem;color:#cfc7b2;font-weight:600}
+
+/* ── recipe card ── */
+.recipe-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:8px}
+.ingredient{
+  background:var(--card);border:2px solid var(--line);border-radius:var(--radius);
+  margin-top:16px;overflow:hidden;
+}
+.ingredient summary{
+  list-style:none;display:flex;align-items:center;gap:14px;padding:18px 22px;cursor:pointer;font-weight:800;font-size:1.05rem;
+}
+.ingredient summary::-webkit-details-marker{display:none}
+.ingredient summary .num{
+  width:38px;height:38px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex:none;
+}
+.ingredient summary .chev{margin-left:auto;transition:transform .2s ease;flex:none}
+.ingredient[open] summary .chev{transform:rotate(180deg)}
+.ingredient .body{padding:0 22px 20px 74px;color:var(--ink-soft)}
+@media (max-width:560px){.ingredient .body{padding-left:22px}}
+.ingredient .body ul{margin:8px 0 0 18px}
+.ingredient .body li{margin-bottom:6px}
+.prompt-box{
+  background:var(--cream-2);border:2px dashed var(--ink-soft);border-radius:12px;padding:14px 16px;
+  font-size:.9rem;margin-top:12px;color:var(--ink);
+}
+.copy-btn{margin-top:10px}
+.pts{width:100%;border-collapse:collapse;margin-top:10px;font-size:.9rem}
+.pts th,.pts td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+.pts th{background:var(--cream-2)}
+
+/* ── facilitator dialog ── */
+dialog{
+  border:3px solid var(--line);border-radius:20px;padding:0;max-width:520px;width:calc(100% - 32px);
+  background:var(--card);color:var(--ink);box-shadow:0 30px 80px rgba(0,0,0,.35);
+}
+dialog::backdrop{background:rgba(38,34,27,.55)}
+.dlg-inner{padding:26px}
+.dlg-inner h2{font-size:1.3rem}
+.facil-timer{
+  font-size:3.4rem;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;margin:10px 0;
+}
+.facil-timer.warn{color:var(--orange-deep)}
+.dlg-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:18px}
+.runlist{margin:12px 0 0 4px;list-style:none}
+.runlist li{display:flex;gap:12px;margin-bottom:8px;font-size:.92rem}
+.runlist b{font-variant-numeric:tabular-nums;color:var(--orange-deep);flex:none;width:86px}
+.qr-zone{text-align:center;margin-top:18px;display:none}
+.qr-zone.show{display:block}
+.qr-zone img{border:6px solid #fff;border-radius:12px;box-shadow:var(--shadow);max-width:200px;height:auto}
+.qr-zone .url{font-weight:700;word-break:break-all;margin-top:8px;font-size:.9rem}
+
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+footer.site{
+  border-top:2px solid var(--line);padding:26px clamp(16px,4vw,40px);text-align:center;color:var(--ink-soft);font-size:.9rem;
+}
+footer.site a{color:var(--teal-deep);font-weight:700}
+
+/* ── print: recipe card only ── */
+@media print{
+  header.site,.header-actions,footer.site,.no-print,.btn{display:none !important}
+  body{background:#fff}
+  .screen{display:none !important}
+  #screen-recipe{display:block !important}
+  .ingredient{break-inside:avoid;border-color:#bbb}
+  .ingredient .body{display:block !important;color:#333}
+  .ingredient summary .chev{display:none}
+  details:not([open]) .body{display:block}
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site">
+  <div class="brand">
+    <span class="dot" aria-hidden="true"></span>
+    <div>
+      Accessible by Design
+      <small>🍋 The Test Kitchen Taste Test · Nick Tillem</small>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-small" id="btn-recipe-nav" type="button">Recipe card</button>
+    <button class="btn btn-ghost btn-small" id="btn-facilitator" type="button" aria-haspopup="dialog">⚙️ Facilitator</button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ════════ START ════════ -->
+  <section class="screen active" id="screen-start" aria-labelledby="h-start">
+    <div class="hero">
+      <div>
+        <span class="kicker">TechLearn 2026 · Innovations in Training Test Kitchen · Austin, TX</span>
+        <h1 id="h-start" tabindex="-1">The Accessibility <span class="accent">Taste&nbsp;Test</span></h1>
+        <p class="lede">Try to finish a 90‑second e‑learning task the way <strong>1 in 4 of your learners</strong> experiences it. Then flip one switch — <strong>Accessible by Design</strong> — and taste the difference.</p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" id="btn-start" type="button">🍽️ Start the taste test</button>
+          <button class="btn btn-ghost" id="btn-skip-recipe" type="button">Skip to the recipe card</button>
+        </div>
+        <div class="stat-strip">
+          <div class="stat"><b>1 in 4</b><span>US adults report a disability (CDC)</span></div>
+          <div class="stat"><b>3 kinds</b><span>of barriers: permanent, temporary, situational</span></div>
+          <div class="stat"><b>0 extra steps</b><span>“It’s steps you’ve missed.” — @NickTillem</span></div>
+        </div>
+      </div>
+      <div class="plate" aria-hidden="true">
+        <div class="big-emoji">🍋</div>
+        <p>When your training gives learners lemons…</p>
+        <small>…this table is where we fix the recipe.</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ MENU ════════ -->
+  <section class="screen" id="screen-menu" aria-labelledby="h-menu">
+    <span class="kicker">Course 1 of 3 · Pick your seasoning</span>
+    <h2 id="h-menu" tabindex="-1">Choose a barrier to taste</h2>
+    <p class="lede">Every barrier below can be <strong>permanent, temporary, or situational</strong> — that’s the social model of disability in one menu. Pick one. You’ll take the same 3‑step mini‑course with it switched on.</p>
+    <div class="menu-grid" role="list">
+      <button class="barrier-card" type="button" data-barrier="blur" role="listitem">
+        <span class="emoji" aria-hidden="true">👁️</span>
+        <h3>Blur &amp; Glare</h3>
+        <p>Low contrast text under a bright light. Squint away.</p>
+        <span class="chips"><span class="chip">Low vision</span><span class="chip">Eye surgery</span><span class="chip">Sun on screen</span></span>
+      </button>
+      <button class="barrier-card" type="button" data-barrier="gray" role="listitem">
+        <span class="emoji" aria-hidden="true">🎨</span>
+        <h3>Color Only</h3>
+        <p>Everything is grayscale — but the course speaks in color.</p>
+        <span class="chips"><span class="chip">Color blindness</span><span class="chip">Old monitor</span><span class="chip">Cheap projector</span></span>
+      </button>
+      <button class="barrier-card" type="button" data-barrier="motor" role="listitem">
+        <span class="emoji" aria-hidden="true">🖐️</span>
+        <h3>Shaky Pointer</h3>
+        <p>Tiny targets on a trembling screen. Good luck, mouse.</p>
+        <span class="chips"><span class="chip">Tremor</span><span class="chip">Broken arm</span><span class="chip">Holding a baby</span></span>
+      </button>
+      <button class="barrier-card" type="button" data-barrier="load" role="listitem">
+        <span class="emoji" aria-hidden="true">🧠</span>
+        <h3>Overload</h3>
+        <p>Jargon, popups, a ticker, and a countdown. Breathe.</p>
+        <span class="chips"><span class="chip">ADHD</span><span class="chip">Stress</span><span class="chip">Noisy expo hall</span></span>
+      </button>
+      <button class="barrier-card" type="button" data-barrier="mute" role="listitem">
+        <span class="emoji" aria-hidden="true">🔇</span>
+        <h3>No Captions</h3>
+        <p>The instructions are audio‑only. Your sound is “broken.”</p>
+        <span class="chips"><span class="chip">Deaf / HoH</span><span class="chip">Ear infection</span><span class="chip">Muted on the bus</span></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ════════ TASK ════════ -->
+  <section class="screen" id="screen-task" aria-labelledby="h-task">
+    <div class="taskbar">
+      <div>
+        <span class="mode-pill barrier" id="mode-pill">🌶️ Barrier ON</span>
+        <h2 id="h-task" tabindex="-1" style="margin-top:8px">Mini‑course: <em>Safety Sprint</em></h2>
+      </div>
+      <div class="run-timer" id="run-timer" role="timer" aria-label="Task timer">0:00</div>
+    </div>
+
+    <div class="sandbox-wrap">
+      <div class="sandbox" id="sandbox">
+        <p class="sr-only" id="sim-note">Heads up: this sandbox deliberately simulates bad, inaccessible design as a teaching demo. If any step blocks you, use the “I’m stuck” button to continue — that is part of the lesson, not a failure.</p>
+        <div class="course-head">
+          <span class="logo" aria-hidden="true">SS</span>
+          <div><b>Safety Sprint</b><span>Module 7 · Required · Due yesterday</span></div>
+          <div class="steps-dots" id="steps-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+        <div class="ticker" aria-hidden="true"><span>🔔 REMINDER: 14 other compliance modules are overdue ・ Your manager has been notified ・ Complete SYNERGY-101 by EOD ・ New badge unlocked: “Procrastinator” ・ </span></div>
+        <div class="countdown" aria-hidden="true"><i id="countdown-fill"></i></div>
+        <div class="stage" id="stage"><!-- steps injected here --></div>
+        <div class="glare" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="stuck-bar">
+      <button class="stuck-btn" id="btn-stuck" type="button" hidden>😤 I’m stuck — why is this so hard?</button>
+    </div>
+    <div class="lesson" id="lesson-box" hidden></div>
+    <p class="sr-only" role="status" aria-live="polite" id="live-region"></p>
+  </section>
+
+  <!-- ════════ FLIP ════════ -->
+  <section class="screen" id="screen-flip" aria-labelledby="h-flip">
+    <div class="flip-stage">
+      <span class="kicker">Course 2 of 3 · The secret sauce</span>
+      <h2 id="h-flip" tabindex="-1">That was the barrier.<br>Now flip <em>one</em> switch.</h2>
+      <p class="lede" style="margin:10px auto 0;max-width:52ch">Same course. Same three steps. The only change: it was <strong>designed for the barrier from the start</strong> — visible labels, color + words + icons, big targets, plain language, captions.</p>
+      <br>
+      <button class="big-switch" id="big-switch" type="button" aria-pressed="false">
+        <span>Accessible by Design</span>
+        <span class="track" aria-hidden="true"><span class="knob"></span></span>
+        <span id="switch-state">OFF</span>
+      </button>
+      <p class="lede" style="margin:0 auto;max-width:44ch">Your barrier stays on. The design changes. That’s the whole point.</p>
+    </div>
+  </section>
+
+  <!-- ════════ RESULTS ════════ -->
+  <section class="screen" id="screen-results" aria-labelledby="h-results">
+    <span class="kicker">Course 3 of 3 · Taste the difference</span>
+    <h2 id="h-results" tabindex="-1">Same you. Same barrier. Different design.</h2>
+
+    <div class="result-grid">
+      <div class="result-tile r-barrier">
+        <h3>🌶️ Barrier design</h3>
+        <div class="time" id="res-barrier-time">–</div>
+        <div class="sub" id="res-barrier-sub">–</div>
+      </div>
+      <div class="result-tile r-access">
+        <h3>🥗 Accessible by Design</h3>
+        <div class="time" id="res-access-time">–</div>
+        <div class="sub" id="res-access-sub">–</div>
+      </div>
+    </div>
+
+    <div class="compare-chart">
+      <h3 id="chart-title">Time to finish the same 3‑step course</h3>
+      <div role="img" aria-labelledby="chart-title" aria-describedby="chart-desc">
+        <div class="bar-row">
+          <span class="bar-label">Barrier design</span>
+          <div class="bar-track"><div class="bar-fill f-barrier" id="bar-barrier" style="width:100%">0:00</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Accessible design</span>
+          <div class="bar-track"><div class="bar-fill f-access" id="bar-access" style="width:30%">0:00</div></div>
+        </div>
+      </div>
+      <p id="chart-desc" class="sr-only"></p>
+      <p style="font-size:.88rem;color:var(--ink-soft);font-weight:600" id="delta-line"></p>
+    </div>
+
+    <div class="punchline">
+      <p>“Accessibility isn’t extra steps.<br>It’s steps you’ve missed.”</p>
+      <small>Nick Tillem · Accessible by Design</small>
+    </div>
+
+    <div class="hero-cta" style="justify-content:center">
+      <button class="btn btn-primary" id="btn-to-recipe" type="button">🧾 Get the recipe card</button>
+      <button class="btn btn-ghost" id="btn-again" type="button">↺ Taste another barrier</button>
+    </div>
+  </section>
+
+  <!-- ════════ RECIPE ════════ -->
+  <section class="screen" id="screen-recipe" aria-labelledby="h-recipe">
+    <div class="recipe-head">
+      <div>
+        <span class="kicker">Take‑home · The secret sauce</span>
+        <h2 id="h-recipe" tabindex="-1">Recipe: Accessible by Design</h2>
+        <p class="lede">Five ingredients you can use this week — no budget approval required.</p>
+      </div>
+      <div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-teal btn-small" id="btn-print" type="button">🖨️ Print / save PDF</button>
+        <button class="btn btn-ghost btn-small" id="btn-copy-link" type="button">🔗 Copy link</button>
+      </div>
+    </div>
+
+    <details class="ingredient" open>
+      <summary><span class="num" aria-hidden="true">1</span> Reframe with the social model <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>Disability isn’t a person’s “problem” to fix — it’s a mismatch between a person and an environment. Fix the environment. Every barrier shows up three ways, so you’re always designing for more people than you think:</p>
+        <table class="pts">
+          <caption class="sr-only">Examples of permanent, temporary, and situational barriers</caption>
+          <thead><tr><th scope="col">Permanent</th><th scope="col">Temporary</th><th scope="col">Situational</th></tr></thead>
+          <tbody>
+            <tr><td>Blindness</td><td>Eye surgery</td><td>Glare on a phone outside</td></tr>
+            <tr><td>One arm</td><td>Broken wrist</td><td>Holding a baby</td></tr>
+            <tr><td>Deafness</td><td>Ear infection</td><td>Muted phone on the bus</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">2</span> Empathy‑map before you build <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>Before storyboarding, map one real learner with a barrier: what do they <strong>say, think, see, hear, feel, and do</strong> while taking your course? Ten minutes of empathy mapping catches the “steps you’ve missed” while they’re still cheap to fix. Better yet — survey your people and form a small advisory board of learners with disabilities.</p>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">3</span> Write an accessibility mission statement <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>One or two sentences, public, updated, with leadership buy‑in — like Barclays (“accessible by design… designing for difference means designing for everyone”) or OXO. Concise but clear, an invitation to connect, and reviewed yearly. Use AI <em>and</em> your brain — start with this prompt:</p>
+        <div class="prompt-box" id="ai-prompt">I work for a [your industry] company and I want to develop an accessibility mission statement. Ask me questions one at a time to make sure you understand my company, our learners, and our values — then help me draft a statement that is concise, invites people to connect, and can be shared publicly.</div>
+        <button class="btn btn-ghost btn-small copy-btn no-print" id="btn-copy-prompt" type="button">📋 Copy this prompt</button>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">4</span> Run the UDL 3‑question check <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>Universal Design for Learning, pocket edition. Ask of every module:</p>
+        <ul>
+          <li><strong>Engagement (the WHY):</strong> do learners have more than one reason and way to care?</li>
+          <li><strong>Representation (the WHAT):</strong> is every key idea available in more than one format — text, audio, visual?</li>
+          <li><strong>Expression (the HOW):</strong> can learners show understanding in more than one way?</li>
+        </ul>
+        <p>If a step only works with perfect eyes, ears, hands, and focus — that’s a step you’ve missed.</p>
+      </div>
+    </details>
+
+    <details class="ingredient">
+      <summary><span class="num" aria-hidden="true">5</span> Hold your vendors accountable <span class="chev" aria-hidden="true">▾</span></summary>
+      <div class="body">
+        <p>Your LMS and authoring tools are ingredients too. Before you buy (or renew), ask three questions and expect real answers:</p>
+        <ul>
+          <li>“<strong>How do you test</strong> for accessibility — with real assistive‑tech users, or just an automated checker?”</li>
+          <li>“What is <strong>your</strong> accessibility mission statement?”</li>
+          <li>“What’s on your <strong>accessibility roadmap</strong> for the next 12 months?”</li>
+        </ul>
+        <p>Silence is an answer.</p>
+      </div>
+    </details>
+
+    <div class="lesson" style="margin-top:22px">
+      <p><b>Steal this page, too.</b> This demo is a single HTML file with no framework: semantic landmarks, a skip link, visible focus, live‑region announcements, reduced‑motion support, and AA contrast on every surface. View source — it’s all there.</p>
+    </div>
+
+    <div class="hero-cta no-print">
+      <button class="btn btn-primary" id="btn-restart" type="button">↺ Run the taste test again</button>
+    </div>
+  </section>
+</main>
+
+<!-- ════════ FACILITATOR DIALOG ════════ -->
+<dialog id="dlg-facilitator" aria-labelledby="dlg-title">
+  <div class="dlg-inner">
+    <h2 id="dlg-title">⚙️ Facilitator kitchen</h2>
+    <p style="font-size:.9rem;color:var(--ink-soft)">Your 12‑minute round, timed and plated.</p>
+    <div class="facil-timer" id="facil-timer">12:00</div>
+    <div class="dlg-row">
+      <button class="btn btn-teal btn-small" id="facil-start" type="button">▶ Start round</button>
+      <button class="btn btn-ghost btn-small" id="facil-reset" type="button">↺ Reset</button>
+      <button class="btn btn-ghost btn-small" id="facil-newgroup" type="button">🧼 New group (reset demo)</button>
+    </div>
+    <h3 style="font-size:1rem">Run of show</h3>
+    <ol class="runlist">
+      <li><b>0:00–1:30</b><span>Hook: “1 in 4 of your learners…” — volunteer picks a barrier</span></li>
+      <li><b>1:30–5:00</b><span>Taste test: group coaches the volunteer through the barrier run</span></li>
+      <li><b>5:00–8:00</b><span>The flip: switch ON, same person re‑runs it — react to the delta</span></li>
+      <li><b>8:00–11:00</b><span>Recipe card: walk the 5 ingredients, copy the AI prompt</span></li>
+      <li><b>11:00–12:00</b><span>QR code up — “it’s steps you’ve missed” — reset for next group</span></li>
+    </ol>
+    <div class="dlg-row" style="margin-top:14px">
+      <button class="btn btn-ghost btn-small" id="btn-qr" type="button" aria-expanded="false">📱 Show QR for this page</button>
+    </div>
+    <div class="qr-zone" id="qr-zone">
+      <img id="qr-img" alt="QR code linking to this page" width="200" height="200">
+      <p class="url" id="qr-url"></p>
+    </div>
+    <div class="dlg-row" style="margin-top:10px">
+      <button class="btn btn-primary btn-small" id="dlg-close" type="button">Close</button>
+    </div>
+  </div>
+</dialog>
+
+<footer class="site">
+  <p>Built (accessibly) by <a href="https://www.linkedin.com/in/nicktillem">Nick Tillem</a> for Training magazine’s TechLearn 2026 Test Kitchen · “Accessibility isn’t extra steps, it’s steps you’ve missed.”</p>
+</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ───────────────────────── state ───────────────────────── */
+var state = {
+  barrier: null,          // 'blur' | 'gray' | 'motor' | 'load' | 'mute'
+  mode: 'barrier',        // 'barrier' | 'accessible'
+  step: 0,
+  errors: 0,
+  ccOn: false,
+  runStart: 0,
+  timerId: null,
+  results: { barrier: null, accessible: null } // {ms, errors, assists}
+};
+var assists = 0;
+
+var BARRIER_NAMES = {
+  blur:'Blur & Glare', gray:'Color Only', motor:'Shaky Pointer', load:'Overload', mute:'No Captions'
+};
+var LESSONS = {
+  blur:'<b>What fixed it:</b> real contrast (4.5:1+), bigger type, and layouts that survive a squint. Glare and low vision are the same design problem.',
+  gray:'<b>What fixed it:</b> never color alone. Words + icons + patterns ride along with color, so “the green one” still works in gray.',
+  motor:'<b>What fixed it:</b> big targets (44px+), space between them, and full keyboard support. Tab and Enter beat a shaky mouse every time.',
+  load:'<b>What fixed it:</b> plain language, one job per screen, no fake urgency. Cognitive load is a design choice — you chose it.',
+  mute:'<b>What fixed it:</b> captions and a transcript, on by default. Audio-only instruction locks out deaf learners, and everyone on a quiet bus.'
+};
+
+/* ───────────────────────── helpers ───────────────────────── */
+function $(id){ return document.getElementById(id); }
+function fmt(ms){
+  var s = Math.round(ms/1000);
+  return Math.floor(s/60) + ':' + ('0'+(s%60)).slice(-2);
+}
+function announce(msg){ $('live-region').textContent = msg; }
+function show(screenId){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var sc = $(screenId);
+  sc.classList.add('active');
+  var h = sc.querySelector('h1[tabindex],h2[tabindex]');
+  if(h) h.focus({preventScroll:false});
+  window.scrollTo({top:0});
+}
+function reducedMotion(){
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/* ───────────────────────── run timer ───────────────────────── */
+function startRun(){
+  state.runStart = Date.now();
+  state.errors = 0;
+  clearInterval(state.timerId);
+  state.timerId = setInterval(function(){
+    $('run-timer').textContent = fmt(Date.now() - state.runStart);
+  }, 250);
+  $('run-timer').textContent = '0:00';
+}
+function endRun(){
+  clearInterval(state.timerId);
+  var ms = Date.now() - state.runStart;
+  state.results[state.mode] = { ms: ms, errors: state.errors, assists: assists };
+  return ms;
+}
+
+/* ───────────────────────── task engine ───────────────────────── */
+var acc = function(){ return state.mode === 'accessible'; };
+
+function audioBlock(spokenText){
+  // Fake audio player used in 'mute' barrier mode. CC button reveals transcript.
+  var wrap = document.createElement('div');
+  var bar = document.createElement('div');
+  bar.className = 'audio-fake';
+  bar.innerHTML =
+    '<button class="play" type="button" aria-label="Play instructions (audio is simulated as broken)">▶</button>' +
+    '<span class="wave" aria-hidden="true"></span>' +
+    '<button class="cc" type="button" aria-pressed="'+(state.ccOn?'true':'false')+'" aria-label="Toggle captions">CC</button>';
+  var transcript = document.createElement('p');
+  transcript.className = 'transcript';
+  transcript.textContent = '🗨️ ' + spokenText;
+  transcript.hidden = !state.ccOn;
+  bar.querySelector('.play').addEventListener('click', function(){
+    announce('Audio is playing, but your sound is broken. Try the CC button.');
+    this.textContent = this.textContent === '▶' ? '⏸' : '▶';
+  });
+  bar.querySelector('.cc').addEventListener('click', function(){
+    state.ccOn = !state.ccOn;
+    if(state.ccOn && !transcript.dataset.counted){ assists++; transcript.dataset.counted = '1'; }
+    this.setAttribute('aria-pressed', state.ccOn ? 'true' : 'false');
+    transcript.hidden = !state.ccOn;
+    announce(state.ccOn ? 'Captions on: ' + spokenText : 'Captions off.');
+  });
+  wrap.appendChild(bar);
+  wrap.appendChild(transcript);
+  return wrap;
+}
+
+function errText(el, msg){
+  var e = el.querySelector('.err-text');
+  if(e){ e.innerHTML = '⚠️ ' + msg; e.classList.add('show'); }
+  el.classList.add('error');
+}
+
+/* STEP 1 — sign in */
+function renderStep1(stage){
+  var mute = state.barrier === 'mute' && !acc();
+  var frag = document.createElement('div');
+
+  if(acc()){
+    frag.innerHTML =
+      '<p class="t-instr">Step 1 of 3 — Sign in. Two quick fields, no tricks.</p>';
+  } else if(mute){
+    frag.appendChild(audioBlock('Welcome to Safety Sprint! To begin, type the team password — it is the word LEMON — and choose your role.'));
+  } else if(state.barrier === 'load'){
+    frag.innerHTML =
+      '<p class="jargon">Pursuant to onboarding directive 7.4.2(b), all associate-adjacent stakeholders must effectuate identity verification via the designated nomenclature field herein, whereupon role-based taxonomical self-classification shall be operationalized prior to module ingress, notwithstanding provisions in the aforementioned synergy framework.</p>';
+  } else {
+    frag.innerHTML = '<p class="t-instr vague">Complete verification to proceed</p>';
+  }
+
+  var f1 = document.createElement('div');
+  f1.className = 'field' + (acc() ? '' : ' mean');
+  var label1 = mute ? 'Team password' : 'Your name';
+  if(acc()){
+    f1.innerHTML = '<label for="t-name">'+ label1 +'</label>' +
+      '<input type="text" id="t-name" autocomplete="off">' +
+      (mute || state.barrier === 'mute' ? '<span class="hint">The transcript above tells you the password: LEMON.</span>' : '<span class="hint">Any nickname works.</span>') +
+      '<span class="err-text" role="alert"></span>';
+  } else {
+    f1.innerHTML = '<label class="sr-only" for="t-name">'+ label1 +'</label>' +
+      '<input type="text" id="t-name" autocomplete="off" placeholder="'+ (mute ? 'Enter password from audio' : 'Enter designation') +'">' +
+      '<span class="err-text" role="alert"></span>';
+  }
+
+  var f2 = document.createElement('div');
+  f2.className = 'field' + (acc() ? '' : ' mean');
+  f2.innerHTML =
+    (acc() ? '<label for="t-role">Your role</label>' : '<label class="sr-only" for="t-role">Role</label>') +
+    '<select id="t-role"><option value="">'+(acc() ? 'Choose one…' : '--')+'</option>' +
+    '<option>Designer</option><option>Facilitator</option><option>Manager</option><option>Chef of Learning</option></select>' +
+    '<span class="err-text" role="alert"></span>';
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 't-btn' + (acc() ? '' : ' mean');
+  btn.textContent = acc() ? 'Next step →' : 'Proceed »';
+  btn.addEventListener('click', function(){
+    f1.classList.remove('error'); f2.classList.remove('error');
+    var name = $('t-name').value.trim();
+    var role = $('t-role').value;
+    var bad = false;
+    if(mute && !acc() && name.toUpperCase() !== 'LEMON'){
+      state.errors++;
+      errText(f1, acc() ? 'The password is LEMON (see the transcript).' : 'Incorrect.');
+      bad = true;
+    } else if(!name){
+      state.errors++;
+      errText(f1, acc() ? 'Please enter your name — any nickname works.' : '');
+      if(!acc()){ f1.classList.add('error'); }  // color-only error in barrier mode
+      bad = true;
+    }
+    if(!role){
+      state.errors++;
+      if(acc()){ errText(f2, 'Please choose a role.'); } else { f2.classList.add('error'); }
+      bad = true;
+    }
+    if(bad){
+      announce(acc() ? 'There are errors described under each field.' : 'Something is wrong, but the form only shows a colored border.');
+      return;
+    }
+    nextStep();
+  });
+
+  frag.appendChild(f1); frag.appendChild(f2); frag.appendChild(btn);
+  stage.appendChild(frag);
+  if(acc()) $('t-name').focus();
+}
+
+/* STEP 2 — pick the safe zone tile */
+function renderStep2(stage){
+  var mute = state.barrier === 'mute' && !acc();
+  var frag = document.createElement('div');
+
+  if(acc()){
+    frag.innerHTML = '<p class="t-instr">Step 2 of 3 — Select the <strong>Safe zone</strong> tile. It’s labeled, green, and marked with a ✓.</p>';
+  } else if(mute){
+    frag.appendChild(audioBlock('Select the GREEN tile to mark the safe assembly zone.'));
+  } else {
+    var p = document.createElement('p');
+    p.className = 't-instr';
+    p.textContent = 'Select the GREEN tile to continue.';
+    frag.appendChild(p);
+  }
+
+  var tiles = [
+    { c:'#B94700', label:'Hazard: forklifts',  ic:'🚧', ok:false },
+    { c:'#0B7A43', label:'Safe zone',          ic:'✓',  ok:true  },
+    { c:'#8A6D00', label:'Caution: wet floor', ic:'⚠️', ok:false },
+    { c:'#A62633', label:'Hazard: chemicals',  ic:'☣️', ok:false }
+  ];
+  var row = document.createElement('div');
+  row.className = 'tile-row';
+  tiles.forEach(function(t){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'tile';
+    b.style.background = t.c;
+    if(acc()){
+      b.innerHTML = '<span class="ic" aria-hidden="true">'+t.ic+'</span><span>'+t.label+'</span>';
+      b.setAttribute('aria-label', t.label + (t.ok ? ' — correct answer' : ''));
+    } else {
+      b.setAttribute('aria-label', 'Unlabeled colored tile');  // honest about how bad this is
+    }
+    b.addEventListener('click', function(){
+      if(t.ok){ nextStep(); return; }
+      state.errors++;
+      b.classList.add('wrong-flash');
+      setTimeout(function(){ b.classList.remove('wrong-flash'); }, 600);
+      announce(acc() ? 'Not that one — the Safe zone tile is labeled with a check mark.' : 'Wrong tile. In grayscale, color-only instructions are a guessing game.');
+    });
+    row.appendChild(b);
+  });
+  frag.appendChild(row);
+  stage.appendChild(frag);
+}
+
+/* STEP 3 — confirm & finish */
+function renderStep3(stage){
+  var mute = state.barrier === 'mute' && !acc();
+  var frag = document.createElement('div');
+
+  if(acc()){
+    frag.innerHTML =
+      '<p class="t-instr">Step 3 of 3 — The short version:</p>' +
+      '<p style="max-width:52ch;margin-bottom:14px">In an emergency, walk to the <strong>Safe zone</strong>, check in with your team lead, and stay put until the all‑clear. That’s it.</p>';
+  } else if(mute){
+    frag.appendChild(audioBlock('Almost done. Check the acknowledgement box, then press Finish to complete the module.'));
+  } else {
+    frag.innerHTML =
+      '<p class="jargon">By continuing herein, the undersigned participant irrevocably acknowledges receipt and comprehension of all aforementioned safety-adjacent stipulations, provisos, and appurtenances thereto, including but not limited to schedule 12(f), and further stipulates that ambulatory egress protocols shall be effectuated in accordance with the framework heretofore delineated, mutatis mutandis.</p>' +
+      '<p class="decoy">For more information about this training <a href="#" id="decoy-link">click here</a>.</p>';
+  }
+
+  var chk = document.createElement('div');
+  chk.className = 'check-row' + (acc() ? '' : ' mean');
+  chk.innerHTML =
+    '<input type="checkbox" id="t-ack">' +
+    '<label for="t-ack">' + (acc()
+      ? 'I’ve read the safety basics and know where the Safe zone is.'
+      : 'I hereby acknowledge the aforementioned stipulations in their entirety.') + '</label>';
+
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 't-btn' + (acc() ? '' : ' mean');
+  btn.textContent = acc() ? 'Finish course ✓' : 'Finish';
+  btn.addEventListener('click', function(){
+    if(!$('t-ack').checked){
+      state.errors++;
+      announce(acc() ? 'Please tick the checkbox first — it’s the big one on the left.' : 'Nothing happened. No error message. Nothing.');
+      if(acc()){
+        var e = document.createElement('p');
+        if(!chk.querySelector('.err-text')){
+          e.className = 'err-text show'; e.setAttribute('role','alert');
+          e.innerHTML = '⚠️ Check the box to confirm, then press Finish.';
+          chk.appendChild(e);
+        }
+      }
+      return;
+    }
+    finishRun();
+  });
+
+  frag.appendChild(chk); frag.appendChild(btn);
+  stage.appendChild(frag);
+
+  var decoy = frag.querySelector('#decoy-link');
+  if(decoy){
+    decoy.addEventListener('click', function(ev){
+      ev.preventDefault();
+      state.errors++;
+      announce('That link goes nowhere. Vague link text (“click here”) strikes again.');
+    });
+  }
+}
+
+var STEP_RENDERERS = [renderStep1, renderStep2, renderStep3];
+var overloadTimer = null, overloadExpired = false;
+
+function renderStep(){
+  var stage = $('stage');
+  stage.innerHTML = '';
+  var dots = $('steps-dots').children;
+  for(var i=0;i<dots.length;i++){
+    dots[i].className = i < state.step ? 'done' : (i === state.step ? 'now' : '');
+  }
+  STEP_RENDERERS[state.step](stage);
+  applyOverloadClutter(stage);
+  announce((acc() ? 'Accessible mode. ' : '') + 'Step ' + (state.step+1) + ' of 3.');
+}
+
+function applyOverloadClutter(stage){
+  if(state.barrier !== 'load' || acc()) return;
+  // popups
+  var p1 = document.createElement('div');
+  p1.className = 'popup'; p1.style.top = '18%'; p1.style.right = '4%';
+  p1.innerHTML = '<button class="x" type="button" aria-label="Close popup">✕</button><b>⚠ Session expiring!</b> Complete SYNERGY‑101 within the compliance window to retain your badge.';
+  var p2 = document.createElement('div');
+  p2.className = 'popup'; p2.style.bottom = '6%'; p2.style.left = '3%';
+  p2.innerHTML = '<button class="x" type="button" aria-label="Close popup">✕</button><b>📢 New!</b> Rate this module before you’ve finished it!';
+  [p1,p2].forEach(function(p){
+    p.querySelector('.x').addEventListener('click', function(){ p.remove(); });
+    $('sandbox').appendChild(p);
+  });
+  // countdown that resets the step once
+  var fill = $('countdown-fill');
+  var total = 20000, t0 = Date.now();
+  clearInterval(overloadTimer);
+  fill.style.width = '100%';
+  overloadTimer = setInterval(function(){
+    var left = Math.max(0, total - (Date.now() - t0));
+    fill.style.width = (left/total*100) + '%';
+    if(left <= 0){
+      clearInterval(overloadTimer);
+      if(!overloadExpired){
+        overloadExpired = true;
+        state.errors++;
+        announce('Time expired! The step reset itself. Fake urgency is a barrier too.');
+        renderStep();
+      }
+    }
+  }, 250);
+}
+
+function clearPopups(){
+  document.querySelectorAll('.popup').forEach(function(p){ p.remove(); });
+  clearInterval(overloadTimer);
+}
+
+function nextStep(){
+  clearPopups();
+  state.step++;
+  if(state.step >= STEP_RENDERERS.length){ finishRun(); return; }
+  renderStep();
+}
+
+function startTask(mode){
+  state.mode = mode;
+  state.step = 0;
+  state.ccOn = mode === 'accessible' ? true : false;
+  overloadExpired = false;
+  if(mode === 'barrier') assists = 0;
+
+  var sb = $('sandbox');
+  sb.className = 'sandbox';
+  if(mode === 'barrier'){
+    var fx = {blur:'fx-blur', gray:'fx-gray', motor:'fx-motor', load:'fx-load'}[state.barrier];
+    if(fx) sb.classList.add(fx);
+  } else if(state.barrier === 'gray'){
+    // the person's barrier doesn't go away — the design compensates
+    sb.classList.add('fx-gray');
+  }
+
+  var pill = $('mode-pill');
+  if(mode === 'barrier'){
+    pill.className = 'mode-pill barrier';
+    pill.textContent = '🌶️ Barrier ON — ' + BARRIER_NAMES[state.barrier];
+  } else {
+    pill.className = 'mode-pill accessible';
+    pill.textContent = '🥗 Accessible by Design — barrier still on';
+  }
+
+  $('lesson-box').hidden = true;
+  var stuck = $('btn-stuck');
+  stuck.hidden = true;
+  clearTimeout(startTask._stuckT);
+  if(mode === 'barrier'){
+    startTask._stuckT = setTimeout(function(){ stuck.hidden = false; }, 12000);
+  }
+
+  show('screen-task');
+  startRun();
+  renderStep();
+}
+
+function finishRun(){
+  clearPopups();
+  clearTimeout(startTask._stuckT);
+  var ms = endRun();
+  if(state.mode === 'barrier'){
+    announce('Barrier run finished in ' + fmt(ms) + ' with ' + state.errors + ' errors.');
+    show('screen-flip');
+    var sw = $('big-switch');
+    sw.setAttribute('aria-pressed','false');
+    $('switch-state').textContent = 'OFF';
+  } else {
+    announce('Accessible run finished in ' + fmt(ms) + '.');
+    showResults();
+  }
+}
+
+/* "I'm stuck" — dignified exit that counts as the lesson landing */
+$('btn-stuck').addEventListener('click', function(){
+  assists++;
+  var box = $('lesson-box');
+  box.innerHTML = '<p><b>That’s the point.</b> You just felt “' + BARRIER_NAMES[state.barrier] +
+    '” — a barrier some learner hits in your courses every day, silently. ' +
+    LESSONS[state.barrier] + '</p>' +
+    '<p style="margin-top:10px"><button class="btn btn-teal btn-small" id="btn-stuck-continue" type="button">Skip ahead to the flip →</button></p>';
+  box.hidden = false;
+  $('btn-stuck-continue').addEventListener('click', function(){ finishRun(); });
+  box.scrollIntoView({behavior: reducedMotion() ? 'auto' : 'smooth', block:'center'});
+});
+
+/* ───────────────────────── results ───────────────────────── */
+function showResults(){
+  var b = state.results.barrier, a = state.results.accessible;
+  if(!b || !a) return;
+  $('res-barrier-time').textContent = fmt(b.ms);
+  $('res-barrier-sub').textContent = b.errors + ' error' + (b.errors===1?'':'s') +
+    (b.assists ? ' · needed help ' + b.assists + '×' : '') + ' · ' + BARRIER_NAMES[state.barrier];
+  $('res-access-time').textContent = fmt(a.ms);
+  $('res-access-sub').textContent = a.errors + ' error' + (a.errors===1?'':'s') + ' · same barrier, better design';
+
+  var max = Math.max(b.ms, a.ms, 1);
+  $('bar-barrier').style.width = Math.max(12, b.ms/max*100) + '%';
+  $('bar-barrier').textContent = fmt(b.ms);
+  $('bar-access').style.width = Math.max(12, a.ms/max*100) + '%';
+  $('bar-access').textContent = fmt(a.ms);
+  $('chart-desc').textContent = 'Bar chart. Barrier design: ' + fmt(b.ms) + '. Accessible design: ' + fmt(a.ms) + '.';
+
+  var line;
+  if(a.ms < b.ms){
+    var pct = Math.round((1 - a.ms/b.ms) * 100);
+    line = 'Same person, same barrier — ' + pct + '% faster and ' + Math.max(0, b.errors - a.errors) + ' fewer errors, because the design did the work.';
+  } else {
+    line = 'Nearly identical times — now imagine the run WITHOUT the fixes for a learner who can’t just squint harder.';
+  }
+  $('delta-line').textContent = line;
+  show('screen-results');
+}
+
+/* ───────────────────────── wiring ───────────────────────── */
+$('btn-start').addEventListener('click', function(){ show('screen-menu'); });
+$('btn-skip-recipe').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-recipe-nav').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-to-recipe').addEventListener('click', function(){ show('screen-recipe'); });
+$('btn-again').addEventListener('click', function(){ resetDemo(); show('screen-menu'); });
+$('btn-restart').addEventListener('click', function(){ resetDemo(); show('screen-start'); });
+
+document.querySelectorAll('.barrier-card').forEach(function(card){
+  card.addEventListener('click', function(){
+    state.barrier = card.dataset.barrier;
+    startTask('barrier');
+  });
+});
+
+$('big-switch').addEventListener('click', function(){
+  this.setAttribute('aria-pressed','true');
+  $('switch-state').textContent = 'ON';
+  var self = this;
+  setTimeout(function(){ startTask('accessible'); }, reducedMotion() ? 50 : 450);
+});
+
+function resetDemo(){
+  clearPopups();
+  clearInterval(state.timerId);
+  clearTimeout(startTask._stuckT);
+  state.barrier = null; state.step = 0; state.errors = 0; state.ccOn = false;
+  state.results = { barrier:null, accessible:null };
+  assists = 0;
+  $('run-timer').textContent = '0:00';
+  $('lesson-box').hidden = true;
+  $('btn-stuck').hidden = true;
+}
+
+/* recipe actions */
+$('btn-print').addEventListener('click', function(){
+  document.querySelectorAll('#screen-recipe details').forEach(function(d){ d.open = true; });
+  window.print();
+});
+function copyText(text, btn, doneLabel){
+  var orig = btn.textContent;
+  (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+    .then(function(){ btn.textContent = doneLabel; })
+    .catch(function(){
+      window.prompt('Copy this:', text);
+      btn.textContent = doneLabel;
+    })
+    .finally(function(){ setTimeout(function(){ btn.textContent = orig; }, 1800); });
+}
+$('btn-copy-prompt').addEventListener('click', function(){
+  copyText($('ai-prompt').textContent.trim(), this, '✅ Copied!');
+});
+$('btn-copy-link').addEventListener('click', function(){
+  copyText(window.location.href, this, '✅ Link copied!');
+});
+
+/* ───────────────────────── facilitator ───────────────────────── */
+var dlg = $('dlg-facilitator');
+$('btn-facilitator').addEventListener('click', function(){ dlg.showModal(); });
+$('dlg-close').addEventListener('click', function(){ dlg.close(); });
+
+var facil = { left: 12*60, id: null };
+function facilPaint(){
+  var m = Math.floor(facil.left/60), s = facil.left % 60;
+  var el = $('facil-timer');
+  el.textContent = m + ':' + ('0'+s).slice(-2);
+  el.classList.toggle('warn', facil.left <= 60);
+}
+$('facil-start').addEventListener('click', function(){
+  var btn = this;
+  if(facil.id){ clearInterval(facil.id); facil.id = null; btn.textContent = '▶ Resume'; return; }
+  btn.textContent = '⏸ Pause';
+  facil.id = setInterval(function(){
+    facil.left = Math.max(0, facil.left - 1);
+    facilPaint();
+    if(facil.left === 0){ clearInterval(facil.id); facil.id = null; btn.textContent = '▶ Start round'; }
+  }, 1000);
+});
+$('facil-reset').addEventListener('click', function(){
+  clearInterval(facil.id); facil.id = null; facil.left = 12*60; facilPaint();
+  $('facil-start').textContent = '▶ Start round';
+});
+$('facil-newgroup').addEventListener('click', function(){
+  resetDemo();
+  clearInterval(facil.id); facil.id = null; facil.left = 12*60; facilPaint();
+  $('facil-start').textContent = '▶ Start round';
+  dlg.close();
+  show('screen-start');
+});
+
+/* QR (uses a public QR image API; URL text is the fallback) */
+$('btn-qr').addEventListener('click', function(){
+  var zone = $('qr-zone');
+  var showIt = !zone.classList.contains('show');
+  zone.classList.toggle('show', showIt);
+  this.setAttribute('aria-expanded', showIt ? 'true' : 'false');
+  if(showIt){
+    var url = window.location.href.split('#')[0];
+    $('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=2&data=' + encodeURIComponent(url);
+    $('qr-url').textContent = url;
+  }
+});
+
+facilPaint();
+})();
+</script>
+</body>
+</html>
