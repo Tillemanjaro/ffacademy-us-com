@@ -201,6 +201,31 @@
   .player .pn { font-weight:600; font-size:.88rem; }
   .player .pt { color:var(--muted); font-size:.72rem; }
 
+  /* ── KEEPER ── */
+  .keeper-note { color: var(--muted); font-size: .82rem; line-height: 1.5; margin-bottom: 16px; }
+  .keeper-note b { color: #fff; }
+  .rec-banner {
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    background: linear-gradient(135deg, rgba(0,200,83,.14), rgba(255,215,0,.08));
+    border:1px solid rgba(0,200,83,.45); border-radius:14px; padding:16px 20px; margin-bottom:18px;
+  }
+  .rec-banner .tag { font-family:'Bebas Neue',sans-serif; letter-spacing:2px; color:var(--green); font-size:1rem; }
+  .rec-banner .pick { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; letter-spacing:1px; }
+  .rec-banner .why { color:var(--muted); font-size:.82rem; }
+  .rec-banner.none { border-color:rgba(255,61,61,.4); background:rgba(255,61,61,.06); }
+  .keeper-tbl input {
+    width:58px; background:#0b0b12; border:1px solid rgba(255,255,255,.14); color:#fff;
+    border-radius:8px; padding:6px 8px; font-family:inherit; font-size:.85rem; text-align:right;
+  }
+  .keeper-tbl input:focus { outline:none; border-color:var(--gold); }
+  .keeper-tbl tr.ineligible { opacity:.4; }
+  .keeper-tbl tr.best td { background: rgba(0,200,83,.09); }
+  .surplus-pos { color:var(--green); font-weight:700; }
+  .surplus-neg { color:var(--red); }
+  .surplus-zero { color:var(--muted); }
+  .elig-box { width:16px; height:16px; accent-color: var(--green); cursor:pointer; }
+  .tag-kept { font-size:.58rem; letter-spacing:.5px; text-transform:uppercase; color:var(--red); border:1px solid rgba(255,61,61,.4); border-radius:5px; padding:1px 5px; margin-left:6px; }
+
   .loader { text-align:center; padding:40px; color:var(--muted); }
   .spinner { width:38px;height:38px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -263,6 +288,7 @@
         <div class="tab active" data-tab="standings">Standings</div>
         <div class="tab" data-tab="matchups">Matchups</div>
         <div class="tab" data-tab="rosters">Rosters</div>
+        <div class="tab" data-tab="keeper">Keeper</div>
         <div class="tab" data-tab="info">League Info</div>
       </div>
       <div id="tab-content"></div>
@@ -293,6 +319,7 @@ const state = {
   usersById: {},
   rostersByOwner: {},
   players: null,      // player map (lazy)
+  draftPicks: null,   // this league's draft picks (lazy)
   activeTab: 'standings',
   selectedRoster: null
 };
@@ -445,6 +472,7 @@ function setActiveTab(tab) {
   if (tab === 'standings') renderStandings();
   else if (tab === 'matchups') renderMatchups();
   else if (tab === 'rosters') renderRosters();
+  else if (tab === 'keeper') renderKeeper();
   else if (tab === 'info') renderInfo();
 }
 
@@ -637,6 +665,195 @@ async function ensurePlayers() {
   }
   state.players = slim;
   try { localStorage.setItem(KEY, JSON.stringify(slim)); localStorage.setItem(TKEY, String(Date.now())); } catch (e) {}
+}
+
+// ── KEEPER ANALYZER ──
+// 2026 half-PPR redraft ADP estimate (overall pick #). Editable inline in the UI.
+// Keys are normalized names (lowercase, no punctuation, hyphens->spaces, suffixes stripped).
+const ADP_2026 = {
+  'jamarr chase':1,'bijan robinson':2,'justin jefferson':3,'saquon barkley':4,'ceedee lamb':5,
+  'jahmyr gibbs':6,'malik nabers':7,'puka nacua':8,'amon ra st brown':9,'christian mccaffrey':10,
+  'devon achane':11,'ashton jeanty':12,'nico collins':13,'brian thomas':14,'drake london':15,
+  'aj brown':16,'jonathan taylor':17,'bucky irving':18,'brock bowers':19,'jaxon smith njigba':20,
+  'josh jacobs':21,'derrick henry':22,'ladd mcconkey':23,'tyreek hill':24,'tee higgins':25,
+  'josh allen':26,'kyren williams':27,'garrett wilson':28,'trey mcbride':29,'marvin harrison':30,
+  'lamar jackson':31,'chase brown':32,'davante adams':33,'james cook':34,'jalen hurts':35,
+  'terry mclaurin':36,'dk metcalf':37,'mike evans':38,'breece hall':39,'dj moore':40,
+  'kenneth walker':41,'george kittle':42,'rome odunze':43,'jayden daniels':44,'xavier worthy':45,
+  'jaylen waddle':46,'omarion hampton':47,'devonta smith':48,'courtland sutton':49,'james conner':50,
+  'zay flowers':51,'alvin kamara':52,'chuba hubbard':53,'jerry jeudy':54,'sam laporta':55,
+  'treveyon henderson':56,'jordan addison':57,'calvin ridley':58,'jameson williams':59,'chris godwin':60,
+  'david montgomery':61,'patrick mahomes':62,'tony pollard':63,'aaron jones':64,'travis hunter':65,
+  'rj harvey':66,'george pickens':67,'dallas goedert':68,'jakobi meyers':69,'tj hockenson':70,
+  'khalil shakir':71,'stefon diggs':72,'deebo samuel':73,'jaylen warren':74,'brandon aiyuk':75,
+  'josh downs':76,'rachaad white':77,'travis kelce':78,'rashee rice':79,'joe mixon':80,
+  'tyrone tracy':81,'isiah pacheco':82,'jordan mason':83,'zamir white':84,'najee harris':85,
+  'ricky pearsall':86,'keon coleman':87,'dj chark':88,'jayden reed':89,'jauan jennings':90,
+  'cooper kupp':91,'bo nix':92,'baker mayfield':93,'kyler murray':94,'jared goff':95,
+  'evan engram':96,'david njoku':97,'mark andrews':98,'tank dell':99,'quentin johnston':100,
+  'caleb williams':101,'brock purdy':102,'dak prescott':103,'jordan love':104,'cj stroud':105,
+  'tucker kraft':106,'colston loveland':107,'jonnu smith':108,'pat freiermuth':109,'dalton kincaid':110,
+  'javonte williams':111,'brian robinson':112,'tyjae spears':113,'jaylen wright':114,'blake corum':115,
+  'trey benson':116,'rhamondre stevenson':117,'jerome ford':118,'austin ekeler':119,'kaleb johnson':120,
+  'marvin mims':121,'demario douglas':122,'wan dale robinson':123,'adam thielen':124,'darnell mooney':125,
+  'jordan whittington':126,'michael pittman':127,'diontae johnson':128,'christian kirk':129,'dontayvion wicks':130
+};
+function normName(s) {
+  return String(s || '').toLowerCase()
+    .replace(/[.'’]/g, '')
+    .replace(/-/g, ' ')
+    .replace(/\b(jr|sr|ii|iii|iv|v)\b/g, '')
+    .replace(/\s+/g, ' ').trim();
+}
+function adpForPlayer(pid) {
+  const p = state.players && state.players[pid];
+  if (!p) return null;
+  const key = normName(p.full_name || `${p.first_name||''} ${p.last_name||''}`);
+  return ADP_2026[key] != null ? ADP_2026[key] : null;
+}
+// Players ineligible because they've been kept before (rules: can't keep Puka again).
+const PREV_KEPT = ['puka nacua'];
+
+async function renderKeeper() {
+  const c = $('#tab-content');
+  c.innerHTML = loaderHTML('Crunching your draft…');
+  await ensurePlayers();
+
+  // Lazy-load this league's draft picks
+  if (!state.draftPicks) {
+    try {
+      const did = state.league.draft_id;
+      state.draftPicks = did ? await getJSON(`${API}/draft/${did}/picks`) : [];
+    } catch (e) { state.draftPicks = []; }
+  }
+  const draftRound = {};
+  let maxRound = 1;
+  (state.draftPicks || []).forEach(p => {
+    if (p.player_id) { draftRound[p.player_id] = p.round; if (p.round > maxRound) maxRound = p.round; }
+  });
+  if (maxRound < 1) maxRound = 15;
+
+  const numTeams = state.league.total_rosters || 12;
+  const myRoster = state.rostersByOwner[state.user.user_id];
+
+  c.innerHTML = '';
+  if (!myRoster) {
+    c.innerHTML = `<div class="loader">Couldn't find your roster in this league. Open the league that ${esc(state.user.display_name||state.user.username)} plays in.</div>`;
+    return;
+  }
+
+  // Build editable model from the FINAL roster
+  const model = (myRoster.players || []).map(pid => {
+    const p = state.players[pid] || {};
+    const drafted = draftRound[pid] || null;               // null = not drafted (waiver/trade)
+    const cost = drafted ? Math.max(1, drafted - 1) : maxRound; // keep 1 round earlier; waivers default = last round
+    const adp = adpForPlayer(pid);
+    const kept = PREV_KEPT.includes(normName(p.full_name || ''));
+    return {
+      pid,
+      name: p.full_name || (p.position === 'DEF' ? pid + ' D/ST' : pid),
+      pos: p.position || '—',
+      team: p.team || 'FA',
+      drafted, cost, adp,
+      eligible: !kept, kept
+    };
+  }).filter(r => r.pos !== 'DEF' || r.adp != null); // drop team defenses (not keeper-relevant here)
+
+  const note = el('div', 'keeper-note',
+    `<b>Rules:</b> keep 1 player · cost = <b>1 round earlier</b> than drafted · can't re-keep a prior keeper (Puka is excluded).<br>
+     Keeper cost comes straight from your ${state.league.season} draft. <b>ADP is an editable 2026 half-PPR estimate</b> — I can't live-scrape it, so correct any number and the ranking updates instantly.
+     Surplus = your keeper-cost round − where ADP says they'd go (round). Higher = better value.`);
+  c.appendChild(note);
+
+  const banner = el('div', 'rec-banner'); c.appendChild(banner);
+
+  const panel = el('div', 'panel'); const scroll = el('div', 'tbl-scroll');
+  const tbl = el('table'); tbl.className = 'keeper-tbl';
+  tbl.innerHTML = `<thead><tr>
+      <th>Keep</th><th>Player</th><th>Pos</th>
+      <th class="num">Drafted Rd</th><th class="num">Keeper Cost</th>
+      <th class="num">ADP</th><th class="num">ADP Rd</th><th class="num">Surplus</th>
+    </tr></thead>`;
+  const tb = el('tbody');
+  tbl.appendChild(tb); scroll.appendChild(tbl); panel.appendChild(scroll); c.appendChild(panel);
+
+  function adpRound(adp) { return adp ? Math.max(1, Math.ceil(adp / numTeams)) : null; }
+  function surplus(r) {
+    const ar = adpRound(r.adp);
+    return ar == null ? null : r.cost - ar;
+  }
+  function surplusCell(s) {
+    if (s == null) return '<span class="surplus-zero">—</span>';
+    const cls = s > 0 ? 'surplus-pos' : s < 0 ? 'surplus-neg' : 'surplus-zero';
+    return `<span class="${cls}">${s > 0 ? '+' : ''}${s}</span>`;
+  }
+
+  function recompute() {
+    // update surplus cells + best row + banner
+    let best = null;
+    model.forEach(r => {
+      const tr = tb.querySelector(`tr[data-pid="${r.pid}"]`);
+      if (!tr) return;
+      const s = surplus(r);
+      tr.querySelector('.cost-cell').textContent = r.cost;
+      tr.querySelector('.adprd-cell').textContent = adpRound(r.adp) == null ? '—' : adpRound(r.adp);
+      tr.querySelector('.surplus-cell').innerHTML = surplusCell(s);
+      tr.classList.toggle('ineligible', !r.eligible);
+      tr.classList.remove('best');
+      if (r.eligible && s != null && (best == null || s > surplus(best))) best = r;
+    });
+    model.forEach(r => {
+      const tr = tb.querySelector(`tr[data-pid="${r.pid}"]`);
+      if (tr) tr.classList.toggle('best', best && r.pid === best.pid);
+    });
+    banner.className = 'rec-banner' + (best ? '' : ' none');
+    if (best) {
+      const s = surplus(best);
+      banner.innerHTML = `<span class="tag">★ Best keeper</span>
+        <span class="pick">${esc(best.name)}</span>
+        <span class="why">${esc(best.pos)} · costs a <b style="color:#fff">Round ${best.cost}</b> pick · 2026 ADP Round ${adpRound(best.adp)} · <b style="color:#00C853">${s>0?'+':''}${s} rounds of value</b></span>`;
+    } else {
+      banner.innerHTML = `<span class="tag" style="color:var(--red)">No eligible keeper</span>
+        <span class="why">Fill in ADP values below (or mark players eligible) to get a recommendation.</span>`;
+    }
+  }
+
+  // sort initial view by surplus desc (nulls last)
+  model.sort((a, b) => {
+    const sa = surplus(a), sb = surplus(b);
+    if (sa == null && sb == null) return (a.cost - b.cost);
+    if (sa == null) return 1; if (sb == null) return -1;
+    return sb - sa;
+  });
+
+  model.forEach(r => {
+    const tr = el('tr'); tr.setAttribute('data-pid', r.pid);
+    tr.innerHTML = `
+      <td><input type="checkbox" class="elig-box" ${r.eligible ? 'checked' : ''}></td>
+      <td><div class="team-cell"><div><div class="tn">${esc(r.name)}${r.kept ? '<span class="tag-kept">kept</span>' : ''}</div><div class="un">${esc(r.team)}</div></div></div></td>
+      <td>${esc(r.pos)}</td>
+      <td class="num"><input type="number" class="draft-in" min="1" value="${r.drafted != null ? r.drafted : ''}" placeholder="—"></td>
+      <td class="num cost-cell">${r.cost}</td>
+      <td class="num"><input type="number" class="adp-in" min="1" value="${r.adp != null ? r.adp : ''}" placeholder="—"></td>
+      <td class="num adprd-cell">${adpRound(r.adp) == null ? '—' : adpRound(r.adp)}</td>
+      <td class="num surplus-cell">${surplusCell(surplus(r))}</td>`;
+    tb.appendChild(tr);
+
+    tr.querySelector('.elig-box').addEventListener('change', e => { r.eligible = e.target.checked; recompute(); });
+    tr.querySelector('.draft-in').addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      r.drafted = isNaN(v) ? null : v;
+      r.cost = r.drafted ? Math.max(1, r.drafted - 1) : maxRound;
+      recompute();
+    });
+    tr.querySelector('.adp-in').addEventListener('input', e => {
+      const v = parseInt(e.target.value, 10);
+      r.adp = isNaN(v) ? null : v;
+      recompute();
+    });
+  });
+
+  recompute();
 }
 
 // ── LEAGUE INFO ──
