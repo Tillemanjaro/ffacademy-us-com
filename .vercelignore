@@ -1,0 +1,45 @@
+# Keep draft / test / not-yet-live pages OUT of production deploys.
+# Only the pages already live on nicktillem.com deploy:
+#   /            -> index.html
+#   /lxp         -> lxp.html
+#   /wpainting   -> watergate-painting.html
+#   /play        -> poll.html
+# Everything below currently 404s in production and stays private until
+# you remove it from this file and redeploy.
+
+# --- Draft / test HTML pages ---
+3d-printing-guide.html
+adult-learning-theories.html
+assignment-anonymizer.html
+bomb-defusal.html
+budget-dashboard.html
+canvas_dynamic_elearning_module.html
+copilot.html
+fantasy-draft-war-room.html
+fantasy_football_training.html
+fantasymon-game.html
+fantasymон.html
+fitquest.html
+learning-how-to-learn.html
+mighty-war-room-test.html
+minecraft-survival-course.html
+play.html
+reasonandroots.html
+scorm-generator.html
+spark-lxp.html
+temple-fitness-learning.html
+watergate-painting-one-file.html
+who-are-you-not-to-be.html
+
+# --- Non-web / build / source junk that shouldn't ship ---
+node_modules
+.git
+watergate-painting-site.zip
+job-app-automator
+ai-proxy.worker.js
+simplefin-proxy.worker.js
+wrangler.toml
+nick_tillem_resume.js
+nick_tillem_disney_resume.docx
+draft-war-room-playbook.md
+BUDGET-SETUP.md
