@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Keep Typing and Nobody Explodes</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #1a1a1a;
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ══ HEADER ══ */
+#header {
+  background: #111;
+  border-bottom: 2px solid #1e1e1e;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+#header-title { font-size: 0.65rem; letter-spacing: 4px; color: #333; }
+#progress-display { margin-left: auto; font-size: 0.7rem; color: #444; }
+#progress-display span { color: #00ff88; }
+
+/* ══ MAIN ══ */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ══ BOMB SCENE ══ */
+#bomb-scene-container {
+  flex: 0 0 580px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 40%, #252830 0%, #0e0e12 100%);
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+}
+#bomb-scene-container:active { cursor: grabbing; }
+#bomb-scene-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(0,80,120,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(80,100,140,0.05) 0%, transparent 50%);
+  pointer-events: none;
+}
+#drag-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: #2a2a2a;
+  letter-spacing: 3px;
+}
+#bomb-perspective {
+  perspective: 650px;
+  perspective-origin: 50% 42%;
+}
+#bomb {
+  width: 500px;
+  height: 340px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateX(14deg) rotateY(-22deg);
+  will-change: transform;
+}
+/* Ground shadow via wrapper */
+#bomb-perspective {
+  filter: drop-shadow(0 40px 50px rgba(0,0,0,0.95)) drop-shadow(0 8px 20px rgba(0,0,0,0.7));
+}
+
+/* ══ BOMB FACES ══ */
+/* Thickness = 32px, so each face is ±16px from center */
+#bomb-front {
+  position: absolute; inset: 0;
+  transform: translateZ(16px);
+  backface-visibility: hidden;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #bcc8d0 0%, #a0aeb8 45%, #8e9ca8 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.25);
+}
+#bomb-back {
+  position: absolute; inset: 0;
+  transform: rotateY(180deg) translateZ(16px);
+  backface-visibility: hidden;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(150deg, #8e9ca8 0%, #7a8896 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Bomb sides — correctly positioned for 500×340×32 box */
+.bomb-edge { position: absolute; backface-visibility: hidden; }
+
+/* Right: 32px wide, 340px tall. Left edge at x=500, rotates to face right. */
+#edge-right {
+  width: 32px; height: 340px;
+  top: 0; left: 500px;
+  transform-origin: left center;
+  transform: rotateY(-90deg) translateZ(0);
+  background: linear-gradient(to bottom, #7a8a96 0%, #5a6a76 100%);
+  border-radius: 0 12px 12px 0;
+}
+/* Left: right edge at x=0, rotates to face left. */
+#edge-left {
+  width: 32px; height: 340px;
+  top: 0; right: 500px;
+  transform-origin: right center;
+  transform: rotateY(90deg) translateZ(0);
+  background: linear-gradient(to bottom, #6a7a86 0%, #4a5a68 100%);
+  border-radius: 12px 0 0 12px;
+}
+/* Top: 500px wide, 32px tall. Bottom edge at y=0, rotates to face up. */
+#edge-top {
+  width: 500px; height: 32px;
+  left: 0; bottom: 340px;
+  transform-origin: bottom center;
+  transform: rotateX(90deg) translateZ(0);
+  background: linear-gradient(to right, #8a9aa6 0%, #6a7a86 100%);
+  border-radius: 12px 12px 0 0;
+}
+/* Bottom: 500px wide, 32px tall. Top edge at y=340, rotates to face down. */
+#edge-bottom {
+  width: 500px; height: 32px;
+  left: 0; top: 340px;
+  transform-origin: top center;
+  transform: rotateX(-90deg) translateZ(0);
+  background: linear-gradient(to right, #5a6a76 0%, #4a5a68 100%);
+  border-radius: 0 0 12px 12px;
+}
+
+/* ══ BOMB FRONT LAYOUT ══ */
+#bomb-inner {
+  padding: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#bomb-top-strip {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+#timer-panel {
+  background: #0d0d0d;
+  border-radius: 6px;
+  border: 3px solid #4a5a68;
+  padding: 6px 12px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.4);
+  display: flex; align-items: center;
+}
+#led-timer {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #ff2200;
+  letter-spacing: 4px;
+  text-shadow: 0 0 8px #ff2200, 0 0 20px rgba(255,34,0,0.4);
+  font-family: 'Courier New', monospace;
+}
+#led-timer.warning { color: #ff8800; text-shadow: 0 0 8px #ff8800; }
+#led-timer.critical { animation: lcrit 0.5s infinite; }
+@keyframes lcrit { 0%,100%{opacity:1} 50%{opacity:0.2} }
+#strikes-panel {
+  background: #0d0d0d;
+  border-radius: 6px;
+  border: 3px solid #4a5a68;
+  padding: 6px 10px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  display: flex; align-items: center; gap: 8px;
+}
+.strike-light {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #1a0a0a;
+  border: 2px solid #3a1a1a;
+  transition: all 0.3s;
+}
+.strike-light.lit {
+  background: #ff2200;
+  border-color: #ff4400;
+  box-shadow: 0 0 12px #ff2200, 0 0 4px rgba(255,34,0,0.5) inset;
+}
+#bomb-info-strip {
+  flex: 1;
+  background: #0d0d0d;
+  border-radius: 6px;
+  border: 3px solid #4a5a68;
+  padding: 4px 10px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+#info-serial { font-size: 0.75rem; letter-spacing: 3px; color: #ffcc44; text-shadow: 0 0 5px rgba(255,200,0,0.4); font-weight: bold; }
+#info-serial-label { font-size: 0.5rem; color: #3a4a58; letter-spacing: 2px; margin-right: 2px; }
+.info-sep { color: #2a3a48; font-size: 0.8rem; }
+#info-batteries { display: flex; gap: 3px; align-items: center; }
+.batt-sm { width: 10px; height: 16px; background: #2a5a2a; border: 1px solid #3a3a3a; border-radius: 1px; position: relative; }
+.batt-sm::before { content:''; position:absolute; top:-3px; left:2px; right:2px; height:2px; background:#3a3a3a; border-radius:1px; }
+#info-indicators { display: flex; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
+.ind-sm {
+  font-size: 0.5rem; letter-spacing: 1px; color: #3a4a58;
+  border: 1px solid #2a3a48; border-radius: 2px; padding: 1px 4px;
+  display: flex; align-items: center; gap: 3px;
+}
+.ind-sm.lit { color: #bbbb88; border-color: #4a5a38; }
+.ind-dot { width: 5px; height: 5px; border-radius: 50%; background: #1a2a18; }
+.ind-sm.lit .ind-dot { background: #ffcc00; box-shadow: 0 0 4px #ffaa00; }
+
+/* ══ MODULE GRID ══ */
+#module-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  flex: 1;
+}
+.mod-cell {
+  background: #1a2028;
+  border: 3px solid #4a5a68;
+  border-radius: 8px;
+  padding: 8px;
+  position: relative;
+  box-shadow:
+    inset 0 2px 6px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.mod-cell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent, transparent 14px,
+    rgba(255,255,255,0.012) 14px, rgba(255,255,255,0.012) 15px
+  );
+  pointer-events: none;
+  border-radius: 5px;
+}
+/* Corner screws */
+.mod-cell::after {
+  content: '⬤  ⬤';
+  position: absolute;
+  top: 3px; left: 0; right: 0;
+  text-align: center;
+  font-size: 4px;
+  color: #3a4a58;
+  letter-spacing: 100px;
+  pointer-events: none;
+}
+.mod-cell.solved { background: #0d1a0d; border-color: #2a5a2a; }
+.mod-cell.active-mod { border-color: #6a8aa8; box-shadow: inset 0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px #8aaac8; }
+.mod-label {
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  color: #3a4a58;
+  text-align: center;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.mod-solved-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,20,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #00ff88;
+  text-shadow: 0 0 10px #00ff88;
+  border-radius: 5px;
+  pointer-events: none;
+}
+.mod-fb {
+  font-size: 0.5rem;
+  text-align: center;
+  min-height: 10px;
+  margin-top: 3px;
+  letter-spacing: 1px;
+}
+.mod-fb.bad { color: #ff3300; }
+.mod-fb.good { color: #00ff88; }
+
+/* ══ WIRES MODULE ══ */
+.wire-rows { display: flex; flex-direction: column; gap: 4px; flex: 1; justify-content: center; }
+.wire-row-sm { display: flex; align-items: center; gap: 5px; }
+.wire-num { font-size: 0.5rem; color: #3a4a58; width: 10px; text-align: right; flex-shrink: 0; }
+.wire-left, .wire-right { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.wire-line-sm {
+  flex: 1; height: 6px; border-radius: 3px;
+  cursor: pointer; transition: filter 0.15s; position: relative;
+}
+.wire-line-sm:hover { filter: brightness(1.5); }
+.wire-line-sm.cut { cursor: default; opacity: 0.2; }
+.wire-line-sm.cut::after {
+  content: '';
+  position: absolute;
+  left: 40%; top: -6px;
+  width: 20%; height: 18px;
+  background: #1a2028;
+}
+
+/* ══ BUTTON MODULE ══ */
+#btn-cell-inner { display: flex; flex-direction: column; align-items: center; flex: 1; justify-content: center; gap: 4px; }
+#the-button-sm {
+  width: 70px; height: 70px; border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.1);
+  font-size: 0.55rem; font-weight: bold;
+  font-family: 'Courier New', monospace;
+  cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
+  transition: transform 0.1s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.15);
+  outline: none;
+}
+#the-button-sm.holding { transform: scale(0.91); }
+#hold-strip-sm { width: 80%; height: 10px; border-radius: 3px; background: #0a0a0a; border: 1px solid #2a2a2a; overflow: hidden; }
+#hold-fill-sm { height: 100%; width: 0%; border-radius: 3px; transition: background 0.3s; }
+#btn-inst-sm { font-size: 0.48rem; color: #3a4a58; text-align: center; }
+
+/* ══ KEYPAD MODULE ══ */
+.kp-grid-sm { display: grid; grid-template-columns: repeat(2,1fr); gap: 5px; flex: 1; }
+.kp-btn-sm {
+  background: #0d1218; border: 1px solid #2a3a48; color: #9aacb8;
+  font-size: 1.1rem; border-radius: 4px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s;
+}
+.kp-btn-sm:hover { background: #1a2a38; border-color: #4a5a68; }
+.kp-btn-sm.pressed { background: #0a1a12; border-color: #2a6a3a; color: #00ff88; }
+.kp-btn-sm.wrong { background: #2a0a0a; border-color: #aa2200; animation: kshake 0.3s; }
+@keyframes kshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+.kp-hint-sm { font-size: 0.48rem; color: #2a3a48; text-align: center; margin-top: 3px; }
+
+/* ══ SIMON MODULE ══ */
+.simon-grid-sm { display: grid; grid-template-columns: repeat(2,1fr); gap: 5px; flex: 1; }
+.sim-btn-sm {
+  border-radius: 5px; cursor: pointer;
+  border: 2px solid rgba(0,0,0,0.3);
+  opacity: 0.4; transition: opacity 0.1s, filter 0.1s;
+}
+.sim-btn-sm.active { opacity: 1; filter: brightness(2.5); }
+.sim-btn-sm:hover { opacity: 0.7; }
+.sim-red   { background: #bb2200; }
+.sim-blue  { background: #0044bb; }
+.sim-green { background: #007722; }
+.sim-yellow{ background: #997700; }
+.simon-st-sm { font-size: 0.48rem; color: #3a4a58; text-align: center; margin-top: 3px; }
+
+/* ══ MEMORY MODULE ══ */
+.mem-disp-sm {
+  background: #060606;
+  border: 1px solid #2a3a48;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #ffcc00;
+  letter-spacing: 4px;
+  padding: 4px;
+  text-shadow: 0 0 6px #aa8800;
+  flex-shrink: 0;
+}
+.mem-stage-sm { font-size: 0.48rem; color: #2a3a48; text-align: center; margin: 3px 0; }
+.mem-btns-sm { display: grid; grid-template-columns: repeat(4,1fr); gap: 3px; }
+.mem-btn-sm {
+  background: #0d1218; border: 1px solid #2a3a48; color: #9aacb8;
+  font-size: 0.75rem; font-weight: bold; border-radius: 3px; cursor: pointer;
+  padding: 6px 2px; font-family: 'Courier New', monospace;
+  transition: all 0.12s;
+}
+.mem-btn-sm:hover { background: #1a2a38; border-color: #4a5a68; }
+
+/* ══ MORSE MODULE ══ */
+.morse-cell-inner { display: flex; flex-direction: column; align-items: center; flex: 1; justify-content: center; gap: 5px; }
+.morse-light-sm {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #1a1a0a; border: 2px solid #3a3a2a;
+  transition: all 0.08s; flex-shrink: 0;
+}
+.morse-light-sm.on { background: #ffcc00; border-color: #ffee44; box-shadow: 0 0 14px #ffaa00; }
+.morse-input-sm {
+  width: 100%; background: #060606; border: 1px solid #2a3a48;
+  color: #9aacb8; font-size: 0.62rem; padding: 4px 6px;
+  font-family: 'Courier New', monospace; border-radius: 3px; outline: none;
+  text-align: center;
+}
+.morse-input-sm:focus { border-color: #3a5a68; }
+.morse-tx-btn {
+  background: #0d1218; border: 1px solid #2a3a48; color: #9aacb8;
+  font-size: 0.55rem; padding: 3px 10px; cursor: pointer;
+  font-family: 'Courier New', monospace; border-radius: 3px; letter-spacing: 2px;
+  transition: all 0.12s;
+}
+.morse-tx-btn:hover { background: #1a2a38; border-color: #4a5a68; }
+
+/* ══ BOMB BACK (info) ══ */
+#back-inner {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#back-serial-block { display: flex; flex-direction: column; gap: 4px; }
+#back-serial-label { font-size: 0.55rem; color: #5a6a78; letter-spacing: 3px; }
+#back-serial-val { font-size: 1.5rem; letter-spacing: 8px; color: #ffcc44; font-weight: bold; text-shadow: 0 0 8px rgba(255,200,0,0.3); }
+#back-batt-block { display: flex; align-items: center; gap: 10px; }
+#back-batt-label { font-size: 0.55rem; color: #5a6a78; letter-spacing: 2px; }
+.batt-lg {
+  width: 18px; height: 28px; background: #2a5a2a; border: 2px solid #4a7a4a;
+  border-radius: 2px; position: relative;
+}
+.batt-lg::before { content:''; position:absolute; top:-5px; left:3px; right:3px; height:4px; background:#4a7a4a; border-radius:1px; }
+#back-indicators { display: flex; flex-wrap: wrap; gap: 8px; }
+.ind-lg {
+  display: flex; align-items: center; gap: 5px;
+  background: #0d1218; border: 1px solid #2a3a48; border-radius: 4px;
+  padding: 5px 10px; font-size: 0.65rem; color: #3a4a58; letter-spacing: 2px;
+}
+.ind-lg.lit { color: #cccc88; border-color: #4a5a38; }
+.ind-light-lg { width: 9px; height: 9px; border-radius: 50%; background: #1a2018; }
+.ind-lg.lit .ind-light-lg { background: #ffcc00; box-shadow: 0 0 6px #ffaa00; }
+#back-ports { display: flex; flex-wrap: wrap; gap: 6px; }
+.port-lg {
+  font-size: 0.6rem; letter-spacing: 1px; color: #4a5a68;
+  border: 1px solid #2a3a48; border-radius: 3px; padding: 3px 8px;
+}
+
+/* ══ MANUAL PANEL ══ */
+#manual-panel { flex: 1; background: #f4efe6; color: #222; overflow-y: auto; display: flex; flex-direction: column; }
+#manual-tabs { display: flex; background: #e6e0d4; border-bottom: 2px solid #ccc; overflow-x: auto; flex-shrink: 0; position: sticky; top: 0; z-index: 10; }
+.man-tab { padding: 9px 12px; font-size: 0.68rem; cursor: pointer; border-right: 1px solid #ccc; color: #888; white-space: nowrap; font-family: Georgia, serif; transition: all 0.15s; }
+.man-tab:hover { background: #dad4c8; }
+.man-tab.active { background: #f4efe6; color: #222; font-weight: bold; }
+.manual-page { display: none; padding: 18px 22px; font-family: Georgia, serif; line-height: 1.65; }
+.manual-page.active { display: block; }
+.manual-page h2 { font-size: 0.95rem; text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid #999; padding-bottom: 5px; margin-bottom: 12px; color: #333; }
+.manual-page h3 { font-size: 0.78rem; margin: 11px 0 4px; color: #444; text-transform: uppercase; letter-spacing: 1px; }
+.manual-page p { font-size: 0.76rem; margin-bottom: 6px; color: #333; }
+.manual-page ul { font-size: 0.76rem; margin-left: 14px; margin-bottom: 8px; color: #333; }
+.manual-page li { margin-bottom: 3px; }
+.man-rule { background: #e6e0d4; border-left: 4px solid #999; padding: 8px 12px; margin: 8px 0; font-size: 0.74rem; border-radius: 0 4px 4px 0; }
+.man-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; margin: 8px 0; }
+.man-table th { background: #d8d0c0; padding: 5px 8px; text-align: left; border: 1px solid #bbb; font-size: 0.66rem; letter-spacing: 1px; }
+.man-table td { padding: 4px 8px; border: 1px solid #ccc; }
+.man-table tr:nth-child(even) td { background: #ece6dc; }
+.sym { font-size: 1.1rem; }
+.cs { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 3px; border: 1px solid rgba(0,0,0,0.2); }
+.note { background: #fffbe8; border: 1px solid #ddd; padding: 6px 10px; font-size: 0.7rem; border-radius: 4px; margin: 6px 0; color: #555; }
+.mrf { font-family: 'Courier New', monospace; }
+
+/* ══ OVERLAYS ══ */
+#start-overlay {
+  position: fixed; inset: 0; background: #080808; z-index: 300;
+  display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+}
+#start-overlay h1 { font-size: 2rem; letter-spacing: 4px; color: #ff3333; text-shadow: 0 0 20px #ff0000; }
+#start-overlay p { font-size: 0.78rem; color: #444; text-align: center; max-width: 400px; line-height: 1.9; letter-spacing: 0.5px; }
+#start-overlay p em { color: #9aacb8; font-style: normal; }
+#start-btn { margin-top: 10px; background: #cc1100; border: none; color: #fff; padding: 12px 36px; font-family: 'Courier New', monospace; font-size: 0.9rem; letter-spacing: 4px; cursor: pointer; border-radius: 4px; text-transform: uppercase; box-shadow: 0 0 24px rgba(200,0,0,0.4); transition: all 0.2s; }
+#start-btn:hover { background: #ee2200; }
+#end-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 200; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+#end-overlay.show { display: flex; }
+#end-title { font-size: 3rem; font-weight: bold; letter-spacing: 6px; }
+#end-sub { font-size: 0.9rem; color: #666; letter-spacing: 3px; }
+#end-btn { background: #1a1a1a; border: 2px solid #444; color: #bbb; padding: 10px 28px; font-family: 'Courier New', monospace; font-size: 0.85rem; letter-spacing: 3px; cursor: pointer; border-radius: 4px; transition: all 0.2s; }
+#end-btn:hover { background: #2a2a2a; border-color: #777; color: #fff; }
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<!-- START -->
+<div id="start-overlay">
+  <h1>💣 DEFUSE IT</h1>
+  <p>One person sees the bomb. One person reads the manual.<br>
+  <em>Drag to rotate</em> the bomb — find the serial number on the back.<br>
+  All six modules are live on the panel at once.<br><br>
+  5 minutes · 3 strikes · 6 modules</p>
+  <button id="start-btn" onclick="startGame()">ARM THE BOMB</button>
+</div>
+
+<!-- END -->
+<div id="end-overlay">
+  <div id="end-title"></div>
+  <div id="end-sub"></div>
+  <button id="end-btn" onclick="resetGame()">NEW BOMB</button>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div id="header-title">DEFUSE IT — BOMB MANUAL</div>
+  <div id="progress-display">MODULES DEFUSED: <span id="solved-count">0</span> / 6</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- BOMB SCENE -->
+  <div id="bomb-scene-container">
+    <div id="bomb-perspective">
+      <div id="bomb">
+
+        <!-- FRONT FACE -->
+        <div class="bomb-face" id="bomb-front">
+          <div id="bomb-inner">
+
+            <!-- TOP STRIP: Timer + Strikes + Info -->
+            <div id="bomb-top-strip">
+              <div id="timer-panel">
+                <div id="led-timer">5:00</div>
+              </div>
+              <div id="strikes-panel">
+                <div class="strike-light" id="s0"></div>
+                <div class="strike-light" id="s1"></div>
+                <div class="strike-light" id="s2"></div>
+              </div>
+              <div id="bomb-info-strip">
+                <span id="info-serial-label">S/N</span>
+                <span id="info-serial">------</span>
+                <span class="info-sep">|</span>
+                <div id="info-batteries"></div>
+                <span class="info-sep">|</span>
+                <div id="info-indicators"></div>
+              </div>
+            </div>
+
+            <!-- MODULE GRID 3x2 -->
+            <div id="module-grid">
+              <div class="mod-cell" id="mc0"><div class="mod-label">WIRES</div><div class="wire-rows" id="wire-rows"></div><div class="mod-fb" id="fb0"></div></div>
+              <div class="mod-cell" id="mc1"><div class="mod-label">THE BUTTON</div><div id="btn-cell-inner"></div><div class="mod-fb" id="fb1"></div></div>
+              <div class="mod-cell" id="mc2"><div class="mod-label">KEYPAD</div><div class="kp-grid-sm" id="kp-grid"></div><div class="kp-hint-sm">press in order</div><div class="mod-fb" id="fb2"></div></div>
+              <div class="mod-cell" id="mc3"><div class="mod-label">SIMON SAYS</div><div class="simon-grid-sm" id="simon-grid"></div><div class="simon-st-sm" id="simon-st"></div><div class="mod-fb" id="fb3"></div></div>
+              <div class="mod-cell" id="mc4"><div class="mod-label">MEMORY</div><div class="mem-disp-sm" id="mem-disp">–</div><div class="mem-stage-sm" id="mem-stage"></div><div class="mem-btns-sm" id="mem-btns"></div><div class="mod-fb" id="fb4"></div></div>
+              <div class="mod-cell" id="mc5"><div class="mod-label">MORSE</div><div class="morse-cell-inner" id="morse-inner"></div><div class="mod-fb" id="fb5"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BACK FACE -->
+        <div class="bomb-face" id="bomb-back">
+          <div id="back-inner">
+            <div id="back-serial-block">
+              <div id="back-serial-label">SERIAL NUMBER</div>
+              <div id="back-serial-val">------</div>
+            </div>
+            <div id="back-batt-block">
+              <div id="back-batt-label">BATTERIES</div>
+              <div id="back-batts"></div>
+            </div>
+            <div>
+              <div style="font-size:0.55rem;color:#5a6a78;letter-spacing:2px;margin-bottom:6px;">INDICATORS</div>
+              <div id="back-indicators"></div>
+            </div>
+            <div>
+              <div style="font-size:0.55rem;color:#5a6a78;letter-spacing:2px;margin-bottom:6px;">PORTS</div>
+              <div id="back-ports"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDGES -->
+        <div class="bomb-edge" id="edge-right"></div>
+        <div class="bomb-edge" id="edge-left"></div>
+        <div class="bomb-edge" id="edge-top"></div>
+        <div class="bomb-edge" id="edge-bottom"></div>
+
+      </div>
+    </div>
+    <div id="drag-hint">DRAG TO ROTATE — FLIP FOR SERIAL NUMBER</div>
+  </div>
+
+  <!-- MANUAL -->
+  <div id="manual-panel">
+    <div id="manual-tabs">
+      <div class="man-tab active" onclick="showManual('intro')">INTRO</div>
+      <div class="man-tab" onclick="showManual('wires')">WIRES</div>
+      <div class="man-tab" onclick="showManual('button')">BUTTON</div>
+      <div class="man-tab" onclick="showManual('keypad')">KEYPAD</div>
+      <div class="man-tab" onclick="showManual('simon')">SIMON</div>
+      <div class="man-tab" onclick="showManual('memory')">MEMORY</div>
+      <div class="man-tab" onclick="showManual('morse')">MORSE</div>
+    </div>
+
+    <div class="manual-page active" id="man-intro">
+      <h2>Defusal Manual</h2>
+      <p>The bomb-holder cannot read this manual. They describe what they see. The expert reads the rules and guides them.</p>
+      <div class="man-rule">Rotate the bomb to see the <strong>back face</strong> — it shows the serial number, battery count, indicator lights, and ports.</div>
+      <h3>Serial Number</h3>
+      <p>A 6-character code. Does it end in an <strong>odd digit</strong>? Does it contain a <strong>vowel</strong> (A E I O U)?</p>
+      <h3>Indicators</h3>
+      <p>Small labeled lights — either <strong>lit</strong> (glowing) or <strong>unlit</strong>. Some modules reference specific indicators like FRK or CAR.</p>
+      <h3>Batteries &amp; Ports</h3>
+      <p>Visible on the back. Battery count affects The Button module.</p>
+      <h3>Modules</h3>
+      <ul>
+        <li><strong>Wires</strong> — Cut exactly one wire.</li>
+        <li><strong>The Button</strong> — Tap or hold based on color/label.</li>
+        <li><strong>Keypad</strong> — Press 4 symbols in the correct order.</li>
+        <li><strong>Simon Says</strong> — Repeat flashing color sequences.</li>
+        <li><strong>Memory</strong> — 5-stage button memory challenge.</li>
+        <li><strong>Morse Code</strong> — Decode blinking light, type the word.</li>
+      </ul>
+    </div>
+
+    <div class="manual-page" id="man-wires">
+      <h2>Wires</h2>
+      <p>3–6 colored wires. Cut exactly one. Wire 1 = top.</p>
+      <h3>3 Wires</h3>
+      <ul><li>No red wires → cut wire 2.</li><li>Last wire is white → cut wire 3.</li><li>More than one blue → cut wire 3.</li><li>Otherwise → cut wire 3.</li></ul>
+      <h3>4 Wires</h3>
+      <ul><li>More than one red AND serial ends odd → cut last red wire.</li><li>Last wire yellow AND no red → cut wire 1.</li><li>Exactly one blue → cut wire 1.</li><li>More than one yellow → cut wire 4.</li><li>Otherwise → cut wire 2.</li></ul>
+      <h3>5 Wires</h3>
+      <ul><li>Last wire black AND serial ends odd → cut wire 4.</li><li>Exactly one red AND more than one yellow → cut wire 1.</li><li>No black wires → cut wire 2.</li><li>Otherwise → cut wire 1.</li></ul>
+      <h3>6 Wires</h3>
+      <ul><li>No yellow AND serial ends odd → cut wire 3.</li><li>Exactly one yellow AND more than one white → cut wire 4.</li><li>No red → cut wire 6.</li><li>Otherwise → cut wire 4.</li></ul>
+      <div class="note">"Last red wire" = lowest-numbered red wire, top to bottom.</div>
+    </div>
+
+    <div class="manual-page" id="man-button">
+      <h2>The Button</h2>
+      <p>Apply rules in order — first match wins.</p>
+      <h3>Tap (press &amp; release quickly)</h3>
+      <ul><li>More than 1 battery AND label says <strong>DETONATE</strong> → tap.</li><li>Red button AND label says <strong>HOLD</strong> → tap.</li></ul>
+      <h3>Hold (press &amp; hold)</h3>
+      <ul><li>Blue button AND label says <strong>ABORT</strong> → hold.</li><li>Yellow button → hold.</li><li>Otherwise → hold.</li></ul>
+      <h3>Releasing a Held Button</h3>
+      <p>A colored strip lights up while holding. Release when the timer contains:</p>
+      <ul>
+        <li><span class="cs" style="background:#00aa33"></span><strong>Green</strong> → timer shows a <strong>5</strong></li>
+        <li><span class="cs" style="background:#ffcc00"></span><strong>Yellow</strong> → timer shows a <strong>3</strong></li>
+        <li>Any other → timer shows a <strong>1</strong></li>
+      </ul>
+      <div class="note">Check battery count on the back of the bomb.</div>
+    </div>
+
+    <div class="manual-page" id="man-keypad">
+      <h2>Keypad</h2>
+      <p>Four symbols displayed. Find the one column below containing all four, then press them top-to-bottom in that column's order.</p>
+      <table class="man-table">
+        <tr><th>Col I</th><th>Col II</th><th>Col III</th><th>Col IV</th><th>Col V</th><th>Col VI</th></tr>
+        <tr><td><span class="sym">Ω</span></td><td><span class="sym">Ϙ</span></td><td><span class="sym">ƛ</span></td><td><span class="sym">Ϟ</span></td><td><span class="sym">Ψ</span></td><td><span class="sym">Ѱ</span></td></tr>
+        <tr><td><span class="sym">ϟ</span></td><td><span class="sym">Ω</span></td><td><span class="sym">Ψ</span></td><td><span class="sym">ƛ</span></td><td><span class="sym">Ϟ</span></td><td><span class="sym">Ω</span></td></tr>
+        <tr><td><span class="sym">Ψ</span></td><td><span class="sym">ϟ</span></td><td><span class="sym">Ϙ</span></td><td><span class="sym">Ω</span></td><td><span class="sym">ƛ</span></td><td><span class="sym">Ϙ</span></td></tr>
+        <tr><td><span class="sym">Ϙ</span></td><td><span class="sym">Ψ</span></td><td><span class="sym">Ϟ</span></td><td><span class="sym">Ψ</span></td><td><span class="sym">Ϙ</span></td><td><span class="sym">Ϟ</span></td></tr>
+      </table>
+      <div class="note">Wrong order = strike and reset. You can retry.</div>
+    </div>
+
+    <div class="manual-page" id="man-simon">
+      <h2>Simon Says</h2>
+      <p>Module flashes colors. Repeat each sequence. Colors to press depend on whether serial has a vowel.</p>
+      <h3>No Vowel in Serial</h3>
+      <table class="man-table"><tr><th>Flash</th><th>Press</th></tr>
+        <tr><td><span class="cs" style="background:#bb2200"></span>Red</td><td><span class="cs" style="background:#0044bb"></span>Blue</td></tr>
+        <tr><td><span class="cs" style="background:#0044bb"></span>Blue</td><td><span class="cs" style="background:#997700"></span>Yellow</td></tr>
+        <tr><td><span class="cs" style="background:#007722"></span>Green</td><td><span class="cs" style="background:#007722"></span>Green</td></tr>
+        <tr><td><span class="cs" style="background:#997700"></span>Yellow</td><td><span class="cs" style="background:#bb2200"></span>Red</td></tr>
+      </table>
+      <h3>Vowel in Serial</h3>
+      <table class="man-table"><tr><th>Flash</th><th>Press</th></tr>
+        <tr><td><span class="cs" style="background:#bb2200"></span>Red</td><td><span class="cs" style="background:#007722"></span>Green</td></tr>
+        <tr><td><span class="cs" style="background:#0044bb"></span>Blue</td><td><span class="cs" style="background:#bb2200"></span>Red</td></tr>
+        <tr><td><span class="cs" style="background:#007722"></span>Green</td><td><span class="cs" style="background:#997700"></span>Yellow</td></tr>
+        <tr><td><span class="cs" style="background:#997700"></span>Yellow</td><td><span class="cs" style="background:#0044bb"></span>Blue</td></tr>
+      </table>
+      <div class="note">Wrong press = strike and restart from round 1.</div>
+    </div>
+
+    <div class="manual-page" id="man-memory">
+      <h2>Memory</h2>
+      <p>Display shows 1–4. Four buttons show numbers in some order. 5 stages. Track pressed <strong>position</strong> (1=left→4=right) and <strong>label</strong>.</p>
+      <h3>Stage 1</h3><ul><li>Display 1 or 2 → position 2.</li><li>Display 3 → position 3.</li><li>Display 4 → position 4.</li></ul>
+      <h3>Stage 2</h3><ul><li>Display 1 → label 4.</li><li>Display 2 → same position as stage 1.</li><li>Display 3 → position 1.</li><li>Display 4 → same position as stage 1.</li></ul>
+      <h3>Stage 3</h3><ul><li>Display 1 → same label as stage 2.</li><li>Display 2 → same label as stage 1.</li><li>Display 3 → position 3.</li><li>Display 4 → label 4.</li></ul>
+      <h3>Stage 4</h3><ul><li>Display 1 → same position as stage 1.</li><li>Display 2 → position 1.</li><li>Display 3 → same position as stage 2.</li><li>Display 4 → same position as stage 2.</li></ul>
+      <h3>Stage 5</h3><ul><li>Display 1 → same label as stage 1.</li><li>Display 2 → same label as stage 2.</li><li>Display 3 → same label as stage 4.</li><li>Display 4 → same label as stage 3.</li></ul>
+      <div class="note">Wrong = strike and restart from stage 1.</div>
+    </div>
+
+    <div class="manual-page" id="man-morse">
+      <h2>Morse Code</h2>
+      <p>Light blinks Morse code. Short = dot (·), long = dash (–). Decode the word and type it.</p>
+      <table class="man-table mrf">
+        <tr><th>Letter</th><th>Code</th><th>Letter</th><th>Code</th></tr>
+        <tr><td>A</td><td>· –</td><td>N</td><td>– ·</td></tr>
+        <tr><td>B</td><td>– · · ·</td><td>O</td><td>– – –</td></tr>
+        <tr><td>C</td><td>– · – ·</td><td>R</td><td>· – ·</td></tr>
+        <tr><td>D</td><td>– · ·</td><td>S</td><td>· · ·</td></tr>
+        <tr><td>E</td><td>·</td><td>T</td><td>–</td></tr>
+        <tr><td>F</td><td>· · – ·</td><td>U</td><td>· · –</td></tr>
+        <tr><td>H</td><td>· · · ·</td><td>W</td><td>· – –</td></tr>
+        <tr><td>L</td><td>· – · ·</td><td>X</td><td>– · · –</td></tr>
+      </table>
+      <div class="note">Word is one of: <strong>shell, halls, sleet, leaks, rates, bread, beats, steam, first, stars</strong>. Type and press TX.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════
+//  3D BOMB ROTATION
+// ══════════════════════════════════
+const bombEl = document.getElementById('bomb');
+const sceneWrap = document.getElementById('bomb-scene-container');
+
+let rotX = 14, rotY = -22;
+let dragging = false, lastX = 0, lastY = 0, velX = 0, velY = 0;
+let inertiaRaf = null;
+
+function applyRot(smooth) {
+  bombEl.style.transition = smooth ? 'transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+  bombEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+}
+
+function clampX(v) { return Math.max(-75, Math.min(75, v)); }
+
+sceneWrap.addEventListener('mousedown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'TEXTAREA') return;
+  dragging = true; lastX = e.clientX; lastY = e.clientY; velX = 0; velY = 0;
+  if (inertiaRaf) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+  e.preventDefault();
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  velX = dx; velY = dy;
+  rotY += dx * 0.45; rotX = clampX(rotX - dy * 0.45);
+  lastX = e.clientX; lastY = e.clientY;
+  applyRot(false);
+});
+window.addEventListener('mouseup', () => {
+  if (!dragging) return;
+  dragging = false;
+  startInertia();
+});
+sceneWrap.addEventListener('touchstart', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+  dragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; velX = 0; velY = 0;
+  if (inertiaRaf) { cancelAnimationFrame(inertiaRaf); inertiaRaf = null; }
+}, {passive:true});
+window.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const dx = e.touches[0].clientX - lastX, dy = e.touches[0].clientY - lastY;
+  velX = dx; velY = dy;
+  rotY += dx * 0.45; rotX = clampX(rotX - dy * 0.45);
+  lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
+  applyRot(false);
+}, {passive:true});
+window.addEventListener('touchend', () => { if (dragging) { dragging = false; startInertia(); } });
+
+function startInertia() {
+  let vx = velX * 0.35, vy = velY * 0.35;
+  function step() {
+    if (Math.abs(vx) < 0.2 && Math.abs(vy) < 0.2) return;
+    rotY += vx * 0.45; rotX = clampX(rotX - vy * 0.45);
+    vx *= 0.88; vy *= 0.88;
+    applyRot(false);
+    inertiaRaf = requestAnimationFrame(step);
+  }
+  inertiaRaf = requestAnimationFrame(step);
+}
+
+applyRot(false);
+
+// ══════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════
+const WIRE_COLORS = ['red','blue','yellow','white','black'];
+const MORSE_WORDS = ['shell','halls','sleet','leaks','rates','bread','beats','steam','first','stars'];
+const MORSE_CODE = {a:'.-',b:'-...',c:'-.-.',d:'-..',e:'.',f:'..-.',g:'--.',h:'....',i:'..',j:'.---',k:'-.-',l:'.-..',m:'--',n:'-.',o:'---',p:'.--.',q:'--.-',r:'.-.',s:'...',t:'-',u:'..-',v:'...-',w:'.--',x:'-..-',y:'-.--',z:'--..'};
+const KEYPAD_COLS = [['Ω','ϟ','Ψ','Ϙ'],['Ϙ','Ω','ϟ','Ψ'],['ƛ','Ψ','Ϙ','Ϟ'],['Ϟ','ƛ','Ω','Ψ'],['Ψ','Ϟ','ƛ','Ϙ'],['Ѱ','Ω','Ϙ','Ϟ']];
+const ALL_INDICATORS = ['SND','FRQ','CAR','IND','MSA','NSA','TRN','FRK','BOB','CLR'];
+const ALL_PORTS = ['DVI','RJ-45','PS/2','SERIAL','RCA'];
+
+let G = {};
+let timerInterval = null;
+let morseStop = null;
+let simonTout = null;
+let btnHoldStart = null, btnHoldInt = null;
+
+const genSerial = () => Array.from({length:6}, () => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');
+const hasVowel = s => /[AEIOU]/i.test(s);
+const endsOdd = s => { const d = s.match(/\d/g); return d && parseInt(d[d.length-1]) % 2 === 1; };
+
+function genModules(serial) {
+  const wc = 3 + Math.floor(Math.random()*4);
+  const wires = Array.from({length:wc}, () => WIRE_COLORS[Math.floor(Math.random()*5)]);
+  const btnColors = ['red','blue','yellow','white'];
+  const btnLabels = ['ABORT','DETONATE','HOLD','PRESS'];
+  const stripColors = ['green','yellow','blue','white'];
+  const kpCol = Math.floor(Math.random()*KEYPAD_COLS.length);
+  const kpOrder = KEYPAD_COLS[kpCol];
+  const kpDisplay = [...kpOrder].sort(()=>Math.random()-0.5);
+  const simonColors = ['red','blue','green','yellow'];
+  const simonSeq = Array.from({length:5}, () => simonColors[Math.floor(Math.random()*4)]);
+  const memStages = Array.from({length:5}, () => ({display:1+Math.floor(Math.random()*4), buttons:[1,2,3,4].sort(()=>Math.random()-0.5)}));
+  return [
+    {type:'wires', wires, solved:false},
+    {type:'button', color:btnColors[Math.floor(Math.random()*4)], label:btnLabels[Math.floor(Math.random()*4)], stripColor:stripColors[Math.floor(Math.random()*4)], solved:false},
+    {type:'keypad', order:kpOrder, display:kpDisplay, pressed:[], solved:false},
+    {type:'simon', seq:simonSeq, stage:0, inputIdx:0, flashing:false, solved:false},
+    {type:'memory', stages:memStages, currentStage:0, history:[], solved:false},
+    {type:'morse', word:MORSE_WORDS[Math.floor(Math.random()*10)], solved:false}
+  ];
+}
+
+function startGame() {
+  document.getElementById('start-overlay').style.display = 'none';
+  initGame();
+}
+
+function initGame() {
+  clearInterval(timerInterval);
+  stopSideEffects();
+  const serial = genSerial();
+  const indicators = [...ALL_INDICATORS].sort(()=>Math.random()-0.5).slice(0,3+Math.floor(Math.random()*2)).map(n=>({name:n,lit:Math.random()>0.5}));
+  const ports = [...ALL_PORTS].sort(()=>Math.random()-0.5).slice(0,2+Math.floor(Math.random()*2));
+  G = {serial, timeLeft:300, strikes:0, solved:0, over:false, batteries:2, indicators, ports, modules:genModules(serial)};
+  // Reset rotation to default front view
+  rotX = 14; rotY = -22; applyRot(true);
+  populateInfo();
+  updateStrikes();
+  updateProgress();
+  renderAllModules();
+  startTimer();
+}
+
+function resetGame() { document.getElementById('end-overlay').classList.remove('show'); initGame(); }
+function stopSideEffects() {
+  if (morseStop) { morseStop(); morseStop = null; }
+  if (simonTout) { clearTimeout(simonTout); simonTout = null; }
+  if (btnHoldInt) { clearInterval(btnHoldInt); btnHoldInt = null; }
+}
+
+function populateInfo() {
+  // Front strip
+  document.getElementById('info-serial').textContent = G.serial;
+  document.getElementById('info-batteries').innerHTML = Array.from({length:G.batteries},()=>`<div class="batt-sm"></div>`).join('');
+  document.getElementById('info-indicators').innerHTML = G.indicators.map(i=>`<div class="ind-sm${i.lit?' lit':''}"><div class="ind-dot"></div>${i.name}</div>`).join('');
+  // Back face
+  document.getElementById('back-serial-val').textContent = G.serial;
+  document.getElementById('back-batts').innerHTML = Array.from({length:G.batteries},()=>`<div class="batt-lg"></div>`).join('');
+  document.getElementById('back-indicators').innerHTML = G.indicators.map(i=>`<div class="ind-lg${i.lit?' lit':''}"><div class="ind-light-lg"></div>${i.name}</div>`).join('');
+  document.getElementById('back-ports').innerHTML = G.ports.map(p=>`<div class="port-lg">${p}</div>`).join('');
+}
+
+// ── Timer ──
+function startTimer() {
+  timerInterval = setInterval(() => {
+    if (G.over) return;
+    G.timeLeft--;
+    updateTimer();
+    if (G.timeLeft <= 0) endGame(false);
+  }, 1000);
+}
+function timerStr() { const m=Math.floor(G.timeLeft/60),s=G.timeLeft%60; return `${m}:${s.toString().padStart(2,'0')}`; }
+function updateTimer() {
+  const el = document.getElementById('led-timer');
+  el.textContent = timerStr();
+  el.className = G.timeLeft < 30 ? 'critical' : G.timeLeft < 60 ? 'warning' : '';
+}
+function updateStrikes() { for(let i=0;i<3;i++) document.getElementById('s'+i).classList.toggle('lit',i<G.strikes); }
+function updateProgress() { document.getElementById('solved-count').textContent = G.solved; }
+
+function addStrike() {
+  G.strikes++;
+  updateStrikes();
+  if (G.strikes >= 3) endGame(false);
+}
+function checkWin() { if (G.solved >= 6) endGame(true); }
+function endGame(won) {
+  G.over = true;
+  clearInterval(timerInterval);
+  stopSideEffects();
+  const ov = document.getElementById('end-overlay');
+  const t = document.getElementById('end-title');
+  if (won) { t.textContent='✓ DEFUSED'; t.style.color='#00ff88'; document.getElementById('end-sub').textContent='TIME REMAINING: '+timerStr(); }
+  else { t.textContent='💥 BOOM'; t.style.color='#ff3300'; document.getElementById('end-sub').textContent='THE BOMB EXPLODED'; }
+  ov.classList.add('show');
+}
+
+// ══════════════════════════════════
+//  MODULE RENDERS (inline on panel)
+// ══════════════════════════════════
+function renderAllModules() {
+  renderWires();
+  renderButton();
+  renderKeypad();
+  renderSimon();
+  renderMemory();
+  renderMorse();
+}
+
+function markSolved(cellIdx) {
+  const cell = document.getElementById('mc'+cellIdx);
+  if (!cell.querySelector('.mod-solved-overlay')) {
+    const ov = document.createElement('div');
+    ov.className = 'mod-solved-overlay';
+    ov.textContent = '✓';
+    cell.appendChild(ov);
+  }
+}
+
+function setFb(idx, msg, type) {
+  const el = document.getElementById('fb'+idx);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'mod-fb ' + (type||'');
+  if (type === 'bad') setTimeout(()=>{ if(el.textContent===msg) el.textContent=''; }, 2500);
+}
+
+// ── WIRES ──
+function renderWires() {
+  const m = G.modules[0];
+  if (m.solved) return;
+  const cmap = {red:'#cc2200',blue:'#2255cc',yellow:'#ddaa00',white:'#cccccc',black:'#555'};
+  const rows = document.getElementById('wire-rows');
+  rows.innerHTML = m.wires.map((c,i) => `
+    <div class="wire-row-sm">
+      <div class="wire-num">${i+1}</div>
+      <div class="wire-left" style="background:${cmap[c]}"></div>
+      <div class="wire-line-sm" style="background:${cmap[c]}" data-wi="${i}" onclick="cutWire(${i})"></div>
+      <div class="wire-right" style="background:${cmap[c]}"></div>
+    </div>`).join('');
+}
+
+function solveWires(wires, serial) {
+  const w=wires, n=w.length, cnt=c=>w.filter(x=>x===c).length, odd=endsOdd(serial);
+  if(n===3){if(!cnt('red'))return 1;if(w[n-1]==='white')return 2;if(cnt('blue')>1)return 2;return 2;}
+  if(n===4){if(cnt('red')>1&&odd){for(let i=w.length-1;i>=0;i--)if(w[i]==='red')return i;}
+    if(w[n-1]==='yellow'&&!cnt('red'))return 0;if(cnt('blue')===1)return 0;if(cnt('yellow')>1)return 3;return 1;}
+  if(n===5){if(w[n-1]==='black'&&odd)return 3;if(cnt('red')===1&&cnt('yellow')>1)return 0;if(!cnt('black'))return 1;return 0;}
+  if(!cnt('yellow')&&odd)return 2;if(cnt('yellow')===1&&cnt('white')>1)return 3;if(!cnt('red'))return 5;return 3;
+}
+
+function cutWire(wi) {
+  const m = G.modules[0];
+  if (m.solved || G.over) return;
+  const correct = solveWires(m.wires, G.serial);
+  if (wi === correct) {
+    m.solved = true; G.solved++; updateProgress(); markSolved(0); checkWin();
+    document.querySelectorAll('.wire-line-sm').forEach(el => el.style.pointerEvents='none');
+  } else {
+    // Show cut effect then restore
+    const el = document.querySelector(`.wire-line-sm[data-wi="${wi}"]`);
+    if (el) { el.classList.add('cut'); setTimeout(()=>el.classList.remove('cut'),800); }
+    addStrike();
+    if (!G.over) setFb(0, 'WRONG WIRE — STRIKE', 'bad');
+  }
+}
+
+// ── BUTTON ──
+function renderButton() {
+  const m = G.modules[1];
+  if (m.solved) return;
+  const cmap={red:'#bb2200',blue:'#1155bb',yellow:'#bb9900',white:'#aaa'};
+  const tmap={red:'#fff',blue:'#fff',yellow:'#111',white:'#111'};
+  const smap={green:'#00aa33',yellow:'#ffcc00',blue:'#1a88ff',white:'#ccc'};
+  const bc=cmap[m.color]||'#555', tc=tmap[m.color]||'#fff', sc=smap[m.stripColor]||'#444';
+  const inner = document.getElementById('btn-cell-inner');
+  inner.innerHTML = `
+    <button id="the-button-sm" style="background:${bc};color:${tc}"
+      onmousedown="btnDown(event)" onmouseup="btnUp(event)"
+      ontouchstart="btnDown(event)" ontouchend="btnUp(event)">${m.label}</button>
+    <div id="hold-strip-sm"><div id="hold-fill-sm" style="background:${sc}"></div></div>
+    <div id="btn-inst-sm">tap or press &amp; hold</div>`;
+}
+
+function shouldHold(m) {
+  if (m.color==='blue'&&m.label==='ABORT') return true;
+  if (m.label==='DETONATE') return false;
+  if (m.color==='red'&&m.label==='HOLD') return false;
+  if (m.color==='yellow') return true;
+  return true;
+}
+function btnDown(e) {
+  e.stopPropagation();
+  const m = G.modules[1];
+  if (m.solved||G.over) return;
+  btnHoldStart = Date.now();
+  document.getElementById('the-button-sm')?.classList.add('holding');
+  btnHoldInt = setInterval(()=>{
+    const f=document.getElementById('hold-fill-sm');
+    if(f) f.style.width=Math.min(100,(Date.now()-btnHoldStart)/30)+'%';
+  },50);
+}
+function btnUp(e) {
+  e.stopPropagation();
+  clearInterval(btnHoldInt); btnHoldInt=null;
+  const m = G.modules[1];
+  if (!m||m.solved||G.over) return;
+  document.getElementById('the-button-sm')?.classList.remove('holding');
+  const held = (Date.now()-(btnHoldStart||Date.now())) > 400;
+  const mustHold = shouldHold(m);
+  if (!held && !mustHold) {
+    m.solved=true;G.solved++;updateProgress();markSolved(1);checkWin();
+  } else if (held && mustHold) {
+    const need=m.stripColor==='green'?'5':m.stripColor==='yellow'?'3':'1';
+    if (timerStr().includes(need)) { m.solved=true;G.solved++;updateProgress();markSolved(1);checkWin(); }
+    else { addStrike(); if(!G.over) setFb(1,`WRONG TIME — need ${need} in timer`,`bad`); }
+  } else {
+    addStrike(); if(!G.over) setFb(1,mustHold?'SHOULD HAVE HELD':'SHOULD HAVE TAPPED','bad');
+  }
+}
+
+// ── KEYPAD ──
+function renderKeypad() {
+  const m = G.modules[2];
+  if (m.solved) return;
+  const grid = document.getElementById('kp-grid');
+  grid.innerHTML = m.display.map((sym,i)=>`
+    <button class="kp-btn-sm${m.pressed.includes(sym)?' pressed':''}" id="kpb${i}" onclick="pressKey('${sym}',${i})">${sym}</button>`
+  ).join('');
+}
+function pressKey(sym, bi) {
+  const m = G.modules[2];
+  if (m.solved||G.over) return;
+  if (sym === m.order[m.pressed.length]) {
+    m.pressed.push(sym);
+    document.getElementById('kpb'+bi)?.classList.add('pressed');
+    if (m.pressed.length===4) { m.solved=true;G.solved++;updateProgress();markSolved(2);checkWin(); }
+  } else {
+    m.pressed=[];
+    const b=document.getElementById('kpb'+bi);
+    if(b){b.classList.add('wrong');setTimeout(()=>b.classList.remove('wrong'),400);}
+    addStrike(); if(!G.over){setFb(2,'WRONG ORDER — STRIKE','bad');renderKeypad();}
+  }
+}
+
+// ── SIMON ──
+const simonTrans = (c,vowel) => ({
+  true:{red:'green',blue:'red',green:'yellow',yellow:'blue'},
+  false:{red:'blue',blue:'yellow',green:'green',yellow:'red'}
+}[vowel+''][c]);
+
+function renderSimon() {
+  const m = G.modules[3];
+  if (m.solved) return;
+  const grid = document.getElementById('simon-grid');
+  grid.innerHTML = ['red','blue','green','yellow'].map(c=>
+    `<div class="sim-btn-sm sim-${c}" id="sb-${c}" onclick="simonPress('${c}')"></div>`
+  ).join('');
+  document.getElementById('simon-st').textContent = `Round ${m.stage+1} — watch...`;
+  if (simonTout) clearTimeout(simonTout);
+  simonTout = setTimeout(()=>flashSimon(0), 700);
+}
+function flashSimon(fi) {
+  const m = G.modules[3];
+  if (!m||m.solved||G.over) return;
+  const seq = m.seq.slice(0, m.stage+1);
+  if (fi >= seq.length) {
+    m.flashing=false; m.inputIdx=0;
+    const st=document.getElementById('simon-st');
+    if(st) st.textContent=`Round ${m.stage+1} — your turn (${m.stage+1} presses)`;
+    return;
+  }
+  m.flashing=true;
+  const color=seq[fi];
+  const el=document.getElementById('sb-'+color);
+  const spd=Math.max(180,480-m.stage*50);
+  if(el) el.classList.add('active');
+  simonTout=setTimeout(()=>{
+    if(el) el.classList.remove('active');
+    simonTout=setTimeout(()=>flashSimon(fi+1),110);
+  },spd);
+}
+function simonPress(color) {
+  const m=G.modules[3];
+  if(!m||m.solved||G.over||m.flashing) return;
+  const expected=simonTrans(m.seq[m.inputIdx],hasVowel(G.serial));
+  if(color===expected){
+    m.inputIdx++;
+    if(m.inputIdx>m.stage){
+      m.stage++;
+      if(m.stage>=5){m.solved=true;G.solved++;updateProgress();markSolved(3);checkWin();return;}
+      m.inputIdx=0;
+      const st=document.getElementById('simon-st');
+      if(st) st.textContent=`Round ${m.stage+1} — watch!`;
+      simonTout=setTimeout(()=>flashSimon(0),500);
+    }
+  } else {
+    m.stage=0;m.inputIdx=0;
+    addStrike();
+    if(!G.over){setFb(3,'WRONG — STRIKE','bad');simonTout=setTimeout(()=>flashSimon(0),800);}
+  }
+}
+
+// ── MEMORY ──
+function renderMemory() {
+  const m=G.modules[4];
+  if(m.solved) return;
+  const s=m.stages[m.currentStage];
+  document.getElementById('mem-disp').textContent=s.display;
+  document.getElementById('mem-stage').textContent=`Stage ${m.currentStage+1} / 5`;
+  document.getElementById('mem-btns').innerHTML=s.buttons.map((lbl,pos)=>
+    `<button class="mem-btn-sm" onclick="memPress(${pos+1},${lbl})">${lbl}</button>`).join('');
+}
+function memAnswer(m) {
+  const s=m.currentStage,d=m.stages[s].display,h=m.history;
+  if(s===0) return {mode:'pos',val:{1:2,2:2,3:3,4:4}[d]};
+  if(s===1){if(d===1)return{mode:'lbl',val:4};if(d===2)return{mode:'pos',val:h[0].pos};if(d===3)return{mode:'pos',val:1};return{mode:'pos',val:h[0].pos};}
+  if(s===2){if(d===1)return{mode:'lbl',val:h[1].lbl};if(d===2)return{mode:'lbl',val:h[0].lbl};if(d===3)return{mode:'pos',val:3};return{mode:'lbl',val:4};}
+  if(s===3){if(d===1)return{mode:'pos',val:h[0].pos};if(d===2)return{mode:'pos',val:1};if(d===3)return{mode:'pos',val:h[1].pos};return{mode:'pos',val:h[1].pos};}
+  if(d===1)return{mode:'lbl',val:h[0].lbl};if(d===2)return{mode:'lbl',val:h[1].lbl};if(d===3)return{mode:'lbl',val:h[3].lbl};return{mode:'lbl',val:h[2].lbl};
+}
+function memPress(pos,lbl) {
+  const m=G.modules[4];
+  if(m.solved||G.over) return;
+  const ans=memAnswer(m);
+  const ok=ans.mode==='pos'?pos===ans.val:lbl===ans.val;
+  if(ok){
+    m.history.push({pos,lbl});m.currentStage++;
+    if(m.currentStage>=5){m.solved=true;G.solved++;updateProgress();markSolved(4);checkWin();return;}
+    renderMemory();
+  } else {
+    m.currentStage=0;m.history=[];
+    addStrike();if(!G.over){setFb(4,'WRONG — STRIKE','bad');renderMemory();}
+  }
+}
+
+// ── MORSE ──
+function renderMorse() {
+  const m=G.modules[5];
+  if(m.solved) return;
+  const inner=document.getElementById('morse-inner');
+  inner.innerHTML=`
+    <div class="morse-light-sm" id="ml"></div>
+    <input class="morse-input-sm" id="morse-in" type="text" maxlength="12" placeholder="decoded word..."
+      onkeydown="if(event.key==='Enter')morseSubmit()">
+    <button class="morse-tx-btn" onclick="morseSubmit()">TX</button>`;
+  startMorse();
+}
+function startMorse() {
+  const m=G.modules[5];
+  if(!m||m.solved) return;
+  if(morseStop){morseStop();morseStop=null;}
+  const word=m.word, sigs=[];
+  for(let ci=0;ci<word.length;ci++){
+    const code=MORSE_CODE[word[ci]];
+    for(let i=0;i<code.length;i++){
+      sigs.push(code[i]==='.'?'dot':'dash');
+      if(i<code.length-1) sigs.push('gs');
+    }
+    if(ci<word.length-1) sigs.push('gl');
+  }
+  sigs.push('gw');
+  const DOT=160,DASH=440,GS=110,GL=400,GW=880;
+  let idx=0,t=null,stopped=false;
+  morseStop=()=>{stopped=true;clearTimeout(t);};
+  function next(){
+    if(stopped||G.over) return;
+    if(idx>=sigs.length){idx=0;next();return;}
+    const s=sigs[idx++];
+    const el=document.getElementById('ml');
+    if(s==='dot'||s==='dash'){
+      if(el) el.classList.add('on');
+      t=setTimeout(()=>{if(el)el.classList.remove('on');t=setTimeout(next,GS);},s==='dot'?DOT:DASH);
+    } else { t=setTimeout(next,s==='gs'?GS:s==='gl'?GL:GW); }
+  }
+  t=setTimeout(next,500);
+}
+function morseSubmit() {
+  const m=G.modules[5];
+  if(m.solved||G.over) return;
+  const val=(document.getElementById('morse-in')?.value||'').trim().toLowerCase();
+  if(val===m.word){
+    if(morseStop){morseStop();morseStop=null;}
+    m.solved=true;G.solved++;updateProgress();markSolved(5);checkWin();
+  } else {
+    addStrike();
+    if(!G.over){setFb(5,'INCORRECT — STRIKE','bad');const inp=document.getElementById('morse-in');if(inp)inp.value='';}
+  }
+}
+
+// ── MANUAL ──
+function showManual(page) {
+  document.querySelectorAll('.manual-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.man-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('man-'+page)?.classList.add('active');
+  const names=['intro','wires','button','keypad','simon','memory','morse'];
+  const tabs=document.querySelectorAll('.man-tab');
+  const i=names.indexOf(page); if(i>=0) tabs[i]?.classList.add('active');
+}
+</script>
+</body>
+</html>

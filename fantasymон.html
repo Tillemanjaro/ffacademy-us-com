@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FantasyMon - Fantasy Football RPG</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; image-rendering: pixelated; }
+  body {
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  #gameCanvas {
+    border: 4px solid #e8b84b;
+    box-shadow: 0 0 40px #e8b84b44, 0 0 80px #e8b84b22;
+    cursor: pointer;
+  }
+  #ui {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 8px 14px;
+    background: #2d2d5e;
+    color: #e8b84b;
+    border: 2px solid #e8b84b;
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .btn:hover { background: #e8b84b; color: #1a1a2e; }
+  .btn:active { transform: scale(0.95); }
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<canvas id="gameCanvas" width="480" height="320"></canvas>
+<div id="ui">
+  <button class="btn" id="btnA">A / CONFIRM</button>
+  <button class="btn" id="btnB">B / BACK</button>
+  <button class="btn" id="btnUp">▲</button>
+  <button class="btn" id="btnDown">▼</button>
+</div>
+
+<script>
+// ============================================================
+// CANVAS & CONTEXT
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+// ============================================================
+// CONSTANTS & COLORS
+// ============================================================
+const TYPES = {
+  QB:  { name:'QB',  color:'#FF6B35', dark:'#cc4400', light:'#ff9966', icon:'🏈' },
+  RB:  { name:'RB',  color:'#8B4513', dark:'#5a2d0c', light:'#c47a3d', icon:'🦵' },
+  WR:  { name:'WR',  color:'#4169E1', dark:'#1a3fa0', light:'#6699ff', icon:'⚡' },
+  TE:  { name:'TE',  color:'#228B22', dark:'#145214', light:'#44bb44', icon:'🛡️' },
+  DEF: { name:'DEF', color:'#808080', dark:'#4d4d4d', light:'#aaaaaa', icon:'🏛️' },
+  K:   { name:'K',   color:'#9932CC', dark:'#5c1e7a', light:'#cc66ff', icon:'🥾' }
+};
+
+// Type effectiveness chart: attacker -> [2x effective against, 0.5x against]
+const TYPE_CHART = {
+  QB:  { strong:['DEF','K'],   weak:['WR','RB'] },
+  RB:  { strong:['QB','TE'],   weak:['DEF','WR'] },
+  WR:  { strong:['RB','DEF'],  weak:['TE','QB'] },
+  TE:  { strong:['WR','QB'],   weak:['RB','K'] },
+  DEF: { strong:['TE','RB'],   weak:['QB','K'] },
+  K:   { strong:['WR','DEF'],  weak:['QB','TE'] }
+};
+
+function getEffectiveness(attackType, defType) {
+  const chart = TYPE_CHART[attackType];
+  if (!chart) return 1;
+  if (chart.strong.includes(defType)) return 2.0;
+  if (chart.weak.includes(defType))   return 0.5;
+  return 1.0;
+}
+
+// ============================================================
+// SPRITE DRAWING FUNCTIONS
+// ============================================================
+function drawPixelRect(x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), w, h);
+}
+
+function drawSprite(player, cx, cy, scale=1, flip=false) {
+  const s = scale;
+  ctx.save();
+  if (flip) {
+    ctx.translate(cx * 2, 0);
+    ctx.scale(-1, 1);
+    cx = cx; // still draw at cx but flipped
+  }
+  player.drawFn(ctx, cx, cy, s);
+  ctx.restore();
+}
+
+// ---- Sprite: QB (throwing pose) ----
+function drawQB(ctx, cx, cy, s, colors) {
+  const c = colors;
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 18*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+  // Cleats
+  drawPixelRect(cx-14*s, cy+50*s, 11*s, 6*s, '#222');
+  drawPixelRect(cx+3*s,  cy+52*s, 11*s, 6*s, '#222');
+  // Pants
+  drawPixelRect(cx-14*s, cy+34*s, 12*s, 18*s, c.pants);
+  drawPixelRect(cx+2*s,  cy+36*s, 12*s, 18*s, c.pants);
+  // Jersey body
+  drawPixelRect(cx-15*s, cy+16*s, 30*s, 22*s, c.jersey);
+  // Jersey number
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${9*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+32*s);
+  // Left arm (down)
+  drawPixelRect(cx-22*s, cy+18*s, 8*s, 16*s, c.jersey);
+  drawPixelRect(cx-22*s, cy+32*s, 8*s, 8*s, c.skin);
+  // Right arm (raised - throwing)
+  drawPixelRect(cx+14*s, cy+8*s,  8*s, 18*s, c.jersey);
+  drawPixelRect(cx+14*s, cy+2*s,  8*s, 10*s, c.skin);
+  // Ball in right hand
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath(); ctx.ellipse(cx+22*s, cy+4*s, 6*s, 4*s, -0.5, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1*s;
+  ctx.beginPath(); ctx.moveTo(cx+18*s, cy+4*s); ctx.lineTo(cx+26*s, cy+4*s); ctx.stroke();
+  // Helmet
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+6*s, 14*s, 0, Math.PI*2); ctx.fill();
+  // Facemask
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 2.5*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-8*s, cy+10*s); ctx.lineTo(cx+8*s, cy+10*s);
+  ctx.moveTo(cx-8*s, cy+14*s); ctx.lineTo(cx+8*s, cy+14*s);
+  ctx.stroke();
+  // Visor strip
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  drawPixelRect(cx-13*s, cy, 26*s, 6*s, 'rgba(0,0,0,0.35)');
+}
+
+// ---- Sprite: RB (running pose) ----
+function drawRB(ctx, cx, cy, s, colors) {
+  const c = colors;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 18*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+  // Legs running (offset)
+  drawPixelRect(cx-12*s, cy+34*s, 11*s, 22*s, c.pants);
+  drawPixelRect(cx+4*s,  cy+38*s, 11*s, 18*s, c.pants);
+  drawPixelRect(cx-14*s, cy+52*s, 13*s, 6*s, '#222');
+  drawPixelRect(cx+2*s,  cy+50*s, 13*s, 6*s, '#222');
+  // Jersey body (stocky)
+  drawPixelRect(cx-18*s, cy+16*s, 36*s, 22*s, c.jersey);
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${9*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+32*s);
+  // Left arm (forward, tucking ball)
+  drawPixelRect(cx-24*s, cy+20*s, 8*s, 12*s, c.jersey);
+  drawPixelRect(cx-22*s, cy+30*s, 8*s, 8*s, c.skin);
+  // Right arm (back)
+  drawPixelRect(cx+16*s, cy+22*s, 8*s, 12*s, c.jersey);
+  drawPixelRect(cx+16*s, cy+32*s, 8*s, 8*s, c.skin);
+  // Ball tucked
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath(); ctx.ellipse(cx-18*s, cy+28*s, 7*s, 5*s, 0.4, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2*s;
+  ctx.beginPath(); ctx.moveTo(cx-22*s, cy+28*s); ctx.lineTo(cx-14*s, cy+28*s); ctx.stroke();
+  // Helmet (wide, RB style)
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+5*s, 15*s, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 2.5*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-9*s, cy+9*s); ctx.lineTo(cx+9*s, cy+9*s);
+  ctx.moveTo(cx-9*s, cy+14*s); ctx.lineTo(cx+9*s, cy+14*s);
+  ctx.stroke();
+  drawPixelRect(cx-14*s, cy-1*s, 28*s, 6*s, 'rgba(0,0,0,0.3)');
+}
+
+// ---- Sprite: WR (jump/catch pose) ----
+function drawWR(ctx, cx, cy, s, colors) {
+  const c = colors;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 14*s, 4*s, 0, 0, Math.PI*2); ctx.fill();
+  // Legs (jumping - one raised)
+  drawPixelRect(cx-10*s, cy+36*s, 9*s, 18*s, c.pants);
+  drawPixelRect(cx+3*s,  cy+32*s, 9*s, 14*s, c.pants);
+  drawPixelRect(cx+3*s,  cy+42*s, 9*s, 8*s, c.pants);
+  drawPixelRect(cx-12*s, cy+50*s, 12*s, 6*s, '#222');
+  drawPixelRect(cx+1*s,  cy+48*s, 12*s, 6*s, '#222');
+  // Jersey (slim)
+  drawPixelRect(cx-14*s, cy+14*s, 28*s, 24*s, c.jersey);
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${9*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+30*s);
+  // Both arms up (catching)
+  drawPixelRect(cx-20*s, cy+8*s, 7*s, 16*s, c.jersey);
+  drawPixelRect(cx-20*s, cy+4*s, 7*s, 8*s, c.skin);
+  drawPixelRect(cx+13*s, cy+6*s, 7*s, 16*s, c.jersey);
+  drawPixelRect(cx+13*s, cy+2*s, 7*s, 8*s, c.skin);
+  // Ball above hands
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath(); ctx.ellipse(cx, cy+2*s, 7*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2*s;
+  ctx.beginPath(); ctx.moveTo(cx-5*s, cy+2*s); ctx.lineTo(cx+5*s, cy+2*s); ctx.stroke();
+  // Helmet
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+10*s, 12*s, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 2*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-7*s, cy+13*s); ctx.lineTo(cx+7*s, cy+13*s);
+  ctx.stroke();
+  drawPixelRect(cx-11*s, cy+3*s, 22*s, 5*s, 'rgba(0,0,0,0.3)');
+}
+
+// ---- Sprite: TE (blocking/power pose) ----
+function drawTE(ctx, cx, cy, s, colors) {
+  const c = colors;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 20*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+  drawPixelRect(cx-16*s, cy+50*s, 14*s, 7*s, '#222');
+  drawPixelRect(cx+2*s,  cy+50*s, 14*s, 7*s, '#222');
+  drawPixelRect(cx-16*s, cy+32*s, 14*s, 20*s, c.pants);
+  drawPixelRect(cx+2*s,  cy+32*s, 14*s, 20*s, c.pants);
+  // Big jersey (TE is big)
+  drawPixelRect(cx-20*s, cy+14*s, 40*s, 22*s, c.jersey);
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${10*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+30*s);
+  // Arms out (blocking)
+  drawPixelRect(cx-28*s, cy+16*s, 10*s, 14*s, c.jersey);
+  drawPixelRect(cx-28*s, cy+28*s, 10*s, 8*s, c.skin);
+  drawPixelRect(cx+18*s, cy+16*s, 10*s, 14*s, c.jersey);
+  drawPixelRect(cx+18*s, cy+28*s, 10*s, 8*s, c.skin);
+  // Big helmet
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+4*s, 16*s, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 3*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-10*s, cy+8*s); ctx.lineTo(cx+10*s, cy+8*s);
+  ctx.moveTo(cx-10*s, cy+14*s); ctx.lineTo(cx+10*s, cy+14*s);
+  ctx.stroke();
+  drawPixelRect(cx-15*s, cy-4*s, 30*s, 6*s, 'rgba(0,0,0,0.3)');
+}
+
+// ---- Sprite: DEF (defensive lineman) ----
+function drawDEF(ctx, cx, cy, s, colors) {
+  const c = colors;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 20*s, 5*s, 0, 0, Math.PI*2); ctx.fill();
+  drawPixelRect(cx-15*s, cy+50*s, 13*s, 7*s, '#222');
+  drawPixelRect(cx+2*s,  cy+50*s, 13*s, 7*s, '#222');
+  drawPixelRect(cx-15*s, cy+30*s, 13*s, 22*s, c.pants);
+  drawPixelRect(cx+2*s,  cy+30*s, 13*s, 22*s, c.pants);
+  // Low stance body
+  drawPixelRect(cx-18*s, cy+18*s, 36*s, 16*s, c.jersey);
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${9*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+30*s);
+  // Arms forward (rush)
+  drawPixelRect(cx-26*s, cy+14*s, 10*s, 12*s, c.jersey);
+  drawPixelRect(cx-26*s, cy+24*s, 8*s, 8*s, c.skin);
+  drawPixelRect(cx+16*s, cy+14*s, 10*s, 12*s, c.jersey);
+  drawPixelRect(cx+18*s, cy+24*s, 8*s, 8*s, c.skin);
+  // Helmet (large)
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+6*s, 15*s, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 2.5*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-10*s, cy+10*s); ctx.lineTo(cx+10*s, cy+10*s);
+  ctx.moveTo(cx-7*s,  cy+16*s); ctx.lineTo(cx+7*s,  cy+16*s);
+  ctx.stroke();
+  drawPixelRect(cx-14*s, cy-1*s, 28*s, 6*s, 'rgba(0,0,0,0.3)');
+}
+
+// ---- Sprite: K (kicker pose) ----
+function drawK(ctx, cx, cy, s, colors) {
+  const c = colors;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(cx, cy+55*s, 14*s, 4*s, 0, 0, Math.PI*2); ctx.fill();
+  // Kicking leg up
+  drawPixelRect(cx-10*s, cy+34*s, 9*s, 20*s, c.pants);
+  // Kick leg raised at angle
+  ctx.save();
+  ctx.translate(cx+5*s, cy+38*s);
+  ctx.rotate(-0.7);
+  drawPixelRect(-5*s, -6*s, 9*s, 20*s, c.pants);
+  drawPixelRect(-5*s, 12*s, 11*s, 6*s, '#222');
+  ctx.restore();
+  drawPixelRect(cx-12*s, cy+50*s, 12*s, 6*s, '#222');
+  // Jersey (slim)
+  drawPixelRect(cx-13*s, cy+14*s, 26*s, 24*s, c.jersey);
+  ctx.fillStyle = c.number;
+  ctx.font = `bold ${8*s}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(c.num, cx, cy+30*s);
+  // Arms out for balance
+  drawPixelRect(cx-22*s, cy+20*s, 10*s, 8*s, c.jersey);
+  drawPixelRect(cx+12*s, cy+18*s, 10*s, 8*s, c.jersey);
+  // Helmet
+  ctx.fillStyle = c.helmet;
+  ctx.beginPath(); ctx.arc(cx, cy+8*s, 12*s, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = c.facemask;
+  ctx.lineWidth = 2*s;
+  ctx.beginPath();
+  ctx.moveTo(cx-8*s, cy+12*s); ctx.lineTo(cx+8*s, cy+12*s); ctx.stroke();
+  drawPixelRect(cx-11*s, cy+1*s, 22*s, 5*s, 'rgba(0,0,0,0.3)');
+}
+
+// ============================================================
+// PLAYER DATA
+// ============================================================
+const PLAYERS = [
+  {
+    id:'mahomes', name:'MAHOMES', surname:'P. Mahomes', type:'QB',
+    team:'Chiefs', region:'AFC West',
+    hp:340, maxHp:340, atk:95, def:70, spd:88,
+    level:15, xp:0, xpToNext:100,
+    colors:{ helmet:'#E31837', facemask:'#FFB612', jersey:'#E31837', pants:'#E31837', number:'#FFB612', num:'15', skin:'#D4A574' },
+    drawFn:(ctx,cx,cy,s)=>drawQB(ctx,cx,cy,s,PLAYERS[0].colors),
+    moves:['DEEP BALL','SCRAMBLE','BULLET PASS','AUDIBLE'],
+    desc:'The GOAT. Elite arm talent with unreal mobility.'
+  },
+  {
+    id:'josh', name:'J. ALLEN', surname:'Josh Allen', type:'QB',
+    team:'Bills', region:'AFC East',
+    hp:360, maxHp:360, atk:92, def:80, spd:82,
+    level:14, xp:0, xpToNext:100,
+    colors:{ helmet:'#00338D', facemask:'#C60C30', jersey:'#00338D', pants:'#C60C30', number:'#fff', num:'17', skin:'#C68642' },
+    drawFn:(ctx,cx,cy,s)=>drawQB(ctx,cx,cy,s,PLAYERS[1].colors),
+    moves:['BULLET PASS','POWER RUSH','DEEP BALL','SCRAMBLE'],
+    desc:'A dual-threat machine. Can run over or past anyone.'
+  },
+  {
+    id:'cmc', name:'McCAFFREY', surname:'C. McCaffrey', type:'RB',
+    team:'49ers', region:'NFC West',
+    hp:300, maxHp:300, atk:90, def:75, spd:96,
+    level:13, xp:0, xpToNext:100,
+    colors:{ helmet:'#AA0000', facemask:'#B3995D', jersey:'#AA0000', pants:'#B3995D', number:'#fff', num:'23', skin:'#FDBCB4' },
+    drawFn:(ctx,cx,cy,s)=>drawRB(ctx,cx,cy,s,PLAYERS[2].colors),
+    moves:['JUKES','POWER RUN','ROUTE RUN','STIFF ARM'],
+    desc:'The total package. Runs, catches, blocks — does it all.'
+  },
+  {
+    id:'hill', name:'TYREEK', surname:'T. Hill', type:'WR',
+    team:'Dolphins', region:'AFC East',
+    hp:260, maxHp:260, atk:88, def:55, spd:100,
+    level:13, xp:0, xpToNext:100,
+    colors:{ helmet:'#008E97', facemask:'#FC4C02', jersey:'#008E97', pants:'#008E97', number:'#fff', num:'10', skin:'#8D5524' },
+    drawFn:(ctx,cx,cy,s)=>drawWR(ctx,cx,cy,s,PLAYERS[3].colors),
+    moves:['SPEED BURST','GO ROUTE','SLANT','PUNT RETURN'],
+    desc:'Fastest man alive. Nobody covers him deep.'
+  },
+  {
+    id:'jefferson', name:'JEFFERSON', surname:'J. Jefferson', type:'WR',
+    team:'Vikings', region:'NFC North',
+    hp:280, maxHp:280, atk:93, def:62, spd:89,
+    level:14, xp:0, xpToNext:100,
+    colors:{ helmet:'#4F2683', facemask:'#FFC62F', jersey:'#4F2683', pants:'#4F2683', number:'#FFC62F', num:'18', skin:'#8D5524' },
+    drawFn:(ctx,cx,cy,s)=>drawWR(ctx,cx,cy,s,PLAYERS[4].colors),
+    moves:['ROUTE RUN','DOUBLE MOVE','SLANT','YAC BURST'],
+    desc:'The best route runner in the league. Unstoppable.'
+  },
+  {
+    id:'kelce', name:'KELCE', surname:'T. Kelce', type:'TE',
+    team:'Chiefs', region:'AFC West',
+    hp:320, maxHp:320, atk:88, def:80, spd:76,
+    level:15, xp:0, xpToNext:100,
+    colors:{ helmet:'#E31837', facemask:'#FFB612', jersey:'#E31837', pants:'#E31837', number:'#FFB612', num:'87', skin:'#FDBCB4' },
+    drawFn:(ctx,cx,cy,s)=>drawTE(ctx,cx,cy,s,PLAYERS[5].colors),
+    moves:['SEAM ROUTE','RED ZONE','BLOCK','RELEASE'],
+    desc:'The greatest TE ever. A mismatch nobody can cover.'
+  },
+  {
+    id:'henry', name:'D. HENRY', surname:'D. Henry', type:'RB',
+    team:'Titans', region:'AFC South',
+    hp:380, maxHp:380, atk:95, def:88, spd:70,
+    level:14, xp:0, xpToNext:100,
+    colors:{ helmet:'#4B92DB', facemask:'#c8102e', jersey:'#4B92DB', pants:'#c8102e', number:'#fff', num:'22', skin:'#8D5524' },
+    drawFn:(ctx,cx,cy,s)=>drawRB(ctx,cx,cy,s,PLAYERS[6].colors),
+    moves:['POWER RUN','STIFF ARM','JUKES','TRUCK STICK'],
+    desc:'King Henry. Breaks tackles like they\'re paper.'
+  },
+  {
+    id:'andrews', name:'M. ANDREWS', surname:'M. Andrews', type:'TE',
+    team:'Ravens', region:'AFC North',
+    hp:310, maxHp:310, atk:85, def:78, spd:73,
+    level:13, xp:0, xpToNext:100,
+    colors:{ helmet:'#241773', facemask:'#9E7C0C', jersey:'#241773', pants:'#241773', number:'#9E7C0C', num:'89', skin:'#D4A574' },
+    drawFn:(ctx,cx,cy,s)=>drawTE(ctx,cx,cy,s,PLAYERS[7].colors),
+    moves:['SEAM ROUTE','RED ZONE','BLOCK','RELEASE'],
+    desc:'A nightmare in the middle of the field. Reliable hands.'
+  },
+  {
+    id:'diggs', name:'S. DIGGS', surname:'S. Diggs', type:'WR',
+    team:'Bills', region:'AFC East',
+    hp:270, maxHp:270, atk:87, def:60, spd:87,
+    level:13, xp:0, xpToNext:100,
+    colors:{ helmet:'#00338D', facemask:'#C60C30', jersey:'#00338D', pants:'#C60C30', number:'#fff', num:'14', skin:'#8D5524' },
+    drawFn:(ctx,cx,cy,s)=>drawWR(ctx,cx,cy,s,PLAYERS[8].colors),
+    moves:['ROUTE RUN','SLANT','GO ROUTE','YAC BURST'],
+    desc:'Crisp routes and clutch hands. Always comes through.'
+  },
+  {
+    id:'tucker', name:'J. TUCKER', surname:'J. Tucker', type:'K',
+    team:'Ravens', region:'AFC North',
+    hp:220, maxHp:220, atk:78, def:45, spd:60,
+    level:12, xp:0, xpToNext:100,
+    colors:{ helmet:'#241773', facemask:'#9E7C0C', jersey:'#241773', pants:'#241773', number:'#9E7C0C', num:'9', skin:'#FDBCB4' },
+    drawFn:(ctx,cx,cy,s)=>drawK(ctx,cx,cy,s,PLAYERS[9].colors),
+    moves:['FIELD GOAL','KICKOFF','ONSIDE KICK','THE KICK'],
+    desc:'Greatest kicker alive. 66-yarder? No problem.'
+  },
+  {
+    id:'donald', name:'A. DONALD', surname:'A. Donald', type:'DEF',
+    team:'Rams', region:'NFC West',
+    hp:330, maxHp:330, atk:97, def:90, spd:78,
+    level:15, xp:0, xpToNext:100,
+    colors:{ helmet:'#003594', facemask:'#FFA300', jersey:'#003594', pants:'#003594', number:'#FFA300', num:'99', skin:'#8D5524' },
+    drawFn:(ctx,cx,cy,s)=>drawDEF(ctx,cx,cy,s,PLAYERS[10].colors),
+    moves:['SACK','TACKLE FOR LOSS','QB PRESSURE','STRIP SACK'],
+    desc:'The most dominant defensive player of his generation.'
+  },
+  {
+    id:'watt', name:'T.J. WATT', surname:'T.J. Watt', type:'DEF',
+    team:'Steelers', region:'AFC North',
+    hp:320, maxHp:320, atk:94, def:86, spd:80,
+    level:14, xp:0, xpToNext:100,
+    colors:{ helmet:'#101820', facemask:'#FFB612', jersey:'#101820', pants:'#101820', number:'#FFB612', num:'90', skin:'#FDBCB4' },
+    drawFn:(ctx,cx,cy,s)=>drawDEF(ctx,cx,cy,s,PLAYERS[11].colors),
+    moves:['SACK','TACKLE FOR LOSS','QB PRESSURE','STRIP SACK'],
+    desc:'Elite pass rusher. QBs have nightmares about T.J. Watt.'
+  }
+];
+
+// ============================================================
+// MOVES DATA
+// ============================================================
+const MOVES = {
+  'DEEP BALL':      { power:90, type:'QB',  acc:70, pp:15, desc:'High-risk, high-reward bomb downfield.' },
+  'SCRAMBLE':       { power:65, type:'QB',  acc:90, pp:20, desc:'QBs legs create yards and chaos.' },
+  'BULLET PASS':    { power:75, type:'QB',  acc:85, pp:20, desc:'A precise dart between defenders.' },
+  'AUDIBLE':        { power:0,  type:'QB',  acc:100, pp:10, desc:'Change the play. Raises ATK +2 stages.', effect:'atk+2' },
+  'POWER RUSH':     { power:80, type:'RB',  acc:85, pp:20, desc:'Lower the shoulder and go!' },
+  'JUKES':          { power:50, type:'RB',  acc:95, pp:25, desc:'Elusive cuts raise evasion.' },
+  'ROUTE RUN':      { power:60, type:'WR',  acc:90, pp:25, desc:'A perfectly timed route.' },
+  'STIFF ARM':      { power:70, type:'RB',  acc:80, pp:20, desc:'One arm, one tackler gone.' },
+  'TRUCK STICK':    { power:95, type:'RB',  acc:75, pp:15, desc:'Run THROUGH the defender. Brutal.' },
+  'SPEED BURST':    { power:85, type:'WR',  acc:80, pp:15, desc:'No one keeps up. Pure speed.' },
+  'GO ROUTE':       { power:80, type:'WR',  acc:75, pp:15, desc:'Straight up the field, eat dust.' },
+  'SLANT':          { power:55, type:'WR',  acc:95, pp:25, desc:'Quick slant across the middle.' },
+  'PUNT RETURN':    { power:70, type:'WR',  acc:85, pp:15, desc:'Returns the kick for big yards.' },
+  'DOUBLE MOVE':    { power:88, type:'WR',  acc:78, pp:15, desc:'Fake left, go right. Lights out.' },
+  'YAC BURST':      { power:65, type:'WR',  acc:90, pp:20, desc:'Yards after catch. Keep running!' },
+  'SEAM ROUTE':     { power:70, type:'TE',  acc:88, pp:20, desc:'Split the safeties clean.' },
+  'RED ZONE':       { power:85, type:'TE',  acc:80, pp:15, desc:'Unmatchable in tight spaces.' },
+  'BLOCK':          { power:0,  type:'TE',  acc:100, pp:20, desc:'Raises DEF +2 stages.', effect:'def+2' },
+  'RELEASE':        { power:60, type:'TE',  acc:92, pp:20, desc:'Beat the press coverage quick.' },
+  'SACK':           { power:90, type:'DEF', acc:75, pp:15, desc:'Bring the QB down hard!' },
+  'TACKLE FOR LOSS':{ power:80, type:'DEF', acc:82, pp:20, desc:'Stop the run before the line.' },
+  'QB PRESSURE':    { power:0,  type:'DEF', acc:95, pp:20, desc:'Lowers enemy ATK -2 stages.', effect:'eatk-2' },
+  'STRIP SACK':     { power:75, type:'DEF', acc:72, pp:15, desc:'Sack AND force a fumble!' },
+  'FIELD GOAL':     { power:70, type:'K',   acc:88, pp:20, desc:'Split the uprights cleanly.' },
+  'KICKOFF':        { power:55, type:'K',   acc:90, pp:25, desc:'Boot it deep for field position.' },
+  'ONSIDE KICK':    { power:40, type:'K',   acc:65, pp:10, desc:'Risky recovery attempt.' },
+  'THE KICK':       { power:100, type:'K',  acc:65, pp:10, desc:'60+ yard moonshot field goal!' },
+  'POWER RUN':      { power:82, type:'RB',  acc:85, pp:20, desc:'Straight north-south power football.' },
+};
+
+// ============================================================
+// OPPONENTS (AI)
+// ============================================================
+function clonePlayer(id) {
+  const p = PLAYERS.find(x=>x.id===id);
+  return JSON.parse(JSON.stringify(p));
+}
+
+const OPPONENTS = [
+  {
+    name:'COACH BELICHICK',
+    title:'The Hooded One',
+    greeting:'Do your job.',
+    team: [clonePlayer('donald'), clonePlayer('watt'), clonePlayer('henry')],
+    reward:200, difficulty:1,
+    portrait:'DEF',
+    colors:{ face:'#607080', jacket:'#444', hat:'#333' }
+  },
+  {
+    name:'COACH REID',
+    title:'The Genius',
+    greeting:"It's a beautiful day for football!",
+    team: [clonePlayer('kelce'), clonePlayer('mahomes'), clonePlayer('hill')],
+    reward:400, difficulty:2,
+    portrait:'QB',
+    colors:{ face:'#D4A574', jacket:'#E31837', hat:'#E31837' }
+  },
+  {
+    name:'THE COMMISSIONER',
+    title:'Roger Goodell',
+    greeting:'Welcome to the Super FantasyMon Bowl!',
+    team: [clonePlayer('jefferson'), clonePlayer('josh'), clonePlayer('cmc')],
+    reward:1000, difficulty:3,
+    portrait:'WR',
+    colors:{ face:'#FDBCB4', jacket:'#1a1a2e', hat:'#000' }
+  }
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let G = {
+  screen: 'TITLE',       // TITLE, INTRO, STARTER, OVERWORLD, BATTLE, WIN, LOSE
+  tick: 0,
+  cursor: 0,
+  playerRoster: [],      // chosen roster (3 players)
+  activeIdx: 0,          // which player is active
+  opponentIdx: 0,        // which opponent we're fighting
+  opponent: null,        // current opponent object
+  opActive: 0,           // opponent's active player index
+  battle: null,          // battle state
+  score: 0,
+  draftPicks: 5,
+  defeatedOps: [],
+  starterChoices: [],
+  starterCursor: 0,
+  dialogQueue: [],
+  dialogDone: false,
+  inputCooldown: 0,
+  titleAnim: 0,
+  battleAnim: { playerShake:0, enemyShake:0, flashPlayer:0, flashEnemy:0, textAnim:0 },
+  moveResult: null,
+  moveResultTimer: 0,
+  phase: 'PLAYER_TURN',  // PLAYER_TURN, ENEMY_TURN, MOVE_ANIM, SWITCH_OUT, GAME_OVER_BATTLE
+  subMenuOpen: false,
+  subMenu: 'MOVES',      // MOVES, ROSTER, DRAFTPICK, RUN
+  currentText: '',
+  textIndex: 0,
+  textTimer: 0,
+  isTyping: false,
+  rosterCursor: 0,
+  canRun: false,
+};
+
+// ============================================================
+// INPUT
+// ============================================================
+const KEYS = { up:false, down:false, a:false, b:false };
+let keyJustPressed = { up:false, down:false, a:false, b:false };
+let lastKeyState   = { up:false, down:false, a:false, b:false };
+
+function handleKey(key, pressed) {
+  if (key==='ArrowUp'||key==='w') KEYS.up = pressed;
+  if (key==='ArrowDown'||key==='s') KEYS.down = pressed;
+  if (key==='z'||key==='Enter') KEYS.a = pressed;
+  if (key==='x'||key==='Escape') KEYS.b = pressed;
+}
+document.addEventListener('keydown', e=>handleKey(e.key, true));
+document.addEventListener('keyup',   e=>handleKey(e.key, false));
+
+document.getElementById('btnA').addEventListener('mousedown', ()=>{ KEYS.a=true; });
+document.getElementById('btnA').addEventListener('mouseup',   ()=>{ KEYS.a=false; });
+document.getElementById('btnB').addEventListener('mousedown', ()=>{ KEYS.b=true; });
+document.getElementById('btnB').addEventListener('mouseup',   ()=>{ KEYS.b=false; });
+document.getElementById('btnUp').addEventListener('mousedown', ()=>{ KEYS.up=true; });
+document.getElementById('btnUp').addEventListener('mouseup',   ()=>{ KEYS.up=false; });
+document.getElementById('btnDown').addEventListener('mousedown', ()=>{ KEYS.down=true; });
+document.getElementById('btnDown').addEventListener('mouseup',   ()=>{ KEYS.down=false; });
+
+canvas.addEventListener('click', ()=>{ KEYS.a=true; setTimeout(()=>KEYS.a=false,100); });
+
+// ============================================================
+// HELPERS
+// ============================================================
+function pxFont(size) { return `${size}px 'Press Start 2P', monospace`; }
+
+function fillRoundRect(x, y, w, h, r, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y, x+w,y+r, r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w,y+h, x+w-r,y+h, r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x,y+h, x,y+h-r, r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x,y, x+r,y, r);
+  ctx.closePath(); ctx.fill();
+}
+
+function strokeRoundRect(x, y, w, h, r, color, lw=2) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.arcTo(x+w,y, x+w,y+r, r);
+  ctx.lineTo(x+w, y+h-r); ctx.arcTo(x+w,y+h, x+w-r,y+h, r);
+  ctx.lineTo(x+r, y+h); ctx.arcTo(x,y+h, x,y+h-r, r);
+  ctx.lineTo(x, y+r); ctx.arcTo(x,y, x+r,y, r);
+  ctx.closePath(); ctx.stroke();
+}
+
+function drawHPBar(x, y, w, h, current, max, label='') {
+  const pct = Math.max(0, current/max);
+  const barColor = pct > 0.5 ? '#44dd44' : pct > 0.25 ? '#ffcc00' : '#ff4444';
+  // Background
+  fillRoundRect(x, y, w, h, 3, '#222');
+  // Fill
+  fillRoundRect(x+1, y+1, Math.floor((w-2)*pct), h-2, 2, barColor);
+  strokeRoundRect(x, y, w, h, 3, '#888', 1);
+  if (label) {
+    ctx.fillStyle = '#ccc';
+    ctx.font = pxFont(6);
+    ctx.textAlign = 'left';
+    ctx.fillText(label, x, y-3);
+  }
+}
+
+function drawTypeTag(type, x, y) {
+  const t = TYPES[type];
+  fillRoundRect(x, y, 38, 14, 4, t.color);
+  ctx.fillStyle = '#fff';
+  ctx.font = pxFont(6);
+  ctx.textAlign = 'center';
+  ctx.fillText(type, x+19, y+10);
+}
+
+function wrap(text, maxChars) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    if ((line+' '+w).trim().length > maxChars) { lines.push(line.trim()); line = w; }
+    else line = (line+' '+w).trim();
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// ============================================================
+// DIALOG SYSTEM
+// ============================================================
+function showDialog(text) {
+  G.currentText = text;
+  G.textIndex = 0;
+  G.isTyping = true;
+  G.dialogDone = false;
+}
+
+function updateDialog() {
+  if (G.isTyping) {
+    G.textTimer++;
+    if (G.textTimer % 2 === 0) {
+      G.textIndex = Math.min(G.textIndex+1, G.currentText.length);
+      if (G.textIndex >= G.currentText.length) {
+        G.isTyping = false;
+        G.dialogDone = true;
+      }
+      G.textTimer = 0;
+    }
+  }
+}
+
+function drawDialogBox(x, y, w, h, text, showCursor=true) {
+  fillRoundRect(x, y, w, h, 6, '#0d0d2b');
+  strokeRoundRect(x, y, w, h, 6, '#e8b84b', 2);
+  const shown = G.isTyping ? text.substring(0, G.textIndex) : text;
+  const lines = wrap(shown, Math.floor((w-20)/7));
+  ctx.fillStyle = '#ffffff';
+  ctx.font = pxFont(8);
+  ctx.textAlign = 'left';
+  lines.forEach((l,i) => ctx.fillText(l, x+10, y+18+i*16));
+  if (G.dialogDone && showCursor && G.tick%30<15) {
+    ctx.fillStyle = '#e8b84b';
+    ctx.fillText('▼', x+w-18, y+h-8);
+  }
+}
+
+// ============================================================
+// SCREEN: TITLE
+// ============================================================
+function drawTitle() {
+  G.titleAnim++;
+  // Sky gradient
+  const grad = ctx.createLinearGradient(0,0,0,200);
+  grad.addColorStop(0,'#0d0d2b'); grad.addColorStop(1,'#1a3a5c');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,480,320);
+
+  // Stars
+  ctx.fillStyle = '#ffffff';
+  [[40,30],[120,50],[200,20],[300,40],[400,25],[60,80],[350,70],[450,45]].forEach(([sx,sy])=>{
+    const twinkle = Math.sin(G.titleAnim*0.05 + sx) * 0.5 + 0.5;
+    ctx.globalAlpha = twinkle;
+    ctx.fillRect(sx, sy, 2, 2);
+  });
+  ctx.globalAlpha = 1;
+
+  // Field at bottom
+  const fieldGrad = ctx.createLinearGradient(0,200,0,320);
+  fieldGrad.addColorStop(0,'#1a5e1a'); fieldGrad.addColorStop(1,'#0d3d0d');
+  ctx.fillStyle = fieldGrad; ctx.fillRect(0,200,480,120);
+  // Yard lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+  for (let i=0; i<8; i++) { ctx.beginPath(); ctx.moveTo(i*70,200); ctx.lineTo(i*70,320); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0,220); ctx.lineTo(480,220); ctx.stroke();
+
+  // Bouncing football
+  const ballY = 160 + Math.sin(G.titleAnim*0.05)*20;
+  const ballRot = G.titleAnim * 0.05;
+  ctx.save(); ctx.translate(240, ballY); ctx.rotate(ballRot);
+  ctx.fillStyle = '#8B4513';
+  ctx.beginPath(); ctx.ellipse(0, 0, 22, 15, 0, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-15,0); ctx.lineTo(15,0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-10); ctx.lineTo(0,10); ctx.stroke();
+  ctx.restore();
+
+  // Title text
+  ctx.fillStyle = '#FFB612';
+  ctx.font = pxFont(32);
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#E31837'; ctx.shadowBlur = 20;
+  ctx.fillText('FANTASYMON', 240, 80);
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = pxFont(10);
+  ctx.fillText('FANTASY FOOTBALL RPG', 240, 100);
+
+  // Blinking start text
+  if (G.tick%40<25) {
+    ctx.fillStyle = '#e8b84b';
+    ctx.font = pxFont(10);
+    ctx.fillText('PRESS A TO START', 240, 280);
+  }
+
+  ctx.fillStyle = '#888';
+  ctx.font = pxFont(7);
+  ctx.fillText('© 2024 FantasyMon Studios', 240, 305);
+}
+
+// ============================================================
+// SCREEN: INTRO
+// ============================================================
+let introStep = 0;
+const introTexts = [
+  'Welcome, rookie! I am the FANTASY SCOUT.',
+  'In the world of FANTASYMON, players are everything.',
+  'You\'ll battle coaches and climb to the top.',
+  'Your journey starts with choosing your STARTER.',
+  'Choose wisely — the Championship awaits!'
+];
+
+function drawIntro() {
+  ctx.fillStyle = '#0d0d2b'; ctx.fillRect(0,0,480,320);
+
+  // Draw a simple "professor" character
+  drawScout(200, 80, 1.2);
+
+  ctx.fillStyle = '#FFB612';
+  ctx.font = pxFont(10);
+  ctx.textAlign = 'center';
+  ctx.fillText('FANTASY SCOUT', 240, 30);
+
+  drawDialogBox(10, 220, 460, 85, introTexts[introStep]);
+}
+
+function drawScout(cx, cy, s) {
+  // Simple professor sprite
+  ctx.fillStyle = '#FDBCB4';
+  ctx.beginPath(); ctx.arc(cx, cy-30*s, 25*s, 0, Math.PI*2); ctx.fill();
+  // Hat
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(cx-28*s, cy-55*s, 56*s, 10*s);
+  ctx.fillRect(cx-20*s, cy-80*s, 40*s, 30*s);
+  // Body - suit
+  ctx.fillStyle = '#2d2d5e';
+  ctx.fillRect(cx-22*s, cy-8*s, 44*s, 40*s);
+  // Tie
+  ctx.fillStyle = '#e8b84b';
+  ctx.fillRect(cx-4*s, cy-8*s, 8*s, 35*s);
+  // Arms
+  ctx.fillStyle = '#2d2d5e';
+  ctx.fillRect(cx-35*s, cy-6*s, 14*s, 28*s);
+  ctx.fillRect(cx+21*s, cy-6*s, 14*s, 28*s);
+  // Eyes
+  ctx.fillStyle = '#333';
+  ctx.fillRect(cx-10*s, cy-34*s, 5*s, 5*s);
+  ctx.fillRect(cx+5*s,  cy-34*s, 5*s, 5*s);
+  // Smile
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2*s;
+  ctx.beginPath(); ctx.arc(cx, cy-24*s, 8*s, 0.1, Math.PI-0.1); ctx.stroke();
+  // Clipboard
+  ctx.fillStyle = '#c8a96e';
+  ctx.fillRect(cx+18*s, cy+2*s, 20*s, 26*s);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(cx+20*s, cy+4*s, 16*s, 20*s);
+  ctx.fillStyle = '#666'; ctx.font = `${5*s}px monospace`;
+  ctx.textAlign = 'left';
+  ['MAHOMES','McCAFFREY','JEFFERSON'].forEach((t,i)=>ctx.fillText(t,cx+21*s,cy+12*s+i*6*s));
+}
+
+// ============================================================
+// SCREEN: STARTER SELECT
+// ============================================================
+function drawStarterSelect() {
+  // Background
+  const grad = ctx.createLinearGradient(0,0,0,320);
+  grad.addColorStop(0,'#0d1a2b'); grad.addColorStop(1,'#1a0d2b');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,480,320);
+
+  // Title
+  ctx.fillStyle = '#e8b84b';
+  ctx.font = pxFont(12);
+  ctx.textAlign = 'center';
+  ctx.fillText('CHOOSE YOUR STARTER!', 240, 20);
+
+  // Draw 3 starter options
+  const startOptions = G.starterChoices;
+  const positions = [80, 240, 400];
+
+  startOptions.forEach((p, i) => {
+    const x = positions[i];
+    const selected = G.starterCursor === i;
+    const bobY = selected ? Math.sin(G.tick*0.1)*4 : 0;
+
+    // Card background
+    fillRoundRect(x-55, 30+bobY, 110, 200, 8, selected ? '#1a2d4a' : '#0d1a2b');
+    strokeRoundRect(x-55, 30+bobY, 110, 200, 8, selected ? TYPES[p.type].color : '#444', selected?3:1);
+
+    // Sprite
+    p.drawFn(ctx, x, 100+bobY, 0.7);
+
+    // Type badge
+    drawTypeTag(p.type, x-19, 38+bobY);
+
+    // Name
+    ctx.fillStyle = selected ? '#fff' : '#aaa';
+    ctx.font = pxFont(7);
+    ctx.textAlign = 'center';
+    ctx.fillText(p.name, x, 200+bobY);
+    ctx.fillStyle = '#888';
+    ctx.font = pxFont(6);
+    ctx.fillText(p.team, x, 212+bobY);
+
+    // Stats
+    ctx.fillStyle = '#aaa';
+    ctx.font = pxFont(5);
+    ctx.fillText(`HP:${p.maxHp} ATK:${p.atk}`, x, 224+bobY);
+    ctx.fillText(`DEF:${p.def} SPD:${p.spd}`, x, 234+bobY);
+
+    if (selected) {
+      ctx.fillStyle = '#e8b84b';
+      ctx.font = pxFont(14);
+      ctx.fillText('▼', x, 248+bobY);
+    }
+  });
+
+  // Description box
+  if (G.starterChoices[G.starterCursor]) {
+    const p = G.starterChoices[G.starterCursor];
+    fillRoundRect(10, 245, 460, 40, 6, '#0d0d2b');
+    strokeRoundRect(10, 245, 460, 40, 6, '#e8b84b', 1);
+    ctx.fillStyle = '#ccc';
+    ctx.font = pxFont(7);
+    ctx.textAlign = 'left';
+    ctx.fillText(p.desc, 20, 263);
+    ctx.fillStyle = '#888'; ctx.font = pxFont(6);
+    ctx.fillText(`[◄► or A/D to choose] [A to confirm]`, 20, 280);
+  }
+}
+
+// ============================================================
+// SCREEN: OVERWORLD
+// ============================================================
+function drawOverworld() {
+  // Field background
+  const grad = ctx.createLinearGradient(0,0,0,320);
+  grad.addColorStop(0,'#1a4a1a'); grad.addColorStop(1,'#0d2b0d');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,480,320);
+
+  // Yard lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
+  for (let i=0; i<8; i++) { ctx.beginPath(); ctx.moveTo(i*70,0); ctx.lineTo(i*70,320); ctx.stroke(); }
+  for (let i=0; i<5; i++) { ctx.beginPath(); ctx.moveTo(0,i*80); ctx.lineTo(480,i*80); ctx.stroke(); }
+
+  // Title bar
+  fillRoundRect(0, 0, 480, 28, 0, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = '#e8b84b';
+  ctx.font = pxFont(10);
+  ctx.textAlign = 'center';
+  ctx.fillText('FANTASY STADIUM', 240, 18);
+
+  // Player info
+  ctx.fillStyle = '#fff';
+  ctx.font = pxFont(7);
+  ctx.textAlign = 'left';
+  ctx.fillText(`ROSTER: ${G.playerRoster.map(p=>p.name).join(', ')}`, 10, 46);
+  ctx.fillStyle = '#aaa';
+  ctx.fillText(`SCORE: ${G.score}  DRAFT PICKS: ${G.draftPicks}`, 10, 60);
+
+  // Opponent panels
+  OPPONENTS.forEach((op, i) => {
+    const defeated = G.defeatedOps.includes(i);
+    const x = 20 + i * 155;
+    const y = 80;
+
+    fillRoundRect(x, y, 140, 180, 8, defeated ? '#111' : '#0d1a2b');
+    strokeRoundRect(x, y, 140, 180, 8, defeated ? '#444' : (G.opponentIdx===i?'#e8b84b':'#446'), defeated?1:2);
+
+    // Portrait
+    ctx.save();
+    if (defeated) ctx.globalAlpha = 0.4;
+    drawCoachPortrait(op, x+70, y+60);
+    ctx.restore();
+
+    ctx.fillStyle = defeated ? '#555' : '#e8b84b';
+    ctx.font = pxFont(7);
+    ctx.textAlign = 'center';
+    ctx.fillText(op.name, x+70, y+120);
+    ctx.fillStyle = defeated ? '#444' : '#888';
+    ctx.font = pxFont(5);
+    ctx.fillText(op.title, x+70, y+133);
+
+    // Difficulty
+    ctx.fillStyle = defeated ? '#333' : '#e8b84b';
+    ctx.fillText('★'.repeat(op.difficulty) + '☆'.repeat(3-op.difficulty), x+70, y+148);
+
+    if (defeated) {
+      ctx.fillStyle = '#44dd44';
+      ctx.font = pxFont(7);
+      ctx.fillText('DEFEATED', x+70, y+165);
+    } else if (!defeated && G.defeatedOps.length === i) {
+      ctx.fillStyle = '#e8b84b';
+      ctx.font = pxFont(7);
+      if (G.tick%40<22) ctx.fillText('BATTLE!', x+70, y+165);
+    } else if (i > G.defeatedOps.length) {
+      ctx.fillStyle = '#666';
+      ctx.font = pxFont(7);
+      ctx.fillText('LOCKED', x+70, y+165);
+    }
+  });
+
+  // Instructions
+  fillRoundRect(0, 285, 480, 35, 0, 'rgba(0,0,0,0.7)');
+  ctx.fillStyle = '#ccc';
+  ctx.font = pxFont(7);
+  ctx.textAlign = 'center';
+  ctx.fillText('← → to select opponent   A to battle', 240, 305);
+}
+
+function drawCoachPortrait(op, cx, cy) {
+  const c = op.colors;
+  ctx.fillStyle = c.face;
+  ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = c.jacket;
+  ctx.fillRect(cx-20, cy+18, 40, 25);
+  ctx.fillStyle = c.hat;
+  ctx.fillRect(cx-22, cy-18, 44, 8);
+  ctx.fillRect(cx-16, cy-36, 32, 22);
+  // Eyes
+  ctx.fillStyle = '#333';
+  ctx.fillRect(cx-9, cy-5, 6, 5);
+  ctx.fillRect(cx+3,  cy-5, 6, 5);
+  // Mouth
+  ctx.strokeStyle = '#333'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx-7, cy+8); ctx.lineTo(cx+7, cy+8); ctx.stroke();
+}
+
+// ============================================================
+// SCREEN: BATTLE
+// ============================================================
+function initBattle(opponentIndex) {
+  const op = JSON.parse(JSON.stringify(OPPONENTS[opponentIndex]));
+  // Re-attach draw functions to opponent players
+  op.team.forEach(p => {
+    const template = PLAYERS.find(x=>x.id===p.id);
+    p.drawFn = template.drawFn;
+    p.colors = template.colors;
+  });
+  G.opponent = op;
+  G.opActive = 0;
+  G.activeIdx = 0;
+  // Reset HP for player roster
+  G.playerRoster.forEach(p => { p.hp = p.maxHp; });
+  G.battle = {
+    log: [`${op.name}: "${op.greeting}"`, `Go, ${G.playerRoster[0].name}!`],
+    logIdx: 0,
+    atkStages: [0,0],  // [player, enemy] attack stage modifiers
+    defStages: [0,0],
+    phase: 'DIALOG',   // DIALOG, MENU, MOVE_EXEC, ENEMY_TURN, FAINTED, WIN, LOSE
+    selectedMove: 0,
+    turnResult: null,
+    switchTarget: -1,
+  };
+  G.phase = 'DIALOG';
+  showDialog(G.battle.log[0]);
+}
+
+function getActivePlayer() { return G.playerRoster[G.activeIdx]; }
+function getActiveEnemy()  { return G.opponent.team[G.opActive]; }
+
+function stageMultiplier(stage) {
+  const s = Math.max(-6, Math.min(6, stage));
+  return s >= 0 ? (2+s)/2 : 2/(2-s);
+}
+
+function execMove(attacker, defender, moveName, atkStage, defStage) {
+  const move = MOVES[moveName];
+  if (!move) return { dmg:0, eff:1, miss:false, text:'???' };
+  // Accuracy check
+  if (Math.random() * 100 > move.acc) return { dmg:0, eff:1, miss:true, text:`${attacker.name} missed!` };
+  // Effect moves
+  if (move.effect) return { dmg:0, eff:1, miss:false, effect:move.effect, text:applyEffect(move.effect, attacker) };
+  // Damage calc
+  const eff = getEffectiveness(move.type, defender.type);
+  const atkMul = stageMultiplier(atkStage);
+  const defMul = stageMultiplier(defStage);
+  const base = move.power * (attacker.atk / 100) * atkMul;
+  const reduced = base * (100 / (100 + defender.def * defMul));
+  const rand = 0.85 + Math.random() * 0.15;
+  const dmg = Math.max(1, Math.round(reduced * eff * rand * 0.8));
+  let effText = '';
+  if (eff >= 2) effText = "It's super effective!";
+  else if (eff <= 0.5) effText = "Not very effective...";
+  return { dmg, eff, miss:false, text:`${attacker.name} used ${moveName}! ${effText}`.trim() };
+}
+
+function applyEffect(effect, attacker) {
+  const b = G.battle;
+  const isPlayer = attacker === getActivePlayer();
+  if (effect === 'atk+2') { b.atkStages[isPlayer?0:1]+=2; return `${attacker.name}'s ATK sharply rose!`; }
+  if (effect === 'def+2') { b.defStages[isPlayer?0:1]+=2; return `${attacker.name}'s DEF sharply rose!`; }
+  if (effect === 'eatk-2') { b.atkStages[isPlayer?1:0]-=2; return `${attacker.name}'s ATK harshly fell!`; }
+  return '';
+}
+
+function drawBattle() {
+  const player = getActivePlayer();
+  const enemy  = getActiveEnemy();
+  const b = G.battle;
+
+  // Background - stadium
+  const skyGrad = ctx.createLinearGradient(0,0,0,160);
+  skyGrad.addColorStop(0,'#1a1a3e'); skyGrad.addColorStop(1,'#2a3a6e');
+  ctx.fillStyle = skyGrad; ctx.fillRect(0,0,480,160);
+
+  // Crowd backdrop
+  for (let i=0; i<24; i++) {
+    const crowd_x = i*20+10, crowd_y = 20+Math.sin(i*1.3)*8;
+    ctx.fillStyle = ['#E31837','#00338D','#4F2683','#228B22','#FFB612'][i%5];
+    ctx.beginPath(); ctx.arc(crowd_x, crowd_y, 6, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ccc';
+    ctx.fillRect(crowd_x-4, crowd_y+5, 8, 10);
+  }
+
+  // Stadium lights
+  [[40,5],[440,5]].forEach(([lx,ly])=>{
+    const lg = ctx.createRadialGradient(lx,ly,2,lx,ly,60);
+    lg.addColorStop(0,'rgba(255,255,200,0.6)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = lg; ctx.fillRect(lx-60,ly-10,120,80);
+  });
+
+  // Field
+  const fieldGrad = ctx.createLinearGradient(0,140,0,240);
+  fieldGrad.addColorStop(0,'#1a5e1a'); fieldGrad.addColorStop(1,'#0d3d0d');
+  ctx.fillStyle = fieldGrad; ctx.fillRect(0,140,480,100);
+  // Field stripes
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2;
+  for (let i=0; i<6; i++) {
+    ctx.beginPath(); ctx.moveTo(i*80,140); ctx.lineTo(i*80,240); ctx.stroke();
+  }
+
+  // ---- Enemy sprite (right side, flipped) ----
+  const enemyX = 320 + (G.battleAnim.enemyShake > 0 ? (Math.random()-0.5)*8 : 0);
+  const enemyY = 110;
+  if (G.battleAnim.flashEnemy > 0 && G.tick%4<2) {
+    ctx.globalAlpha = 0.3;
+  }
+  ctx.save(); ctx.translate(enemyX*2, 0); ctx.scale(-1,1);
+  enemy.drawFn(ctx, enemyX, enemyY, 0.85);
+  ctx.restore();
+  ctx.globalAlpha = 1;
+
+  // Enemy HP card
+  fillRoundRect(10, 8, 200, 55, 6, 'rgba(0,0,0,0.75)');
+  strokeRoundRect(10, 8, 200, 55, 6, TYPES[enemy.type].color, 2);
+  ctx.fillStyle = '#fff'; ctx.font = pxFont(8); ctx.textAlign = 'left';
+  ctx.fillText(enemy.name, 18, 24);
+  drawTypeTag(enemy.type, 120, 11);
+  ctx.fillStyle = '#aaa'; ctx.font = pxFont(6);
+  ctx.fillText(`Lv.${enemy.level}  ${enemy.team}`, 18, 36);
+  drawHPBar(18, 42, 180, 12, enemy.hp, enemy.maxHp);
+  ctx.fillStyle = '#ccc'; ctx.font = pxFont(6); ctx.textAlign = 'right';
+  ctx.fillText(`${enemy.hp}/${enemy.maxHp}`, 200, 54);
+
+  // ---- Player sprite (left side) ----
+  const playerX = 120 + (G.battleAnim.playerShake > 0 ? (Math.random()-0.5)*8 : 0);
+  const playerY = 110;
+  if (G.battleAnim.flashPlayer > 0 && G.tick%4<2) {
+    ctx.globalAlpha = 0.3;
+  }
+  player.drawFn(ctx, playerX, playerY, 0.95);
+  ctx.globalAlpha = 1;
+
+  // Player HP card
+  fillRoundRect(270, 150, 200, 65, 6, 'rgba(0,0,0,0.75)');
+  strokeRoundRect(270, 150, 200, 65, 6, TYPES[player.type].color, 2);
+  ctx.fillStyle = '#fff'; ctx.font = pxFont(8); ctx.textAlign = 'left';
+  ctx.fillText(player.name, 278, 166);
+  drawTypeTag(player.type, 390, 153);
+  ctx.fillStyle = '#aaa'; ctx.font = pxFont(6);
+  ctx.fillText(`Lv.${player.level}  ${player.team}`, 278, 178);
+  drawHPBar(278, 184, 180, 12, player.hp, player.maxHp);
+  ctx.fillStyle = '#ccc'; ctx.font = pxFont(6); ctx.textAlign = 'right';
+  ctx.fillText(`${player.hp}/${player.maxHp}`, 462, 196);
+
+  // Roster dots
+  ctx.fillStyle = '#666';
+  ctx.font = pxFont(6);
+  ctx.textAlign = 'left';
+  G.playerRoster.forEach((p,i)=>{
+    const dot_x = 278+i*16;
+    ctx.fillStyle = p.hp>0 ? (i===G.activeIdx ? '#44dd44' : '#44aaff') : '#444';
+    ctx.beginPath(); ctx.arc(dot_x, 208, 5, 0, Math.PI*2); ctx.fill();
+  });
+
+  // ---- Battle dialog / menu ----
+  if (b.phase === 'DIALOG' || b.phase === 'MOVE_EXEC' || b.phase === 'ENEMY_TURN' || b.phase === 'FAINTED') {
+    drawDialogBox(10, 240, 460, 72, G.currentText);
+  }
+  else if (b.phase === 'MENU') {
+    drawBattleMenu();
+  }
+  else if (b.phase === 'MOVES') {
+    drawMovesMenu();
+  }
+  else if (b.phase === 'ROSTER_SWITCH') {
+    drawRosterSwitch();
+  }
+
+  // Animate shakes/flashes
+  if (G.battleAnim.playerShake > 0) G.battleAnim.playerShake--;
+  if (G.battleAnim.enemyShake  > 0) G.battleAnim.enemyShake--;
+  if (G.battleAnim.flashPlayer > 0) G.battleAnim.flashPlayer--;
+  if (G.battleAnim.flashEnemy  > 0) G.battleAnim.flashEnemy--;
+}
+
+function drawBattleMenu() {
+  const opts = ['MOVES','ROSTER','DRAFT PICK','RUN'];
+  fillRoundRect(10, 238, 460, 76, 6, '#0d0d2b');
+  strokeRoundRect(10, 238, 460, 76, 6, '#e8b84b', 2);
+  ctx.fillStyle = '#fff'; ctx.font = pxFont(9); ctx.textAlign = 'center';
+  ctx.fillText('What will you do?', 240, 255);
+  opts.forEach((o, i) => {
+    const col = i<2 ? (10+i*235) : (10+(i-2)*235);
+    const row = i<2 ? 262 : 284;
+    fillRoundRect(col, row, 225, 22, 4, G.battle.selectedMove===i ? '#1a2d4a' : '#111');
+    strokeRoundRect(col, row, 225, 22, 4, G.battle.selectedMove===i ? '#e8b84b' : '#444', 1);
+    ctx.fillStyle = G.battle.selectedMove===i ? '#e8b84b' : '#ccc';
+    ctx.font = pxFont(8);
+    ctx.textAlign = 'center';
+    ctx.fillText(G.battle.selectedMove===i ? '▶ '+o : o, col+112, row+15);
+  });
+}
+
+function drawMovesMenu() {
+  const player = getActivePlayer();
+  fillRoundRect(10, 238, 460, 76, 6, '#0d0d2b');
+  strokeRoundRect(10, 238, 460, 76, 6, '#e8b84b', 2);
+  ctx.fillStyle = '#e8b84b'; ctx.font = pxFont(8); ctx.textAlign = 'left';
+  ctx.fillText('MOVES:', 18, 254);
+  player.moves.forEach((m, i) => {
+    const col = i<2 ? (10+i*235) : (10+(i-2)*235);
+    const row = i<2 ? 258 : 278;
+    const move = MOVES[m];
+    fillRoundRect(col, row, 225, 22, 4, G.battle.selectedMove===i ? '#1a2d4a' : '#111');
+    strokeRoundRect(col, row, 225, 22, 4, G.battle.selectedMove===i ? TYPES[move?move.type:'QB'].color : '#444', 1);
+    ctx.fillStyle = G.battle.selectedMove===i ? '#fff' : '#ccc';
+    ctx.font = pxFont(7);
+    ctx.textAlign = 'left';
+    ctx.fillText((G.battle.selectedMove===i?'▶ ':' ')+m, col+4, row+15);
+    if (move) {
+      ctx.fillStyle = '#888'; ctx.font = pxFont(5);
+      ctx.textAlign = 'right';
+      ctx.fillText(move.power>0?`PWR:${move.power}`:'EFFECT', col+220, row+15);
+    }
+  });
+  ctx.fillStyle = '#666'; ctx.font = pxFont(6); ctx.textAlign = 'left';
+  ctx.fillText('[B] BACK', 18, 308);
+}
+
+function drawRosterSwitch() {
+  fillRoundRect(10, 200, 460, 115, 6, '#0d0d2b');
+  strokeRoundRect(10, 200, 460, 115, 6, '#e8b84b', 2);
+  ctx.fillStyle = '#e8b84b'; ctx.font = pxFont(8); ctx.textAlign = 'center';
+  ctx.fillText('SWITCH PLAYER', 240, 218);
+  G.playerRoster.forEach((p,i) => {
+    const isActive = i === G.activeIdx;
+    const isCursor = i === G.rosterCursor;
+    const y = 225 + i*28;
+    fillRoundRect(18, y, 440, 24, 4, isCursor ? '#1a2d4a' : (isActive ? '#1a1a4a' : '#111'));
+    strokeRoundRect(18, y, 440, 24, 4, isCursor ? '#e8b84b' : (isActive ? '#44aaff' : '#444'), 1);
+    ctx.fillStyle = p.hp<=0 ? '#555' : (isCursor ? '#fff' : '#ccc');
+    ctx.font = pxFont(7);
+    ctx.textAlign = 'left';
+    ctx.fillText(`${isCursor?'▶':' '} ${p.name}`, 28, y+16);
+    drawTypeTag(p.type, 150, y+4);
+    drawHPBar(200, y+6, 150, 10, p.hp, p.maxHp);
+    ctx.fillStyle = '#888'; ctx.font = pxFont(6); ctx.textAlign = 'right';
+    ctx.fillText(`${p.hp}/${p.maxHp}`, 456, y+16);
+    if (isActive) { ctx.fillStyle = '#44aaff'; ctx.fillText('ACTIVE', 190, y+16); }
+    if (p.hp<=0) { ctx.fillStyle = '#ff4444'; ctx.fillText('FAINTED', 190, y+16); }
+  });
+  ctx.fillStyle = '#666'; ctx.font = pxFont(6); ctx.textAlign = 'left';
+  ctx.fillText('[B] BACK', 18, 310);
+}
+
+// ============================================================
+// BATTLE LOGIC
+// ============================================================
+function battleUpdate() {
+  const b = G.battle;
+  const player = getActivePlayer();
+  const enemy  = getActiveEnemy();
+
+  updateDialog();
+
+  if (b.phase === 'DIALOG') {
+    if (G.dialogDone && keyJustPressed.a) {
+      b.logIdx++;
+      if (b.logIdx < b.log.length) {
+        showDialog(b.log[b.logIdx]);
+      } else {
+        b.phase = 'MENU';
+        b.selectedMove = 0;
+      }
+    }
+    return;
+  }
+
+  if (b.phase === 'MENU') {
+    if (keyJustPressed.up)   b.selectedMove = (b.selectedMove + 2) % 4;
+    if (keyJustPressed.down) b.selectedMove = (b.selectedMove + 2) % 4;
+    if (keyJustPressed.a) {
+      if (b.selectedMove === 0) { b.phase = 'MOVES'; b.selectedMove = 0; }
+      if (b.selectedMove === 1) { b.phase = 'ROSTER_SWITCH'; G.rosterCursor = 0; }
+      if (b.selectedMove === 2) useDraftPick();
+      if (b.selectedMove === 3) tryRun();
+    }
+    return;
+  }
+
+  if (b.phase === 'MOVES') {
+    if (keyJustPressed.up)   b.selectedMove = (b.selectedMove + 2) % 4;
+    if (keyJustPressed.down) b.selectedMove = (b.selectedMove + 2) % 4;
+    if (keyJustPressed.b)    { b.phase = 'MENU'; b.selectedMove = 0; return; }
+    if (keyJustPressed.a) {
+      const moveName = player.moves[b.selectedMove];
+      executePlayerMove(moveName);
+    }
+    return;
+  }
+
+  if (b.phase === 'ROSTER_SWITCH') {
+    if (keyJustPressed.up)   G.rosterCursor = Math.max(0, G.rosterCursor-1);
+    if (keyJustPressed.down) G.rosterCursor = Math.min(G.playerRoster.length-1, G.rosterCursor+1);
+    if (keyJustPressed.b)    { b.phase = 'MENU'; return; }
+    if (keyJustPressed.a) {
+      const target = G.playerRoster[G.rosterCursor];
+      if (G.rosterCursor === G.activeIdx) { showDialog(`${target.name} is already out!`); b.phase='DIALOG'; b.log=[`${target.name} is already out!`]; b.logIdx=0; return; }
+      if (target.hp <= 0) { showDialog(`${target.name} has fainted!`); b.phase='DIALOG'; b.log=[`${target.name} has fainted!`]; b.logIdx=0; return; }
+      G.activeIdx = G.rosterCursor;
+      showDialog(`Go, ${target.name}!`);
+      b.log = [`Go, ${target.name}!`];
+      b.logIdx = 0;
+      b.phase = 'DIALOG';
+      // Enemy still attacks after switch
+      setTimeout(()=>{ if(b.phase==='MENU') executeEnemyMove(); }, 1500);
+    }
+    return;
+  }
+
+  if (b.phase === 'MOVE_EXEC') {
+    if (G.dialogDone && keyJustPressed.a) {
+      if (b.pendingEnemy) {
+        b.pendingEnemy = false;
+        executeEnemyMove();
+      } else {
+        checkFaints();
+      }
+    }
+    return;
+  }
+
+  if (b.phase === 'ENEMY_TURN') {
+    if (G.dialogDone && keyJustPressed.a) {
+      checkFaints();
+    }
+    return;
+  }
+
+  if (b.phase === 'FAINTED') {
+    if (G.dialogDone && keyJustPressed.a) {
+      // Check if all player players fainted
+      const allFainted = G.playerRoster.every(p=>p.hp<=0);
+      if (allFainted) { G.screen = 'LOSE'; return; }
+      const allEnemyFainted = G.opponent.team.every(p=>p.hp<=0);
+      if (allEnemyFainted) { winBattle(); return; }
+      // Must switch
+      b.phase = 'ROSTER_SWITCH';
+      G.rosterCursor = 0;
+    }
+    return;
+  }
+
+  if (b.phase === 'WIN') {
+    if (G.dialogDone && keyJustPressed.a) winBattle();
+    return;
+  }
+}
+
+function executePlayerMove(moveName) {
+  const b = G.battle;
+  const player = getActivePlayer();
+  const enemy  = getActiveEnemy();
+  const result = execMove(player, enemy, moveName, b.atkStages[0], b.defStages[1]);
+  if (!result.miss && result.dmg > 0) {
+    enemy.hp = Math.max(0, enemy.hp - result.dmg);
+    G.battleAnim.enemyShake  = 8;
+    G.battleAnim.flashEnemy  = 12;
+  }
+  if (result.dmg > 0) {
+    showDialog(`${result.text} (${result.dmg} pts!)`);
+  } else {
+    showDialog(result.text);
+  }
+  b.log = [result.text + (result.dmg>0?` (${result.dmg} pts!)`:'')];
+  b.logIdx = 0;
+  b.phase = 'MOVE_EXEC';
+  b.pendingEnemy = enemy.hp > 0; // enemy retaliates if alive
+  if (enemy.hp <= 0) b.pendingEnemy = false;
+}
+
+function executeEnemyMove() {
+  const b = G.battle;
+  const player = getActivePlayer();
+  const enemy  = getActiveEnemy();
+  if (enemy.hp <= 0) { checkFaints(); return; }
+  const moveName = enemy.moves[Math.floor(Math.random()*enemy.moves.length)];
+  const result = execMove(enemy, player, moveName, b.atkStages[1], b.defStages[0]);
+  if (!result.miss && result.dmg > 0) {
+    player.hp = Math.max(0, player.hp - result.dmg);
+    G.battleAnim.playerShake = 8;
+    G.battleAnim.flashPlayer = 12;
+  }
+  if (result.dmg > 0) {
+    showDialog(`${result.text} (${result.dmg} pts!)`);
+  } else {
+    showDialog(result.text);
+  }
+  b.log = [result.text + (result.dmg>0?` (${result.dmg} pts!)`:'')];
+  b.logIdx = 0;
+  b.phase = 'ENEMY_TURN';
+}
+
+function checkFaints() {
+  const b = G.battle;
+  const player = getActivePlayer();
+  const enemy  = getActiveEnemy();
+
+  if (enemy.hp <= 0) {
+    const allEnemyFainted = G.opponent.team.every(p=>p.hp<=0);
+    if (allEnemyFainted) {
+      showDialog(`All of ${G.opponent.name}'s players fainted! You win!`);
+      b.log = [`All of ${G.opponent.name}'s players fainted! You win!`];
+      b.logIdx = 0; b.phase = 'WIN';
+      return;
+    }
+    // Next enemy
+    G.opActive++;
+    const next = getActiveEnemy();
+    showDialog(`${G.opponent.name} sends out ${next.name}!`);
+    b.log = [`${G.opponent.name} sends out ${next.name}!`];
+    b.logIdx = 0; b.phase = 'DIALOG';
+    return;
+  }
+
+  if (player.hp <= 0) {
+    showDialog(`${player.name} is injured!`);
+    b.log = [`${player.name} is injured!`];
+    b.logIdx = 0; b.phase = 'FAINTED';
+    return;
+  }
+
+  b.phase = 'MENU';
+  b.selectedMove = 0;
+}
+
+function useDraftPick() {
+  const b = G.battle;
+  if (G.draftPicks <= 0) {
+    showDialog("No Draft Picks left!");
+    b.log = ["No Draft Picks left!"];
+    b.logIdx = 0; b.phase = 'DIALOG'; return;
+  }
+  // Try to "sign" enemy player (capture)
+  const enemy = getActiveEnemy();
+  const chance = (1 - enemy.hp/enemy.maxHp) * 0.6 + 0.2;
+  G.draftPicks--;
+  if (Math.random() < chance && G.playerRoster.length < 6) {
+    const caught = JSON.parse(JSON.stringify(enemy));
+    caught.drawFn = PLAYERS.find(x=>x.id===enemy.id).drawFn;
+    caught.colors = PLAYERS.find(x=>x.id===enemy.id).colors;
+    G.playerRoster.push(caught);
+    showDialog(`You signed ${enemy.name}! Added to roster!`);
+    enemy.hp = 0;
+  } else {
+    showDialog(`${enemy.name} broke free! (${G.draftPicks} picks left)`);
+  }
+  b.log = [G.currentText];
+  b.logIdx = 0; b.phase = 'DIALOG';
+}
+
+function tryRun() {
+  const b = G.battle;
+  showDialog("You can't run from an official game!");
+  b.log = ["You can't run from an official game!"];
+  b.logIdx = 0; b.phase = 'DIALOG';
+}
+
+function winBattle() {
+  G.defeatedOps.push(G.opponentIdx);
+  G.score += G.opponent.reward;
+  // Level up active player
+  G.playerRoster.forEach(p => {
+    if (p.hp > 0) { p.level = Math.min(50, p.level+1); p.maxHp = Math.round(p.maxHp*1.05); p.hp = p.maxHp; p.atk = Math.round(p.atk*1.03); }
+  });
+  if (G.defeatedOps.length >= OPPONENTS.length) {
+    G.screen = 'WIN';
+  } else {
+    G.screen = 'OVERWORLD';
+    G.opponentIdx = G.defeatedOps.length;
+  }
+}
+
+// ============================================================
+// SCREEN: WIN / LOSE
+// ============================================================
+function drawWin() {
+  const grad = ctx.createLinearGradient(0,0,0,320);
+  grad.addColorStop(0,'#1a2e00'); grad.addColorStop(1,'#0d1a00');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,480,320);
+  // Confetti
+  for (let i=0; i<30; i++) {
+    const cx2 = (i*47+G.tick*2) % 480;
+    const cy2 = (i*37+G.tick) % 200 + 20;
+    ctx.fillStyle = ['#FFB612','#E31837','#44dd44','#4169E1','#fff'][i%5];
+    ctx.fillRect(cx2, cy2, 6, 6);
+  }
+  ctx.fillStyle = '#FFB612';
+  ctx.font = pxFont(24);
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#fff'; ctx.shadowBlur = 30;
+  ctx.fillText('CHAMPION!', 240, 80);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#fff';
+  ctx.font = pxFont(10);
+  ctx.fillText('YOU ARE THE FANTASY CHAMPION!', 240, 115);
+  ctx.fillStyle = '#e8b84b';
+  ctx.font = pxFont(9);
+  ctx.fillText(`FINAL SCORE: ${G.score}`, 240, 145);
+  ctx.fillStyle = '#aaa';
+  ctx.font = pxFont(7);
+  ctx.fillText('YOUR ROSTER:', 240, 175);
+  G.playerRoster.forEach((p,i) => {
+    ctx.fillStyle = TYPES[p.type].color;
+    ctx.fillText(`${p.name} (${p.type}) Lv.${p.level}`, 240, 195+i*18);
+  });
+  if (G.tick%40<22) {
+    ctx.fillStyle = '#e8b84b'; ctx.font = pxFont(8);
+    ctx.fillText('PRESS A TO PLAY AGAIN', 240, 300);
+  }
+}
+
+function drawLose() {
+  ctx.fillStyle = '#0d0000'; ctx.fillRect(0,0,480,320);
+  // Rain effect
+  for (let i=0; i<20; i++) {
+    ctx.strokeStyle = 'rgba(100,150,255,0.4)';
+    ctx.lineWidth = 1;
+    const rx = (i*37+G.tick*3)%480, ry = (i*53+G.tick*4)%320;
+    ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx-3,ry+20); ctx.stroke();
+  }
+  ctx.fillStyle = '#ff4444';
+  ctx.font = pxFont(22);
+  ctx.textAlign = 'center';
+  ctx.shadowColor = '#aa0000'; ctx.shadowBlur = 20;
+  ctx.fillText('GAME OVER', 240, 80);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#ccc';
+  ctx.font = pxFont(8);
+  ctx.fillText('ALL PLAYERS INJURED', 240, 115);
+  ctx.fillText(`SCORE: ${G.score}`, 240, 145);
+  ctx.fillStyle = '#888'; ctx.font = pxFont(7);
+  ctx.fillText(`Defeated: ${G.defeatedOps.length}/${OPPONENTS.length} coaches`, 240, 170);
+  if (G.tick%40<22) {
+    ctx.fillStyle = '#e8b84b'; ctx.font = pxFont(8);
+    ctx.fillText('PRESS A TO TRY AGAIN', 240, 300);
+  }
+}
+
+// ============================================================
+// GAME FLOW / TRANSITIONS
+// ============================================================
+function startGame() {
+  introStep = 0;
+  G.screen = 'INTRO';
+  showDialog(introTexts[0]);
+}
+
+function chooseStarters() {
+  // Pick 3 random starters from available QB/RB/WR types
+  const pool = PLAYERS.filter(p=>['QB','RB','WR'].includes(p.type));
+  const shuffled = [...pool].sort(()=>Math.random()-0.5);
+  G.starterChoices = shuffled.slice(0,3).map(p=>JSON.parse(JSON.stringify(p)));
+  G.starterChoices.forEach(p=>{ p.drawFn = PLAYERS.find(x=>x.id===p.id).drawFn; p.colors = PLAYERS.find(x=>x.id===p.id).colors; });
+  G.starterCursor = 0;
+  G.screen = 'STARTER';
+}
+
+function confirmStarter() {
+  const starter = G.starterChoices[G.starterCursor];
+  // Build roster of 3: starter + 2 random support picks
+  const rest = PLAYERS.filter(p=>p.id!==starter.id && ['RB','WR','TE'].includes(p.type));
+  const extras = rest.sort(()=>Math.random()-0.5).slice(0,2).map(p=>JSON.parse(JSON.stringify(p)));
+  extras.forEach(p=>{ p.drawFn=PLAYERS.find(x=>x.id===p.id).drawFn; p.colors=PLAYERS.find(x=>x.id===p.id).colors; });
+  G.playerRoster = [starter, ...extras];
+  G.activeIdx = 0;
+  G.defeatedOps = [];
+  G.score = 0;
+  G.draftPicks = 5;
+  G.opponentIdx = 0;
+  G.screen = 'OVERWORLD';
+}
+
+function resetGame() {
+  G.screen = 'TITLE';
+  G.tick = 0;
+  G.defeatedOps = [];
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function update() {
+  // Detect just-pressed
+  for (const k in KEYS) {
+    keyJustPressed[k] = KEYS[k] && !lastKeyState[k];
+    lastKeyState[k] = KEYS[k];
+  }
+
+  G.tick++;
+
+  if (G.screen === 'TITLE') {
+    if (keyJustPressed.a) startGame();
+  }
+  else if (G.screen === 'INTRO') {
+    updateDialog();
+    if (G.dialogDone && keyJustPressed.a) {
+      introStep++;
+      if (introStep >= introTexts.length) chooseStarters();
+      else showDialog(introTexts[introStep]);
+    }
+  }
+  else if (G.screen === 'STARTER') {
+    if (keyJustPressed.up || keyJustPressed.b && false) {}  // intentional no-op
+    if (keyJustPressed.a) confirmStarter();
+    // Horizontal nav
+    if (keyJustPressed.up) G.starterCursor = (G.starterCursor+2)%3;
+    if (keyJustPressed.down) G.starterCursor = (G.starterCursor+1)%3;
+  }
+  else if (G.screen === 'OVERWORLD') {
+    if (keyJustPressed.up) G.opponentIdx = Math.max(0, G.opponentIdx-1);
+    if (keyJustPressed.down) G.opponentIdx = Math.min(OPPONENTS.length-1, G.opponentIdx+1);
+    if (keyJustPressed.a) {
+      if (!G.defeatedOps.includes(G.opponentIdx) && G.opponentIdx <= G.defeatedOps.length) {
+        initBattle(G.opponentIdx);
+        G.screen = 'BATTLE';
+      }
+    }
+  }
+  else if (G.screen === 'BATTLE') {
+    battleUpdate();
+  }
+  else if (G.screen === 'WIN') {
+    if (keyJustPressed.a) resetGame();
+  }
+  else if (G.screen === 'LOSE') {
+    if (keyJustPressed.a) resetGame();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 480, 320);
+
+  if      (G.screen === 'TITLE')     drawTitle();
+  else if (G.screen === 'INTRO')     drawIntro();
+  else if (G.screen === 'STARTER')   drawStarterSelect();
+  else if (G.screen === 'OVERWORLD') drawOverworld();
+  else if (G.screen === 'BATTLE')    drawBattle();
+  else if (G.screen === 'WIN')       drawWin();
+  else if (G.screen === 'LOSE')      drawLose();
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS (STAR SELECT HORIZONTAL)
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (G.screen === 'STARTER') {
+    if (e.key==='ArrowLeft'||e.key==='a') {
+      KEYS.up = true;
+      setTimeout(()=>KEYS.up=false,50);
+    }
+    if (e.key==='ArrowRight'||e.key==='d') {
+      KEYS.down = true;
+      setTimeout(()=>KEYS.down=false,50);
+    }
+  }
+  if (G.screen === 'OVERWORLD') {
+    if (e.key==='ArrowLeft'||e.key==='a') {
+      KEYS.up = true;
+      setTimeout(()=>KEYS.up=false,50);
+    }
+    if (e.key==='ArrowRight'||e.key==='d') {
+      KEYS.down = true;
+      setTimeout(()=>KEYS.down=false,50);
+    }
+  }
+  if (G.screen === 'BATTLE') {
+    if (e.key==='ArrowLeft'||e.key==='a') {
+      KEYS.up = true;
+      setTimeout(()=>KEYS.up=false,50);
+    }
+    if (e.key==='ArrowRight'||e.key==='d') {
+      KEYS.down = true;
+      setTimeout(()=>KEYS.down=false,50);
+    }
+  }
+});
+
+// Start
+gameLoop();
+</script>
+</body>
+</html>

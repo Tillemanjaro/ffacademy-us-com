@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temple Fitness | 12-Week Transformation Blueprint</title>
+<style>
+:root {
+  --bg: #080808; --surface: #111; --surface2: #1c1c1c;
+  --gold: #d4a843; --gold-light: #f0c84e; --gold-dark: #a07820;
+  --text: #f0f0f0; --text-muted: #888; --text-dim: #444;
+  --success: #4ade80; --error: #f87171; --accent: #ff6b35;
+  --border: rgba(212,168,67,0.2); --radius: 16px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+.progress-bar-container{position:fixed;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.08);z-index:100;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-dark),var(--gold-light));transition:width .6s ease;}
+
+.header{position:fixed;top:3px;left:0;right:0;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;z-index:99;background:linear-gradient(to bottom,rgba(8,8,8,.95),transparent);}
+.logo{font-size:18px;font-weight:800;letter-spacing:3px;color:var(--gold);text-transform:uppercase;}
+.step-indicator{font-size:12px;color:var(--text-muted);}
+
+.journey{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px 60px;}
+
+.step{width:100%;max-width:680px;display:none;}
+.step.active{display:block;animation:stepIn .45s cubic-bezier(.4,0,.2,1) forwards;}
+.step.exit{animation:stepOut .3s ease forwards;}
+@keyframes stepIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes stepOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(-40px)}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;margin-bottom:14px;}
+.card-gold{background:linear-gradient(135deg,#1a1400,#0d0d0d);border-color:var(--gold);}
+
+h1{font-size:clamp(28px,6vw,50px);font-weight:800;line-height:1.1;}
+h2{font-size:clamp(20px,4vw,30px);font-weight:700;line-height:1.2;}
+h3{font-size:19px;font-weight:700;}
+h4{font-size:15px;font-weight:600;}
+p{line-height:1.65;color:var(--text-muted);}
+.gradient-text{background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.gold-text{color:var(--gold);}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:all .2s;text-decoration:none;}
+.btn-primary{background:linear-gradient(135deg,var(--gold-dark),var(--gold));color:#000;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(212,168,67,.4);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+.btn-large{padding:17px 38px;font-size:17px;}
+.btn-full{width:100%;justify-content:center;}
+
+.form-group{margin-bottom:18px;}
+label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:7px;}
+input[type=text],input[type=number],select{width:100%;background:var(--surface2);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:13px 15px;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;}
+input:focus,select:focus{border-color:var(--gold);}
+select option{background:#1c1c1c;}
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+
+.input-with-unit{position:relative;}
+.input-with-unit input{padding-right:48px;}
+.input-unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;font-weight:600;pointer-events:none;}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+.goal-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px;}
+.goal-card{background:var(--surface2);border:2px solid transparent;border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .2s;text-align:center;}
+.goal-card:hover{border-color:rgba(212,168,67,.35);transform:translateY(-2px);}
+.goal-card.selected{border-color:var(--gold);background:rgba(212,168,67,.06);}
+.goal-title{font-size:15px;font-weight:700;margin-bottom:5px;}
+.goal-desc{font-size:12px;color:var(--text-muted);line-height:1.4;}
+
+.equipment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px;}
+.equip-chip{background:var(--surface2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px 8px;cursor:pointer;text-align:center;transition:all .2s;font-size:13px;font-weight:600;color:var(--text-muted);}
+.equip-chip.selected{border-color:var(--gold);background:rgba(212,168,67,.08);color:var(--gold);}
+
+.big-number{font-size:clamp(64px,14vw,108px);font-weight:900;line-height:1;background:linear-gradient(135deg,var(--gold-dark),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0;}
+.stat-box{background:var(--surface2);border-radius:12px;padding:14px;text-align:center;}
+.stat-box .stat-val{font-size:22px;font-weight:800;color:var(--gold);}
+.stat-box .stat-key{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+
+.macro-chart{display:flex;gap:16px;align-items:center;flex-wrap:wrap;}
+.donut-wrapper{position:relative;width:180px;height:180px;flex-shrink:0;}
+.donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.donut-center .kcal{font-size:22px;font-weight:800;color:var(--gold);}
+.donut-center .label{font-size:11px;color:var(--text-muted);}
+.macro-legend{flex:1;min-width:190px;}
+.macro-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.macro-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.macro-name{font-size:13px;color:var(--text-muted);flex:1;}
+.macro-grams{font-size:18px;font-weight:700;}
+.macro-kcal{font-size:11px;color:var(--text-dim);}
+
+.module-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;}
+.module-tab{padding:8px 16px;border-radius:50px;font-size:13px;font-weight:600;cursor:pointer;background:var(--surface2);color:var(--text-muted);border:none;white-space:nowrap;transition:all .2s;}
+.module-tab.active{background:var(--gold);color:#000;}
+
+.learn-card{background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:10px;border-left:3px solid var(--gold);}
+.learn-card h4{margin-bottom:7px;}
+.learn-card p{font-size:13px;}
+
+.quiz-question{font-size:17px;font-weight:600;margin-bottom:18px;line-height:1.45;}
+.quiz-options{display:flex;flex-direction:column;gap:9px;}
+.quiz-option{background:var(--surface2);border:2px solid rgba(255,255,255,.08);border-radius:11px;padding:14px 18px;cursor:pointer;font-size:14px;text-align:left;color:var(--text);transition:all .2s;}
+.quiz-option:hover:not(:disabled){border-color:rgba(212,168,67,.4);}
+.quiz-option.correct{border-color:var(--success);background:rgba(74,222,128,.08);}
+.quiz-option.incorrect{border-color:var(--error);background:rgba(248,113,113,.08);}
+.quiz-feedback{margin-top:14px;padding:13px 16px;border-radius:10px;font-size:13px;display:none;line-height:1.5;}
+.quiz-feedback.show{display:block;}
+.quiz-feedback.correct-fb{background:rgba(74,222,128,.1);color:var(--success);}
+.quiz-feedback.incorrect-fb{background:rgba(248,113,113,.1);color:var(--error);}
+
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px;}
+.day-card{background:var(--surface2);border-radius:8px;padding:9px 4px;text-align:center;}
+.day-card.rest-day{opacity:.45;}
+.day-name{font-weight:700;font-size:9px;color:var(--text-muted);text-transform:uppercase;}
+.day-type{margin-top:5px;font-weight:700;font-size:11px;}
+.day-focus{margin-top:3px;font-size:9px;color:var(--text-muted);}
+
+.phase-timeline{display:flex;gap:8px;margin-top:12px;}
+.phase{flex:1;padding:14px 10px;border-radius:10px;text-align:center;font-size:12px;}
+.phase-1{background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.25);}
+.phase-2{background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.25);}
+.phase-3{background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);}
+.phase-label{font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;}
+.phase-weeks{margin-top:3px;color:var(--text-muted);font-size:11px;}
+
+.tip-box{background:rgba(212,168,67,.05);border:1px solid rgba(212,168,67,.18);border-radius:10px;padding:13px 15px;margin:12px 0;}
+.tip-text{font-size:13px;color:var(--text-muted);line-height:1.5;}
+
+.badge{display:inline-flex;align-items:center;padding:5px 13px;border-radius:50px;font-size:12px;font-weight:700;background:rgba(212,168,67,.1);color:var(--gold);border:1px solid rgba(212,168,67,.2);margin-bottom:14px;}
+
+.step-nav{display:flex;gap:12px;margin-top:22px;align-items:center;}
+
+.section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:10px;}
+
+.divider{height:1px;background:rgba(255,255,255,.06);margin:20px 0;}
+
+.meal-card{background:var(--surface2);border-radius:9px;padding:13px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;}
+.meal-info h5{font-size:13px;margin-bottom:3px;}
+.meal-info span{font-size:12px;color:var(--text-muted);}
+.meal-macros{text-align:right;font-size:11px;color:var(--text-muted);}
+.meal-macros strong{display:block;font-size:15px;color:var(--gold);}
+
+.achievement{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--gold);border-radius:14px;padding:13px 18px;transform:translateY(120px);opacity:0;transition:all .4s cubic-bezier(.34,1.56,.64,1);z-index:1000;max-width:260px;}
+.achievement.show{transform:translateY(0);opacity:1;}
+.achievement-title{font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.achievement-desc{font-size:13px;font-weight:600;margin-top:2px;}
+
+.stars{color:#f0c84e;font-size:15px;letter-spacing:2px;}
+
+.reveal{opacity:0;transform:translateY(18px);animation:reveal .5s ease forwards;}
+@keyframes reveal{to{opacity:1;transform:translateY(0)}}
+.d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}.d4{animation-delay:.45s}
+
+.hero{text-align:center;padding:30px 0;}
+.hero-eyebrow{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:3px;text-transform:uppercase;margin-bottom:18px;}
+
+@media(max-width:480px){
+  .goal-grid{grid-template-columns:1fr;}
+  .equipment-grid{grid-template-columns:repeat(2,1fr);}
+  .week-grid{grid-template-columns:repeat(4,1fr);}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .phase-timeline{flex-direction:column;}
+  .macro-chart{flex-direction:column;align-items:center;}
+  .form-row{grid-template-columns:1fr;}
+}
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div class="progress-bar-container"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+
+<header class="header">
+  <div class="logo">Temple</div>
+  <div class="step-indicator" id="stepIndicator"></div>
+</header>
+
+<div class="achievement" id="achievement">
+  <div class="achievement-title">Achievement Unlocked</div>
+  <div class="achievement-desc" id="achievementDesc"></div>
+</div>
+
+<main class="journey">
+
+<!-- STEP 0: HERO -->
+<div class="step active" id="step-0">
+  <div class="hero">
+    <div class="hero-eyebrow reveal">Personalized Fitness Education</div>
+    <h1 class="reveal d1">Build Your <span class="gradient-text">Perfect Body</span><br>With Science</h1>
+    <p class="reveal d2" style="margin:18px 0;font-size:17px;">In the next 5 minutes you'll discover your exact calorie targets, macro split, and training approach — and understand <em style="color:var(--text)">why</em> it all works.</p>
+    <div class="stats-row reveal d3" style="max-width:400px;margin:0 auto 28px;">
+      <div class="stat-box"><div class="stat-val">12</div><div class="stat-key">Week Plan</div></div>
+      <div class="stat-box"><div class="stat-val">30+</div><div class="stat-key">Recipes</div></div>
+      <div class="stat-box"><div class="stat-val">100%</div><div class="stat-key">Personalized</div></div>
+    </div>
+    <button class="btn btn-primary btn-large reveal d4" onclick="nextStep()">Begin Your Journey →</button>
+    <p class="reveal d4" style="margin-top:12px;font-size:12px;">Free assessment · No account required</p>
+  </div>
+</div>
+
+<!-- STEP 1: PROFILE -->
+<div class="step" id="step-1">
+  <div class="badge">Your Profile</div>
+  <h2 style="margin-bottom:6px;">Let's get to know you</h2>
+  <p style="margin-bottom:22px;">Your blueprint is only as accurate as the data behind it.</p>
+  <div class="card">
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="inputName" placeholder="What should we call you?" oninput="state.profile.name=this.value">
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Biological Sex</label>
+        <select onchange="state.profile.gender=this.value">
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Age</label>
+        <div class="input-with-unit">
+          <input type="number" id="inputAge" value="28" min="16" max="80" placeholder="28"
+            oninput="state.profile.age=+this.value||28">
+          <span class="input-unit">yrs</span>
+        </div>
+      </div>
+    </div>
+    <div style="height:18px"></div>
+    <div class="form-group">
+      <label>Height</label>
+      <div class="form-row">
+        <select onchange="state.profile.heightFt=+this.value">
+          <option value="4">4 ft</option><option value="5" selected>5 ft</option>
+          <option value="6">6 ft</option><option value="7">7 ft</option>
+        </select>
+        <select onchange="state.profile.heightIn=+this.value">
+          <option value="0">0 in</option><option value="1">1 in</option><option value="2">2 in</option>
+          <option value="3">3 in</option><option value="4">4 in</option><option value="5">5 in</option>
+          <option value="6">6 in</option><option value="7">7 in</option><option value="8">8 in</option>
+          <option value="9">9 in</option><option value="10" selected>10 in</option><option value="11">11 in</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label>Current Weight</label>
+      <div class="input-with-unit">
+        <input type="number" id="inputWeight" value="185" min="80" max="500" placeholder="185"
+          oninput="state.profile.weight=+this.value||185">
+        <span class="input-unit">lbs</span>
+      </div>
+    </div>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">Continue →</button>
+  </div>
+</div>
+
+<!-- STEP 2: GOAL -->
+<div class="step" id="step-2">
+  <div class="badge">Your Goal</div>
+  <h2 style="margin-bottom:6px;">What's your primary goal?</h2>
+  <p style="margin-bottom:6px;">This shapes your training split, macro targets, and programming style.</p>
+  <div class="goal-grid">
+    <div class="goal-card" onclick="selectGoal('lose',this)">
+      <div class="goal-title">Lose Weight</div>
+      <div class="goal-desc">Burn fat while preserving lean muscle mass</div>
+    </div>
+    <div class="goal-card" onclick="selectGoal('muscle',this)">
+      <div class="goal-title">Build Muscle</div>
+      <div class="goal-desc">Maximize hypertrophy and strength gains</div>
+    </div>
+    <div class="goal-card" onclick="selectGoal('recomp',this)">
+      <div class="goal-title">Body Recomp</div>
+      <div class="goal-desc">Lose fat and build muscle simultaneously</div>
+    </div>
+    <div class="goal-card" onclick="selectGoal('athletic',this)">
+      <div class="goal-title">Athletic Performance</div>
+      <div class="goal-desc">Build strength, speed, and endurance</div>
+    </div>
+  </div>
+  <div class="tip-box" style="margin-top:18px;">
+    <span class="tip-text">Not sure? Body Recomp is the most popular choice — it gives you the best of both worlds and works well for most starting points.</span>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" id="goalNext" onclick="nextStep()" style="flex:1;justify-content:center" disabled>Continue →</button>
+  </div>
+</div>
+
+<!-- STEP 3: ACTIVITY & EQUIPMENT -->
+<div class="step" id="step-3">
+  <div class="badge">Your Setup</div>
+  <h2 style="margin-bottom:6px;">Training environment</h2>
+  <p style="margin-bottom:20px;">Your program is built around your real life — not a hypothetical.</p>
+  <div class="card">
+    <!-- Goal weight — only shown for lose/recomp goals, injected by JS -->
+    <div id="goalWeightGroup" style="display:none">
+      <div class="form-group">
+        <label>Goal Weight</label>
+        <div class="input-with-unit">
+          <input type="number" id="inputGoalWeight" value="175" min="80" max="500" placeholder="175"
+            oninput="state.profile.goalWeight=+this.value||175">
+          <span class="input-unit">lbs</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Current Activity Level</label>
+      <select onchange="state.profile.activityLevel=this.value">
+        <option value="sedentary">Sedentary — desk job, little exercise</option>
+        <option value="light">Lightly Active — 1–2 days/week</option>
+        <option value="moderate" selected>Moderately Active — 3–4 days/week</option>
+        <option value="active">Very Active — 5–6 days/week</option>
+        <option value="athlete">Athlete — 2x/day or physical job</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Days Per Week</label>
+        <div class="input-with-unit">
+          <input type="number" id="inputDays" value="4" min="2" max="7" placeholder="4"
+            oninput="state.profile.daysPerWeek=+this.value||4">
+          <span class="input-unit">days</span>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Cardio Preference</label>
+        <select onchange="state.profile.cardio=this.value">
+          <option value="none">No Cardio</option>
+          <option value="low">Light — walks, cycling</option>
+          <option value="moderate" selected>Moderate — 20–30 min</option>
+          <option value="hiit">High Intensity — HIIT</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="section-label" style="margin-top:18px;">Available Equipment — select all that apply</div>
+  <div class="equipment-grid">
+    <div class="equip-chip" onclick="toggleEquip('barbell',this)">Barbell</div>
+    <div class="equip-chip" onclick="toggleEquip('dumbbells',this)">Dumbbells</div>
+    <div class="equip-chip" onclick="toggleEquip('cables',this)">Cables</div>
+    <div class="equip-chip" onclick="toggleEquip('machines',this)">Machines</div>
+    <div class="equip-chip" onclick="toggleEquip('bodyweight',this)">Bodyweight</div>
+    <div class="equip-chip" onclick="toggleEquip('bands',this)">Bands</div>
+    <div class="equip-chip" onclick="toggleEquip('kettlebells',this)">Kettlebells</div>
+    <div class="equip-chip" onclick="toggleEquip('cardio_eq',this)">Cardio Equipment</div>
+    <div class="equip-chip" onclick="toggleEquip('full_gym',this)">Full Gym</div>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">Calculate My Numbers →</button>
+  </div>
+</div>
+
+<!-- STEP 4: TDEE REVEAL -->
+<div class="step" id="step-4">
+  <div class="badge">Your Numbers</div>
+  <h2 style="margin-bottom:6px;">Your Energy Blueprint</h2>
+  <p style="margin-bottom:20px;">Calculated from your exact stats using the Mifflin-St Jeor formula — the gold standard in nutrition science.</p>
+  <div class="card card-gold" style="text-align:center;padding:36px 28px;">
+    <p style="font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:6px;">Your Daily Calorie Target</p>
+    <div class="big-number" id="tdeeNumber">—</div>
+    <p style="margin-top:8px;font-size:14px;" id="tdeeDescription">calories per day</p>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-val" id="bmrDisplay">—</div><div class="stat-key">BMR</div></div>
+    <div class="stat-box"><div class="stat-val" id="tdeeBaseDisplay">—</div><div class="stat-key">TDEE</div></div>
+    <div class="stat-box"><div class="stat-val" id="adjustmentDisplay">—</div><div class="stat-key">Adjustment</div></div>
+  </div>
+  <div class="card">
+    <h4 style="margin-bottom:14px;color:var(--gold);">What These Numbers Mean</h4>
+    <div class="learn-card">
+      <h4>BMR — Basal Metabolic Rate</h4>
+      <p>Calories your body burns at complete rest. Your engine idling — heart beating, organs functioning, cells repairing. This number never drops to zero.</p>
+    </div>
+    <div class="learn-card">
+      <h4>TDEE — Total Daily Energy Expenditure</h4>
+      <p>Your BMR multiplied by your activity level. This is your true maintenance — the exact number of calories you burn on a typical day including all movement.</p>
+    </div>
+    <div class="learn-card">
+      <h4 id="adjustmentTitle">Goal Adjustment</h4>
+      <p id="adjustmentExplain">We shift your target up or down based on your goal to create the optimal environment for transformation.</p>
+    </div>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">See My Macros →</button>
+  </div>
+</div>
+
+<!-- STEP 5: MACROS -->
+<div class="step" id="step-5">
+  <div class="badge">Macro Blueprint</div>
+  <h2 style="margin-bottom:6px;">Your Daily Macro Targets</h2>
+  <p style="margin-bottom:20px;">Macros aren't just numbers — they're fuel, building blocks, and hormonal regulators.</p>
+  <div class="card">
+    <div class="macro-chart">
+      <div class="donut-wrapper">
+        <svg viewBox="0 0 100 100" width="180" height="180">
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#1a1a1a" stroke-width="16"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#d4a843" stroke-width="16" id="proteinArc"
+            stroke-dasharray="0 238.76" stroke-dashoffset="0" transform="rotate(-90 50 50)"
+            style="transition:stroke-dasharray 1.2s ease,stroke-dashoffset 1.2s ease"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#ff6b35" stroke-width="16" id="carbsArc"
+            stroke-dasharray="0 238.76" stroke-dashoffset="0" transform="rotate(-90 50 50)"
+            style="transition:stroke-dasharray 1.2s ease,stroke-dashoffset 1.2s ease 0.1s"/>
+          <circle cx="50" cy="50" r="38" fill="none" stroke="#4ade80" stroke-width="16" id="fatsArc"
+            stroke-dasharray="0 238.76" stroke-dashoffset="0" transform="rotate(-90 50 50)"
+            style="transition:stroke-dasharray 1.2s ease,stroke-dashoffset 1.2s ease 0.2s"/>
+        </svg>
+        <div class="donut-center">
+          <div class="kcal" id="pieKcal">—</div>
+          <div class="label">kcal/day</div>
+        </div>
+      </div>
+      <div class="macro-legend">
+        <div class="macro-item">
+          <div class="macro-dot" style="background:#d4a843"></div>
+          <div class="macro-name">Protein</div>
+          <div><div class="macro-grams" id="proteinGrams">—g</div><div class="macro-kcal" id="proteinKcal">—</div></div>
+        </div>
+        <div class="macro-item">
+          <div class="macro-dot" style="background:#ff6b35"></div>
+          <div class="macro-name">Carbohydrates</div>
+          <div><div class="macro-grams" id="carbsGrams">—g</div><div class="macro-kcal" id="carbsKcal">—</div></div>
+        </div>
+        <div class="macro-item" style="border-bottom:none">
+          <div class="macro-dot" style="background:#4ade80"></div>
+          <div class="macro-name">Fats</div>
+          <div><div class="macro-grams" id="fatsGrams">—g</div><div class="macro-kcal" id="fatsKcal">—</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><h4 style="margin-bottom:14px;color:var(--gold);">Why These Specific Targets?</h4><div id="macroRationale"></div></div>
+  <div class="card"><h4 style="margin-bottom:12px;">Sample Day of Eating</h4><div id="sampleMeals"></div></div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">Learn Training Science →</button>
+  </div>
+</div>
+
+<!-- STEP 6: TRAINING EDUCATION -->
+<div class="step" id="step-6">
+  <div class="badge">Training Science</div>
+  <h2 style="margin-bottom:6px;">The Science Behind Your Training</h2>
+  <p style="margin-bottom:18px;">Understanding the <em style="color:var(--text)">why</em> makes you unstoppable in the gym.</p>
+  <div class="module-tabs">
+    <button class="module-tab active" onclick="showTab('progressive',this)">Progressive Overload</button>
+    <button class="module-tab" onclick="showTab('recovery',this)">Recovery</button>
+    <button class="module-tab" onclick="showTab('periodization',this)">Periodization</button>
+  </div>
+  <div id="tab-progressive">
+    <div class="card">
+      <h3 style="margin-bottom:12px;">The #1 Principle in All of Fitness</h3>
+      <p style="margin-bottom:16px;">If you only master one concept, make it this. Without progressive overload, your body has zero reason to change.</p>
+      <div class="learn-card"><h4>What It Is</h4><p>Systematically increasing the demands placed on your body — more weight, more reps, less rest, or better form. Any measurable improvement counts.</p></div>
+      <div class="learn-card"><h4>Why It Works</h4><p>Your body is a survival machine. Apply stress → body recovers → body adapts → stress is no longer challenging → repeat. This adaptation cycle IS your transformation.</p></div>
+      <div class="learn-card"><h4>How Your Blueprint Applies It</h4><p>Each week builds on the last. Volume, intensity, and movement complexity increase on a structured schedule — no guessing, no plateaus.</p></div>
+      <div class="tip-box"><span class="tip-text">The single biggest difference between someone who plateaus and someone who keeps improving is consistent, intentional progressive overload.</span></div>
+    </div>
+  </div>
+  <div id="tab-recovery" style="display:none">
+    <div class="card">
+      <h3 style="margin-bottom:12px;">Growth Doesn't Happen in the Gym</h3>
+      <p style="margin-bottom:16px;">You break down muscle tissue during training. You build it back bigger during recovery. Skip recovery, skip results.</p>
+      <div class="learn-card"><h4>Sleep: The Master Recovery Tool</h4><p>During deep sleep, your body releases growth hormone, repairs muscle fibers, and consolidates motor patterns. 7–9 hours is a physiological requirement — not a preference.</p></div>
+      <div class="learn-card"><h4>Active Recovery Days</h4><p>Light movement on rest days (walks, mobility, swimming) increases blood flow to muscles, clears metabolic waste, and reduces soreness without adding recovery debt.</p></div>
+      <div class="learn-card"><h4>Deload Weeks — Built Into Your Program</h4><p>Every 4 weeks, volume and intensity drop 40–50% to let your central nervous system fully reset. You'll come back noticeably stronger every time.</p></div>
+      <div class="tip-box"><span class="tip-text">Sleep deprivation reduces muscle protein synthesis by up to 18% and doubles cortisol levels — the hormone that actively breaks down muscle tissue.</span></div>
+    </div>
+  </div>
+  <div id="tab-periodization" style="display:none">
+    <div class="card">
+      <h3 style="margin-bottom:12px;">Your 12-Week Strategy</h3>
+      <p style="margin-bottom:16px;">Elite athletes have used periodization for decades. Your program uses the exact same structured approach.</p>
+      <div class="phase-timeline">
+        <div class="phase phase-1">
+          <div class="phase-label" style="color:#d4a843">Phase 1</div>
+          <div style="font-weight:700;font-size:13px;margin:5px 0">Foundation</div>
+          <div class="phase-weeks">Weeks 1–4</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:7px">Master movements. Build the habit. Establish your baseline.</div>
+        </div>
+        <div class="phase phase-2">
+          <div class="phase-label" style="color:#ff6b35">Phase 2</div>
+          <div style="font-weight:700;font-size:13px;margin:5px 0">Build</div>
+          <div class="phase-weeks">Weeks 5–8</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:7px">Increase volume. Challenge your limits. See visible change.</div>
+        </div>
+        <div class="phase phase-3">
+          <div class="phase-label" style="color:#4ade80">Phase 3</div>
+          <div style="font-weight:700;font-size:13px;margin:5px 0">Peak</div>
+          <div class="phase-weeks">Weeks 9–12</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:7px">Maximum intensity. Overload peaks. Transformation locked in.</div>
+        </div>
+      </div>
+      <div class="tip-box" style="margin-top:16px"><span class="tip-text">Linear periodization outperforms random training by 47% in measurable strength and body composition gains over 12 weeks.</span></div>
+    </div>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">Take the Knowledge Check →</button>
+  </div>
+</div>
+
+<!-- STEP 7: QUIZ -->
+<div class="step" id="step-7">
+  <div class="badge">Knowledge Check</div>
+  <h2 style="margin-bottom:6px;">Test What You've Learned</h2>
+  <p style="margin-bottom:20px;">Retrieving knowledge locks it in. Earn XP for every correct answer.</p>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <span style="font-size:13px;color:var(--text-muted)">Question <span id="qNum">1</span> of 3</span>
+      <div style="display:flex;gap:6px">
+        <div style="width:26px;height:5px;border-radius:3px;background:var(--gold)" id="qDot1"></div>
+        <div style="width:26px;height:5px;border-radius:3px;background:var(--surface2)" id="qDot2"></div>
+        <div style="width:26px;height:5px;border-radius:3px;background:var(--surface2)" id="qDot3"></div>
+      </div>
+    </div>
+    <div id="quiz-container"></div>
+  </div>
+  <div class="step-nav" id="quizNav" style="display:none">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">See My Results →</button>
+  </div>
+</div>
+
+<!-- STEP 8: QUIZ RESULTS -->
+<div class="step" id="step-8">
+  <div class="badge">Results</div>
+  <h2 style="margin-bottom:20px;text-align:center">Knowledge Check Complete</h2>
+  <div class="card" style="text-align:center;padding:36px 28px">
+    <div style="font-size:46px;font-weight:900;color:var(--gold);margin-bottom:8px" id="quizScoreDisplay">0/3</div>
+    <div style="font-size:15px;color:var(--text-muted)" id="quizScoreMessage"></div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:center;gap:32px">
+      <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:var(--gold)" id="xpEarned">+0 XP</div><div style="font-size:11px;color:var(--text-muted)">This Section</div></div>
+      <div style="text-align:center"><div style="font-size:26px;font-weight:800;color:var(--gold)" id="totalXpDisplay">0 XP</div><div style="font-size:11px;color:var(--text-muted)">Total XP</div></div>
+    </div>
+  </div>
+  <div class="card" id="quizReview"></div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary btn-large" onclick="nextStep()" style="flex:1;justify-content:center">Unlock My Blueprint Preview →</button>
+  </div>
+</div>
+
+<!-- STEP 9: BLUEPRINT PREVIEW -->
+<div class="step" id="step-9">
+  <div class="badge">Your Blueprint</div>
+  <h2 style="margin-bottom:4px">Your Personalized Preview</h2>
+  <p style="margin-bottom:20px" id="blueprintSubtitle">Here's a snapshot of what your 12-week program looks like.</p>
+  <div class="card">
+    <div class="section-label">Sample Training Week — Week 1, Foundation Phase</div>
+    <div class="week-grid" id="weekGrid"></div>
+  </div>
+  <div class="card">
+    <div class="section-label">Your 12-Week Journey</div>
+    <div class="phase-timeline">
+      <div class="phase phase-1">
+        <div class="phase-label" style="color:#d4a843">Phase 1</div>
+        <div style="font-weight:700;font-size:13px;margin:5px 0">Foundation</div>
+        <div class="phase-weeks">Weeks 1–4</div>
+        <div id="phase1Desc" style="font-size:10px;color:var(--text-muted);margin-top:7px"></div>
+      </div>
+      <div class="phase phase-2">
+        <div class="phase-label" style="color:#ff6b35">Phase 2</div>
+        <div style="font-weight:700;font-size:13px;margin:5px 0">Build</div>
+        <div class="phase-weeks">Weeks 5–8</div>
+        <div id="phase2Desc" style="font-size:10px;color:var(--text-muted);margin-top:7px"></div>
+      </div>
+      <div class="phase phase-3">
+        <div class="phase-label" style="color:#4ade80">Phase 3</div>
+        <div style="font-weight:700;font-size:13px;margin:5px 0">Peak</div>
+        <div class="phase-weeks">Weeks 9–12</div>
+        <div id="phase3Desc" style="font-size:10px;color:var(--text-muted);margin-top:7px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-label">Cookbook Preview — 30 Recipes Included</div>
+    <div id="recipePreview"></div>
+    <div style="text-align:center;padding:12px 0;color:var(--text-muted);font-size:13px;border-top:1px solid rgba(255,255,255,.05);margin-top:8px">27 more recipes unlocked with your full blueprint</div>
+  </div>
+  <div class="step-nav">
+    <button class="btn btn-outline" onclick="prevStep()">← Back</button>
+    <button class="btn btn-primary" onclick="nextStep()" style="flex:1;justify-content:center">Get My Full Blueprint →</button>
+  </div>
+</div>
+
+<!-- STEP 10: CTA -->
+<div class="step" id="step-10">
+  <div style="text-align:center;padding:16px 0 24px">
+    <div class="badge" style="margin:0 auto 14px">You're Ready</div>
+    <h1 style="margin-bottom:12px">Your Blueprint<br>Awaits, <span class="gradient-text" id="ctaName">Champion</span></h1>
+    <p style="font-size:16px;margin-bottom:6px">You know your numbers. You understand the science.<br>Now it's time to <strong style="color:var(--text)">execute</strong>.</p>
+  </div>
+  <div class="card card-gold" style="margin-bottom:14px">
+    <div class="section-label">Everything That's Included</div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="color:var(--gold);font-size:17px;flex-shrink:0">✓</span><div><div style="font-weight:700;font-size:15px">Personalized 12-Week Training Blueprint</div><div style="font-size:13px;color:var(--text-muted)">Day-by-day workouts built around your goal, equipment, and schedule</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="color:var(--gold);font-size:17px;flex-shrink:0">✓</span><div><div style="font-weight:700;font-size:15px">Your Personalized Daily Macro Targets</div><div style="font-size:13px;color:var(--text-muted)">Exact protein, carb, and fat targets calculated from your unique stats</div></div></div>
+      <div style="display:flex;gap:12px;align-items:flex-start"><span style="color:var(--gold);font-size:17px;flex-shrink:0">✓</span><div><div style="font-weight:700;font-size:15px">30-Recipe Meal Prep Cookbook</div><div style="font-size:13px;color:var(--text-muted)">Full ingredient lists, macros per serving, and step-by-step instructions</div></div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px;text-align:center">
+    <div class="stars">★★★★★</div>
+    <p style="font-size:14px;margin:12px 0;color:var(--text);font-style:italic">"Lost 22 lbs in 12 weeks. The personalization is what makes this different — it actually fits my life and schedule."</p>
+    <div style="font-size:13px;color:var(--text-muted)">— Marcus T., Temple Fitness Member</div>
+  </div>
+  <div class="card" style="margin-bottom:14px;text-align:center">
+    <div class="stars">★★★★★</div>
+    <p style="font-size:14px;margin:12px 0;color:var(--text);font-style:italic">"Gained 14 lbs of muscle in 3 months. The macro targets were spot on and the cookbook made eating right effortless."</p>
+    <div style="font-size:13px;color:var(--text-muted)">— Jamie K., Temple Fitness Member</div>
+  </div>
+  <a href="https://templefitness.store" target="_blank" class="btn btn-primary btn-large btn-full" style="margin-bottom:10px">Get My Personalized Blueprint</a>
+  <p style="text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:24px">Handcrafted by a certified coach · Delivered within 48 hours</p>
+  <div style="text-align:center;padding:20px;background:var(--surface2);border-radius:14px">
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Total XP Earned This Session</div>
+    <div style="font-size:40px;font-weight:900;color:var(--gold)" id="finalXp">0 XP</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-top:6px">You've learned the principles. Now build the physique.</div>
+  </div>
+</div>
+
+</main>
+
+<script>
+const state = {
+  step: 0, totalSteps: 11,
+  profile: { name:'', age:28, gender:'male', heightFt:5, heightIn:10, weight:185, goalWeight:175, activityLevel:'moderate', goal:null, equipment:[], daysPerWeek:4, cardio:'moderate' },
+  quiz: { currentQuestion:0, answers:[null,null,null], score:0 },
+  xp: 0, tabsViewed: new Set(['progressive']),
+  calc: { bmr:0, tdee:0, targetCals:0, protein:0, carbs:0, fats:0 },
+  _scholarGiven: false
+};
+
+const ACT = { sedentary:1.2, light:1.375, moderate:1.55, active:1.725, athlete:1.9 };
+
+function calcBMR() {
+  const p = state.profile;
+  const kg = p.weight * 0.453592;
+  const cm = (p.heightFt * 12 + p.heightIn) * 2.54;
+  return Math.round(p.gender==='male' ? 10*kg+6.25*cm-5*p.age+5 : 10*kg+6.25*cm-5*p.age-161);
+}
+
+function calcTargetCals(tdee) {
+  const g = state.profile.goal;
+  return g==='lose' ? tdee-500 : g==='muscle' ? tdee+300 : g==='athletic' ? tdee+200 : tdee;
+}
+
+function calcMacros(cals) {
+  const w = state.profile.weight, g = state.profile.goal;
+  const protein = Math.round(g==='muscle' ? w*0.85 : w*1.0);
+  const fats = Math.round(g==='lose' ? w*0.35 : w*0.4);
+  const carbs = Math.max(0, Math.round((cals - protein*4 - fats*9) / 4));
+  return { protein, carbs, fats };
+}
+
+function updateDonut(p,c,f) {
+  const total = p*4 + c*4 + f*9, circ = 238.76;
+  const pLen = circ*(p*4/total), cLen = circ*(c*4/total), fLen = circ*(f*9/total);
+  document.getElementById('proteinArc').setAttribute('stroke-dasharray', `${pLen} ${circ}`);
+  document.getElementById('proteinArc').setAttribute('stroke-dashoffset', '0');
+  document.getElementById('carbsArc').setAttribute('stroke-dasharray', `${cLen} ${circ}`);
+  document.getElementById('carbsArc').setAttribute('stroke-dashoffset', `${-pLen}`);
+  document.getElementById('fatsArc').setAttribute('stroke-dasharray', `${fLen} ${circ}`);
+  document.getElementById('fatsArc').setAttribute('stroke-dashoffset', `${-(pLen+cLen)}`);
+}
+
+const QUIZ = [
+  { q:"What does TDEE stand for — and why is it the foundation of every calorie target?",
+    opts:["Total Daily Energy Expenditure — the exact calories your body burns per day","Time-Dependent Exercise Efficiency — how efficiently you convert food to energy","Total Dietary Energy Estimate — an approximate daily calorie range","Training Duration and Exercise Evaluation — a workout planning metric"],
+    correct:0, explain:"TDEE (Total Daily Energy Expenditure) is the precise number of calories your body burns daily accounting for both metabolism and activity. Every calorie target in your blueprint is calculated directly from your personal TDEE." },
+  { q:"For optimal muscle preservation and body composition, how much protein per pound of bodyweight is recommended?",
+    opts:["0.1–0.3g per pound — the minimum for basic function","0.3–0.5g per pound — the standard RDA recommendation","0.7–1.0g per pound — the research-backed optimal range","1.5–2.0g per pound — maximum possible absorption"],
+    correct:2, explain:"Decades of research confirms 0.7–1.0g of protein per pound of bodyweight maximizes muscle protein synthesis — whether your goal is fat loss, muscle gain, or recomposition. It's the sweet spot between measurable results and day-to-day practicality." },
+  { q:"Progressive overload means you should consistently:",
+    opts:["Train to complete muscle failure on every single set","Gradually increase workout demands over time — weight, reps, volume, or intensity","Work out more days per week as your fitness level improves","Only add weight when you can perform 20+ reps with perfect form"],
+    correct:1, explain:"Progressive overload is systematically increasing the stress placed on your body over time. Your body adapts to every challenge you give it — so the challenge must keep growing. This cycle of stress and adaptation is how transformation happens." }
+];
+
+function renderQuiz() {
+  const q = state.quiz.currentQuestion;
+  const question = QUIZ[q];
+  for (let i=0;i<3;i++) {
+    const dot = document.getElementById(`qDot${i+1}`);
+    dot.style.background = i < q ? 'var(--success)' : i===q ? 'var(--gold)' : 'var(--surface2)';
+  }
+  document.getElementById('qNum').textContent = q+1;
+  document.getElementById('quiz-container').innerHTML = `
+    <div class="quiz-question">${question.q}</div>
+    <div class="quiz-options">
+      ${question.opts.map((o,i)=>`<button class="quiz-option" onclick="answerQuiz(${i})" id="qOpt${i}"><span style="color:var(--text-muted);margin-right:10px">${String.fromCharCode(65+i)}.</span>${o}</button>`).join('')}
+    </div>
+    <div class="quiz-feedback" id="quizFeedback"></div>
+  `;
+}
+
+function answerQuiz(sel) {
+  const q = state.quiz.currentQuestion;
+  if (state.quiz.answers[q] !== null) return;
+  state.quiz.answers[q] = sel;
+  const correct = QUIZ[q].correct;
+  document.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);
+  document.getElementById(`qOpt${correct}`).classList.add('correct');
+  if (sel !== correct) document.getElementById(`qOpt${sel}`).classList.add('incorrect');
+  else { state.quiz.score++; state.xp += 50; }
+  const fb = document.getElementById('quizFeedback');
+  fb.className = `quiz-feedback show ${sel===correct?'correct-fb':'incorrect-fb'}`;
+  fb.innerHTML = `<strong>${sel===correct ? 'Correct.' : 'Not quite.'}</strong> ${QUIZ[q].explain}`;
+  setTimeout(()=>{
+    if (q < 2) { state.quiz.currentQuestion++; renderQuiz(); }
+    else document.getElementById('quizNav').style.display='flex';
+  }, 2600);
+}
+
+function getWeekSchedule() {
+  const { goal, daysPerWeek: d } = state.profile;
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const schedules = {
+    muscle: {
+      4:[{t:'Upper A',f:'Chest / Shoulders',c:'#d4a843'},{t:'Lower A',f:'Quads / Glutes',c:'#ff6b35'},{t:'Rest',f:'Active Recovery',c:null},{t:'Upper B',f:'Back / Biceps',c:'#d4a843'},{t:'Lower B',f:'Hamstrings',c:'#ff6b35'},{t:'Rest',f:'',c:null},{t:'Rest',f:'',c:null}],
+      5:[{t:'Push A',f:'Chest / Triceps',c:'#d4a843'},{t:'Pull A',f:'Back / Biceps',c:'#4ade80'},{t:'Legs A',f:'Quads / Glutes',c:'#ff6b35'},{t:'Push B',f:'Shoulders',c:'#d4a843'},{t:'Pull + Legs',f:'Back / Hams',c:'#4ade80'},{t:'Rest',f:'',c:null},{t:'Rest',f:'',c:null}]
+    },
+    lose: {
+      4:[{t:'Full Body A',f:'+20min HIIT',c:'#ff6b35'},{t:'Cardio',f:'30min Steady',c:'#4ade80'},{t:'Full Body B',f:'+20min HIIT',c:'#ff6b35'},{t:'Rest',f:'Active Walk',c:null},{t:'Full Body C',f:'+20min Cardio',c:'#ff6b35'},{t:'Cardio',f:'30min Steady',c:'#4ade80'},{t:'Rest',f:'',c:null}],
+      3:[{t:'Full Body A',f:'+20min HIIT',c:'#ff6b35'},{t:'Rest',f:'Active Walk',c:null},{t:'Full Body B',f:'+20min HIIT',c:'#ff6b35'},{t:'Rest',f:'',c:null},{t:'Full Body C',f:'+Cardio',c:'#ff6b35'},{t:'Rest',f:'',c:null},{t:'Rest',f:'',c:null}]
+    },
+    recomp: {
+      4:[{t:'Upper A',f:'Strength Focus',c:'#d4a843'},{t:'Lower A',f:'+15min Cardio',c:'#ff6b35'},{t:'Rest',f:'Mobility',c:null},{t:'Upper B',f:'Hypertrophy',c:'#d4a843'},{t:'Lower B',f:'+15min HIIT',c:'#ff6b35'},{t:'Cardio',f:'20min Steady',c:'#4ade80'},{t:'Rest',f:'',c:null}]
+    },
+    athletic: {
+      5:[{t:'Strength',f:'Compound Lifts',c:'#d4a843'},{t:'Conditioning',f:'HIIT / Circuits',c:'#ff6b35'},{t:'Strength',f:'Power Focus',c:'#d4a843'},{t:'Recovery',f:'Mobility',c:'#4ade80'},{t:'Strength',f:'Volume Day',c:'#d4a843'},{t:'Conditioning',f:'Sport / Cardio',c:'#ff6b35'},{t:'Rest',f:'',c:null}]
+    }
+  };
+  const gs = schedules[goal] || schedules.recomp;
+  const sched = gs[d] || gs[Object.keys(gs)[0]];
+  return sched.map((s,i)=>({...s, dayName:days[i]}));
+}
+
+function renderWeekGrid() {
+  const sched = getWeekSchedule();
+  document.getElementById('weekGrid').innerHTML = sched.map(d=>`
+    <div class="day-card ${d.t==='Rest'?'rest-day':''}">
+      <div class="day-name">${d.dayName}</div>
+      <div class="day-type" style="color:${d.c||'var(--text-dim)'}">${d.t}</div>
+      <div class="day-focus">${d.f}</div>
+    </div>`).join('');
+}
+
+function renderPhaseDescriptions() {
+  const phases = {
+    lose:['Establish calorie deficit. Learn fat-burning fundamentals. Master HIIT form.','Increase cardio frequency. Intensify circuits. Break through first plateau.','Maximum fat-burning protocol. Final progressive push. Transformation complete.'],
+    muscle:['Master compound movements. Build mind-muscle connection. Establish strength baseline.','Increase training volume. Set new PRs weekly. Visible muscle growth begins.','Maximum hypertrophy protocol. Progressive overload peaks. Transformation locked in.'],
+    recomp:['Establish calorie balance. Learn movement patterns. Start simultaneous fat loss + muscle gain.','Increase intensity. Body composition visibly shifts. Strength and leanness improve together.','Peak recomp phase. Strongest and leanest simultaneously. Blueprint delivered.'],
+    athletic:['Build strength base. Develop conditioning. Improve movement quality and efficiency.','Sport-specific programming. Power development. Cardiovascular capacity peaks.','Peak athletic performance. All physical qualities at maximum. Competition-ready.']
+  };
+  const p = phases[state.profile.goal] || phases.recomp;
+  document.getElementById('phase1Desc').textContent = p[0];
+  document.getElementById('phase2Desc').textContent = p[1];
+  document.getElementById('phase3Desc').textContent = p[2];
+}
+
+function renderMacroRationale() {
+  const { protein:p, carbs:c, fats:f } = state.calc, g = state.profile.goal;
+  const r = {
+    lose:`<div class="learn-card"><h4>High Protein (${p}g)</h4><p>Protein has a 30% thermic effect — your body burns nearly a third of protein calories just digesting it. High protein also prevents muscle loss during a deficit.</p></div><div class="learn-card"><h4>Moderate Carbs (${c}g)</h4><p>Carbs fuel your training sessions and preserve muscle. We keep them moderate — not eliminated — because training performance drives muscle retention during fat loss.</p></div><div class="learn-card"><h4>Lower Fat (${f}g)</h4><p>Fat is reduced (never eliminated) to create caloric room for protein and carbs. Essential fats are maintained for hormone production and vitamin absorption.</p></div>`,
+    muscle:`<div class="learn-card"><h4>Optimal Protein (${p}g)</h4><p>Muscle protein synthesis requires a constant amino acid supply. ${p}g keeps your muscles in an anabolic state 24 hours a day.</p></div><div class="learn-card"><h4>High Carbs (${c}g)</h4><p>Carbohydrates are the primary fuel for high-intensity training. More carbs means more training capacity, more progressive overload, and more muscle.</p></div><div class="learn-card"><h4>Moderate Fat (${f}g)</h4><p>Dietary fat drives testosterone production — critical for muscle building. This level optimizes hormones without crowding out anabolic carbs.</p></div>`,
+    recomp:`<div class="learn-card"><h4>High Protein (${p}g)</h4><p>Body recomposition demands enough protein to build muscle and lose fat simultaneously. At maintenance calories, protein is what tips the balance toward recomp.</p></div><div class="learn-card"><h4>Balanced Carbs (${c}g)</h4><p>Carb timing matters most for recomp — higher around training, lower at rest. This approach simultaneously maximizes fat burning and muscle building.</p></div><div class="learn-card"><h4>Moderate Fat (${f}g)</h4><p>Healthy fats support the hormonal environment needed for body recomposition — particularly testosterone and growth hormone.</p></div>`,
+    athletic:`<div class="learn-card"><h4>Performance Protein (${p}g)</h4><p>Athletes need protein for both muscle repair after strength work and structural recovery after cardio. ${p}g hits both needs.</p></div><div class="learn-card"><h4>High Carbs (${c}g)</h4><p>Both aerobic and anaerobic systems run on glycogen. Your ${c}g ensures full glycogen replenishment between sessions — critical for back-to-back training days.</p></div>`
+  };
+  document.getElementById('macroRationale').innerHTML = r[g] || r.recomp;
+}
+
+function renderSampleMeals() {
+  const { protein:p, carbs:c, fats:f, targetCals:t } = state.calc;
+  const meals = [
+    {name:'Breakfast',meal:'Egg white omelette + oats + berries',pct:.25},
+    {name:'Lunch',meal:'Grilled chicken breast + rice + vegetables',pct:.30},
+    {name:'Snack',meal:'Greek yogurt + almonds + banana',pct:.15},
+    {name:'Dinner',meal:'Salmon + sweet potato + broccoli',pct:.30}
+  ];
+  document.getElementById('sampleMeals').innerHTML = meals.map(m=>`
+    <div class="meal-card">
+      <div class="meal-info"><h5>${m.name}</h5><span>${m.meal}</span></div>
+      <div class="meal-macros"><strong>${Math.round(t*m.pct)} kcal</strong>${Math.round(p*m.pct)}P / ${Math.round(c*m.pct)}C / ${Math.round(f*m.pct)}F</div>
+    </div>`).join('');
+}
+
+function renderRecipePreview() {
+  const recipes = [
+    {name:'High-Protein Overnight Oats',macros:'42P / 55C / 12F',kcal:492},
+    {name:'Teriyaki Chicken Rice Bowl',macros:'48P / 62C / 8F',kcal:516},
+    {name:'Turkey & Sweet Potato Hash',macros:'38P / 44C / 10F',kcal:418}
+  ];
+  document.getElementById('recipePreview').innerHTML = recipes.map(r=>`
+    <div class="meal-card">
+      <div class="meal-info"><h5>${r.name}</h5><span style="color:var(--text-dim)">${r.macros}</span></div>
+      <div class="meal-macros"><strong>${r.kcal} kcal</strong></div>
+    </div>`).join('');
+}
+
+function populateTDEE() {
+  const { bmr, tdee, targetCals } = state.calc, g = state.profile.goal;
+  animateNumber(document.getElementById('tdeeNumber'), targetCals);
+  animateNumber(document.getElementById('bmrDisplay'), bmr, 1000);
+  animateNumber(document.getElementById('tdeeBaseDisplay'), tdee, 1200);
+  const adj = targetCals - tdee;
+  const adjEl = document.getElementById('adjustmentDisplay');
+  adjEl.textContent = (adj>=0?'+':'')+adj;
+  adjEl.style.color = adj>=0 ? 'var(--success)' : 'var(--accent)';
+  const dMap = {
+    lose:['calories/day — ~1 lb fat loss/week','500-calorie deficit from TDEE','A 500-calorie daily deficit creates roughly 1 lb of fat loss per week — aggressive enough to see results, moderate enough to preserve muscle.'],
+    muscle:['calories/day — lean muscle growth','300-calorie surplus above TDEE','A 300-calorie lean bulk provides just enough energy to build muscle without excessive fat gain — the cleanest path to size.'],
+    recomp:['calories/day — body recomposition','At TDEE (maintenance calories)','At maintenance, stored fat fuels your energy needs while dietary protein builds new muscle. The simultaneous recomp protocol.'],
+    athletic:['calories/day — peak performance','200-calorie surplus above TDEE','A small surplus fuels high training intensity and recovery without unwanted fat accumulation.']
+  };
+  const d = dMap[g]||dMap.recomp;
+  document.getElementById('tdeeDescription').textContent = d[0];
+  document.getElementById('adjustmentTitle').textContent = d[1];
+  document.getElementById('adjustmentExplain').textContent = d[2];
+  showAchievement('Numbers Unlocked');
+}
+
+function populateMacros() {
+  const { protein:p, carbs:c, fats:f, targetCals:t } = state.calc;
+  document.getElementById('proteinGrams').textContent = p+'g';
+  document.getElementById('proteinKcal').textContent = (p*4)+' kcal';
+  document.getElementById('carbsGrams').textContent = c+'g';
+  document.getElementById('carbsKcal').textContent = (c*4)+' kcal';
+  document.getElementById('fatsGrams').textContent = f+'g';
+  document.getElementById('fatsKcal').textContent = (f*9)+' kcal';
+  document.getElementById('pieKcal').textContent = t;
+  setTimeout(()=>updateDonut(p,c,f), 300);
+  renderMacroRationale();
+  renderSampleMeals();
+  showAchievement('Macro Blueprint Ready');
+}
+
+function populateQuizResults() {
+  const s = state.quiz.score;
+  const msgs=['Keep at it — revisit the modules and try again.','Good foundation. One more to review.','Solid understanding. Almost perfect.','Perfect score. You are ready to transform.'];
+  document.getElementById('quizScoreDisplay').textContent = `${s}/3`;
+  document.getElementById('quizScoreMessage').textContent = msgs[s];
+  document.getElementById('xpEarned').textContent = `+${s*50+75} XP`;
+  document.getElementById('totalXpDisplay').textContent = `${state.xp} XP`;
+  document.getElementById('quizReview').innerHTML = `<div class="section-label" style="margin-bottom:12px">Answer Review</div>`+
+    QUIZ.map((q,i)=>{
+      const ans=state.quiz.answers[i], ok=ans===q.correct;
+      return `<div style="padding:12px 0;border-bottom:1px solid rgba(255,255,255,.05)"><div style="display:flex;gap:10px;align-items:flex-start"><div style="width:20px;height:20px;border-radius:50%;flex-shrink:0;background:${ok?'rgba(74,222,128,.2)':'rgba(248,113,113,.2)'};border:1px solid ${ok?'var(--success)':'var(--error)'};display:flex;align-items:center;justify-content:center;font-size:11px;color:${ok?'var(--success)':'var(--error)'}">${ok?'+':'x'}</div><div><div style="font-size:13px;font-weight:600;margin-bottom:4px">${q.q}</div><div style="font-size:12px;color:${ok?'var(--success)':'var(--error)'}">${q.opts[q.correct]}</div></div></div></div>`;
+    }).join('');
+  showAchievement('Knowledge Check Complete');
+}
+
+function showAchievement(desc) {
+  document.getElementById('achievementDesc').textContent = desc;
+  const el = document.getElementById('achievement');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+function animateNumber(el, target, dur=1600) {
+  const t0 = performance.now();
+  (function frame(now) {
+    const prog = Math.min((now-t0)/dur,1);
+    const ease = 1-Math.pow(1-prog,3);
+    el.textContent = Math.round(target*ease).toLocaleString();
+    if(prog<1) requestAnimationFrame(frame);
+  })(t0);
+}
+
+function selectGoal(goal, el) {
+  state.profile.goal = goal;
+  document.querySelectorAll('.goal-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('goalNext').disabled = false;
+}
+
+function toggleEquip(eq, el) {
+  el.classList.toggle('selected');
+  const i = state.profile.equipment.indexOf(eq);
+  i>=0 ? state.profile.equipment.splice(i,1) : state.profile.equipment.push(eq);
+}
+
+function showTab(tab, btn) {
+  ['progressive','recovery','periodization'].forEach(t=>{
+    document.getElementById(`tab-${t}`).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('.module-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.tabsViewed.add(tab);
+  if(state.tabsViewed.size>=3 && !state._scholarGiven){
+    state._scholarGiven=true; state.xp+=75;
+    showAchievement('All Training Modules Complete');
+  }
+}
+
+function nextStep() {
+  const s = state.step;
+
+  // Show goal weight field on step 3 only if goal involves a target weight
+  if(s===2) {
+    const needsGoalWeight = state.profile.goal==='lose' || state.profile.goal==='recomp';
+    document.getElementById('goalWeightGroup').style.display = needsGoalWeight ? 'block' : 'none';
+  }
+
+  if(s===3){
+    const bmr=calcBMR(), tdee=Math.round(bmr*ACT[state.profile.activityLevel]), targetCals=calcTargetCals(tdee);
+    const macros=calcMacros(targetCals);
+    state.calc={bmr,tdee,targetCals,...macros};
+  }
+  if(s===1) showAchievement('Profile Complete');
+  if(s===2) showAchievement('Goal Set');
+
+  goToStep(s+1);
+
+  if(s===3) setTimeout(populateTDEE,350);
+  if(s===4) setTimeout(populateMacros,350);
+  if(s===6){
+    state.quiz={currentQuestion:0,answers:[null,null,null],score:0};
+    setTimeout(renderQuiz,350);
+  }
+  if(s===7) setTimeout(populateQuizResults,350);
+  if(s===8){
+    setTimeout(()=>{
+      renderWeekGrid(); renderPhaseDescriptions(); renderRecipePreview();
+      const g={lose:'Fat Loss',muscle:'Muscle Building',recomp:'Body Recomposition',athletic:'Athletic Performance'};
+      document.getElementById('blueprintSubtitle').textContent=`Your personalized ${g[state.profile.goal]||'Transformation'} program — ${state.profile.daysPerWeek} days/week.`;
+      showAchievement('Blueprint Preview Unlocked');
+    },350);
+  }
+  if(s===9){
+    document.getElementById('ctaName').textContent = state.profile.name||'Champion';
+    document.getElementById('finalXp').textContent = state.xp+' XP';
+  }
+}
+
+function prevStep() { goToStep(state.step-1); }
+
+function goToStep(n) {
+  if(n<0||n>=state.totalSteps) return;
+  const cur = document.getElementById(`step-${state.step}`);
+  cur.classList.add('exit');
+  setTimeout(()=>{
+    cur.classList.remove('active','exit');
+    state.step=n;
+    document.getElementById(`step-${state.step}`).classList.add('active');
+    updateProgress();
+    window.scrollTo({top:0,behavior:'smooth'});
+  },300);
+}
+
+function updateProgress() {
+  document.getElementById('progressBar').style.width = `${(state.step/(state.totalSteps-1))*100}%`;
+  document.getElementById('stepIndicator').textContent = state.step>0 ? `Step ${state.step} of ${state.totalSteps-1}` : '';
+}
+
+updateProgress();
+</script>
+</body>
+</html>

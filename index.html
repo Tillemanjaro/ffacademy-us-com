@@ -70,15 +70,39 @@
     max-width: none;
   }
   .nav-dot {
-    width: 10px; height: 10px;
+    width: 12px; height: 12px;
     border-radius: 50%;
     background: rgba(255,255,255,.2);
     cursor: pointer;
     transition: all .3s;
     flex-shrink: 0;
+    position: relative;
   }
+  .nav-dot:hover { background: rgba(255,255,255,.5); transform: scale(1.3); }
   .nav-dot.active { background: var(--gold); transform: scale(1.4); }
+  .nav-dot.active:hover { background: var(--gold); }
   .nav-dot.done { background: var(--green); }
+  .nav-dot.done:hover { background: #00e676; }
+  .nav-dot-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,15,.95);
+    border: 1px solid rgba(255,255,255,.15);
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 5px 9px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .2s;
+    z-index: 999;
+    letter-spacing: .5px;
+  }
+  .nav-dot:hover .nav-dot-tooltip { opacity: 1; }
   
   @media (max-width: 768px) {
     nav {
@@ -735,6 +759,7 @@
     .hero-player-card { width: 130px; }
   }
 </style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
 
@@ -5023,13 +5048,22 @@
   let current = 1;
 
   function buildDots() {
+    const STEP_NAMES = [
+      'Intro', 'What Is FF?', 'Positions', 'Scoring', 'Formats',
+      'Draft Strategy', 'Tips & Glossary', 'How to Win', 'Bye Weeks',
+      'Rookie Mistakes', 'Trade Tips', 'Draft Tiers', 'Playoffs',
+      'Resources', 'You\'re Ready!'
+    ];
     const wrap = document.getElementById('nav-dots');
     wrap.innerHTML = '';
     for (let i = 1; i <= TOTAL; i++) {
       const d = document.createElement('div');
       d.className = 'nav-dot' + (i === current ? ' active' : i < current ? ' done' : '');
       d.onclick = () => goTo(i);
-      d.title = 'Step ' + i;
+      const tip = document.createElement('span');
+      tip.className = 'nav-dot-tooltip';
+      tip.textContent = (i === current ? '▶ ' : '') + STEP_NAMES[i - 1];
+      d.appendChild(tip);
       wrap.appendChild(d);
     }
   }

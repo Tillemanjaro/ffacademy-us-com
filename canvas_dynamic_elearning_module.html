@@ -1,0 +1,1452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dynamic Canvas eLearning Module</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #5d6978;
+      --line: #dbe2ea;
+      --panel: #ffffff;
+      --soft: #f5f7fa;
+      --brand: #0e7c7b;
+      --brand-strong: #075f5d;
+      --accent: #d94f30;
+      --gold: #d89c21;
+      --good: #217a45;
+      --bad: #a33434;
+      --shadow: 0 18px 50px rgba(22, 32, 42, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(14, 124, 123, 0.10), rgba(245, 247, 250, 0) 340px),
+        var(--soft);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    input[type="radio"],
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    .module-shell {
+      min-height: 100vh;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px max(20px, calc((100vw - 1180px) / 2));
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid rgba(219, 226, 234, 0.9);
+      backdrop-filter: blur(18px);
+    }
+
+    .topbar::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .course-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .course-mark svg {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+    }
+
+    .course-mark span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .progress-wrap {
+      width: min(360px, 42vw);
+      display: grid;
+      gap: 5px;
+    }
+
+    .progress-copy {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7edf2;
+    }
+
+    .progress-bar {
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--brand), var(--gold));
+      transition: width 260ms ease;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+      gap: 34px;
+      align-items: center;
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 48px 0 26px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--brand-strong);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 780px;
+      margin: 0;
+      font-size: clamp(38px, 5.8vw, 76px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      max-width: 670px;
+      margin: 22px 0 0;
+      color: #344254;
+      font-size: clamp(17px, 2vw, 21px);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: var(--brand);
+      color: white;
+      font-weight: 850;
+      text-decoration: none;
+      transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+      -webkit-appearance: none;
+      user-select: none;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-1px);
+      background: var(--brand-strong);
+      box-shadow: 0 12px 24px rgba(14, 124, 123, 0.22);
+      outline: none;
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn.secondary {
+      border-color: var(--line);
+      background: #fff;
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    .btn.secondary:hover,
+    .btn.secondary:focus-visible {
+      background: #f5f7fa;
+      border-color: var(--brand);
+    }
+
+    .hero-visual {
+      position: relative;
+      min-height: 430px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0f1d26;
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(15, 29, 38, 0.94), rgba(15, 29, 38, 0.28)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='980' height='760' viewBox='0 0 980 760'%3E%3Crect width='980' height='760' fill='%23192733'/%3E%3Cg opacity='.92'%3E%3Cpath d='M125 165h310v110H125z' fill='%23f7fafc'/%3E%3Cpath d='M160 202h240v14H160zM160 232h178v14H160z' fill='%230e7c7b'/%3E%3Cpath d='M515 112h310v225H515z' fill='%23f7fafc'/%3E%3Cpath d='M550 153h112v16H550zM550 195h235v13H550zM550 225h210v13H550zM550 255h158v13H550z' fill='%2317202a'/%3E%3Ccircle cx='754' cy='158' r='36' fill='%23d94f30'/%3E%3Cpath d='M106 371h778v220H106z' fill='%23f7fafc'/%3E%3Cpath d='M151 429h105v105H151z' fill='%23d89c21'/%3E%3Cpath d='M301 430h496v15H301zM301 471h420v15H301zM301 512h306v15H301z' fill='%2317202a'/%3E%3Cpath d='M630 613h182v42H630z' fill='%230e7c7b'/%3E%3C/g%3E%3Cpath d='M0 705c146-54 289-78 429-71 214 11 351 85 551 31v95H0z' fill='%230e7c7b' opacity='.82'/%3E%3C/svg%3E") center / cover;
+      z-index: -2;
+    }
+
+    .hero-visual::after {
+      content: "";
+      position: absolute;
+      inset: auto 24px 24px 24px;
+      height: 90px;
+      border-top: 1px solid rgba(255, 255, 255, 0.28);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.03));
+    }
+
+    .metric-stack {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 26px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .metric {
+      min-height: 74px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 23px;
+      line-height: 1;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .content-band {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 22px 0 70px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .side-nav {
+      position: sticky;
+      top: 88px;
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 10px 34px rgba(23, 32, 42, 0.06);
+    }
+
+    .nav-btn {
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      min-height: 48px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--ink);
+      text-align: left;
+      font-weight: 800;
+      transition: background 160ms ease, border-color 160ms ease;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .nav-btn:active {
+      transform: scale(0.98);
+    }
+
+    .nav-btn span:first-child {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 999px;
+      background: #e8f3f2;
+      color: var(--brand-strong);
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .nav-btn[aria-current="true"] {
+      background: #e8f3f2;
+    }
+
+    .nav-btn.is-complete span:first-child {
+      background: var(--good);
+      color: #fff;
+    }
+
+    .lesson-stage {
+      min-width: 0;
+    }
+
+    .lesson-panel {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 10px 34px rgba(23, 32, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .lesson-panel.is-active {
+      display: block;
+    }
+
+    .panel-header {
+      padding: 28px 30px 20px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #fff, #f8fafc);
+    }
+
+    .panel-kicker {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(27px, 3vw, 42px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .panel-header p {
+      margin: 14px 0 0;
+      max-width: 770px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .panel-body {
+      display: grid;
+      gap: 22px;
+      padding: 26px 30px 30px;
+    }
+
+    .callout {
+      padding: 18px;
+      border-left: 5px solid var(--brand);
+      border-radius: 8px;
+      background: #edf8f7;
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .reveal-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .reveal-card {
+      min-height: 150px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      text-align: left;
+      transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      cursor: pointer;
+      -webkit-appearance: none;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .reveal-card:hover,
+    .reveal-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(14, 124, 123, 0.45);
+      box-shadow: 0 12px 28px rgba(23, 32, 42, 0.10);
+      outline: none;
+    }
+
+    .reveal-card:active {
+      transform: translateY(0);
+    }
+
+    .reveal-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .reveal-card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+      counter-reset: steps;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .timeline-item::before {
+      counter-increment: steps;
+      content: counter(steps);
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .timeline-item h3 {
+      margin: 0 0 4px;
+      font-size: 18px;
+    }
+
+    .timeline-item p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .scenario {
+      display: grid;
+      gap: 16px;
+    }
+
+    .scenario-options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .scenario-option {
+      width: 100%;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      text-align: left;
+      font-weight: 750;
+      transition: all 160ms ease;
+      cursor: pointer;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      -webkit-appearance: none;
+    }
+
+    .scenario-option:hover {
+      border-color: var(--brand);
+      background: #f8fafc;
+    }
+
+    .scenario-option:active {
+      transform: scale(0.98);
+    }
+
+    .scenario-option.is-selected {
+      border-color: var(--brand);
+      background: #e8f3f2;
+    }
+
+    .scenario-feedback {
+      min-height: 66px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #f9fafb;
+      color: var(--muted);
+    }
+
+    .knowledge-check {
+      display: grid;
+      gap: 18px;
+    }
+
+    .question-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .question-card h3 {
+      margin: 0 0 14px;
+      font-size: 19px;
+    }
+
+    .answer-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .answer {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      min-height: 48px;
+      transition: all 160ms ease;
+      cursor: pointer;
+    }
+
+    .answer:hover {
+      background: #f8fafc;
+      border-color: var(--brand);
+    }
+
+    .answer:active {
+      transform: scale(0.98);
+    }
+
+    .answer input {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--brand);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .answer.is-correct {
+      border-color: rgba(33, 122, 69, 0.45);
+      background: #edf8f0;
+    }
+
+    .answer.is-wrong {
+      border-color: rgba(163, 52, 52, 0.42);
+      background: #fff1f1;
+    }
+
+    .quiz-feedback {
+      display: none;
+      padding: 18px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .quiz-feedback.is-visible {
+      display: block;
+    }
+
+    .quiz-score {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .panel-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 30px 28px;
+      border-top: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .module-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding-top: 34px;
+        gap: 24px;
+      }
+
+      .hero-visual {
+        min-height: 320px;
+      }
+
+      .side-nav {
+        position: static;
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 12px max(16px, calc((100vw - 100%) / 2));
+        gap: 12px;
+      }
+
+      .course-mark {
+        min-width: auto;
+      }
+
+      .course-mark span {
+        display: none;
+      }
+
+      .progress-wrap {
+        width: auto;
+        flex: 1;
+      }
+
+      h1 {
+        font-size: clamp(28px, 4vw, 48px);
+      }
+
+      h2 {
+        font-size: clamp(22px, 3vw, 32px);
+      }
+
+      .hero p {
+        font-size: clamp(15px, 1.8vw, 18px);
+      }
+
+      .reveal-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .metric-stack {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .scenario-option,
+      .answer {
+        min-height: 48px;
+      }
+
+      .nav-btn {
+        min-height: 44px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 16px;
+      }
+
+      .progress-wrap {
+        width: 100%;
+      }
+
+      .content-band,
+      .hero {
+        width: min(100% - 28px, 1180px);
+        gap: 16px;
+      }
+
+      .hero {
+        padding: 24px 0 16px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .hero-actions {
+        gap: 8px;
+      }
+
+      .metric-stack,
+      .reveal-grid,
+      .side-nav {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-header,
+      .panel-body,
+      .panel-footer {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+
+      .panel-header {
+        padding-top: 20px;
+        padding-bottom: 16px;
+      }
+
+      .panel-body {
+        gap: 16px;
+        padding: 18px 18px 20px;
+      }
+
+      .panel-footer {
+        flex-direction: column-reverse;
+        padding: 16px 18px 20px;
+        gap: 8px;
+      }
+
+      .btn {
+        width: 100%;
+        min-height: 44px;
+        font-size: 1rem;
+      }
+
+      .answer,
+      .scenario-option,
+      .reveal-card {
+        min-height: 50px;
+        padding: 14px 12px;
+      }
+
+      .timeline-item {
+        grid-template-columns: 40px minmax(0, 1fr);
+        padding: 12px;
+        gap: 12px;
+      }
+
+      .timeline-item::before {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+      }
+
+      .question-card {
+        padding: 14px;
+      }
+
+      .question-card h3 {
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .callout {
+        padding: 14px;
+      }
+
+      .metric {
+        min-height: 66px;
+        padding: 10px;
+      }
+
+      .metric strong {
+        font-size: 20px;
+      }
+
+      .metric span {
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        font-size: 14px;
+      }
+
+      .topbar {
+        padding: 10px 12px;
+        gap: 8px;
+      }
+
+      .course-mark svg {
+        width: 28px;
+        height: 28px;
+      }
+
+      .progress-copy {
+        font-size: 11px;
+      }
+
+      h1 {
+        font-size: clamp(24px, 6vw, 36px);
+        line-height: 1.1;
+      }
+
+      h2 {
+        font-size: clamp(18px, 4vw, 26px);
+      }
+
+      .hero {
+        padding: 16px 0 12px;
+        gap: 12px;
+      }
+
+      .hero p {
+        font-size: 14px;
+        margin-top: 12px;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+
+      .hero-actions {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+      }
+
+      .btn {
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+
+      .hero-visual {
+        min-height: 260px;
+      }
+
+      .metric-stack {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        gap: 6px;
+      }
+
+      .metric {
+        min-height: 56px;
+        padding: 8px;
+      }
+
+      .metric strong {
+        font-size: 18px;
+      }
+
+      .metric span {
+        font-size: 10px;
+      }
+
+      .content-band {
+        padding: 16px 0 40px;
+      }
+
+      .module-grid {
+        gap: 12px;
+      }
+
+      .side-nav {
+        gap: 6px;
+        padding: 8px;
+      }
+
+      .nav-btn {
+        min-height: 40px;
+        font-size: 13px;
+      }
+
+      .nav-btn span:first-child {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+
+      .panel-header {
+        padding: 16px 12px 12px;
+      }
+
+      .panel-kicker {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+
+      .panel-body {
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .panel-footer {
+        padding: 12px;
+        gap: 6px;
+      }
+
+      .callout {
+        padding: 12px;
+        font-size: 13px;
+      }
+
+      .callout strong {
+        margin-bottom: 3px;
+      }
+
+      .reveal-card {
+        min-height: auto;
+        padding: 12px;
+      }
+
+      .reveal-card strong {
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .reveal-card p {
+        font-size: 13px;
+      }
+
+      .timeline-item {
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .timeline-item::before {
+        width: 36px;
+        height: 36px;
+        font-size: 12px;
+      }
+
+      .timeline-item h3 {
+        font-size: 15px;
+        margin-bottom: 2px;
+      }
+
+      .timeline-item p {
+        font-size: 13px;
+      }
+
+      .scenario-option,
+      .answer {
+        padding: 12px 10px;
+        font-size: 13px;
+        min-height: 44px;
+      }
+
+      .answer-list {
+        gap: 8px;
+      }
+
+      .question-card {
+        padding: 12px;
+      }
+
+      .question-card h3 {
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .quiz-feedback {
+        padding: 12px;
+        font-size: 13px;
+      }
+
+      .quiz-score {
+        font-size: 20px;
+        margin-bottom: 6px;
+      }
+
+      input[type="radio"] {
+        width: 16px;
+        height: 16px;
+      }
+    }
+  </style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+  <div class="module-shell">
+    <header class="topbar" aria-label="Module progress">
+      <div class="course-mark">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <rect width="48" height="48" rx="10" fill="#0e7c7b"></rect>
+          <path d="M13 16h22v4H13zm0 8h16v4H13zm0 8h22v4H13z" fill="#fff"></path>
+          <path d="M34 22l5 5-5 5" fill="none" stroke="#d89c21" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span id="courseTitle">Dynamic Learning Module</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-copy"><span>Progress</span><span id="progressLabel">0%</span></div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="moduleTitle">
+        <div>
+          <p class="eyebrow" id="moduleEyebrow">Canvas-ready interactive lesson</p>
+          <h1 id="moduleTitle">Build skill through choice, feedback, and practice.</h1>
+          <p id="moduleIntro">Move through a short concept sequence, make a judgment call in context, and complete a scored knowledge check with instant explanations.</p>
+          <div class="hero-actions">
+            <a class="btn" href="#lesson">Start module</a>
+            <a class="btn secondary" href="#check">Jump to knowledge check</a>
+          </div>
+        </div>
+        <div class="hero-visual" aria-label="Stylized preview of online learning content">
+          <div class="metric-stack">
+            <div class="metric"><strong>4</strong><span>lesson moves</span></div>
+            <div class="metric"><strong>1</strong><span>scenario</span></div>
+            <div class="metric"><strong>5</strong><span>check items</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-band" id="lesson">
+        <div class="module-grid">
+          <nav class="side-nav" aria-label="Lesson sections" id="lessonNav"></nav>
+          <div class="lesson-stage" id="lessonStage"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const moduleData = {
+      courseTitle: "Dynamic Learning Module",
+      eyebrow: "Canvas-ready interactive lesson",
+      title: "Build skill through choice, feedback, and practice.",
+      intro: "Move through a short concept sequence, make a judgment call in context, and complete a scored knowledge check with instant explanations.",
+      sections: [
+        {
+          type: "concepts",
+          nav: "Core Ideas",
+          kicker: "Step 1",
+          title: "What learners should notice first",
+          summary: "A strong online module gives learners a clear target, a reason to care, and frequent chances to do something with the idea.",
+          calloutTitle: "Design principle",
+          calloutBody: "Keep every screen anchored to one action: inspect, choose, compare, apply, or reflect.",
+          cards: [
+            {
+              title: "Clarity",
+              body: "Learners should know what success looks like before they start practicing."
+            },
+            {
+              title: "Interaction",
+              body: "Short decisions beat long passive explanations when the goal is retention."
+            },
+            {
+              title: "Feedback",
+              body: "Immediate explanation helps learners correct the reason behind an answer."
+            }
+          ]
+        },
+        {
+          type: "process",
+          nav: "Process",
+          kicker: "Step 2",
+          title: "A simple pattern for dynamic course pages",
+          summary: "Use this flow whenever you want a Canvas page to feel more like a guided learning experience than a static reading.",
+          steps: [
+            {
+              title: "Frame the decision",
+              body: "Start with the situation learners will recognize from the real course context."
+            },
+            {
+              title: "Show the model",
+              body: "Give the criteria, example, or framework they need to make a thoughtful choice."
+            },
+            {
+              title: "Ask for action",
+              body: "Use a scenario, sorting task, reveal card, or short check to require active processing."
+            },
+            {
+              title: "Close the loop",
+              body: "Explain why the best answer works and what to watch for next time."
+            }
+          ]
+        },
+        {
+          type: "scenario",
+          nav: "Scenario",
+          kicker: "Step 3",
+          title: "Try it in context",
+          summary: "A learner reaches the middle of a module and starts clicking ahead without reading. Which intervention best supports learning without stopping momentum?",
+          options: [
+            {
+              text: "Add a required interaction that asks the learner to apply the idea before advancing.",
+              feedback: "Best choice. A meaningful interaction preserves momentum while requiring the learner to process the concept."
+            },
+            {
+              text: "Add more explanation text before the next page.",
+              feedback: "More text may help some learners, but it does not directly create active processing."
+            },
+            {
+              text: "Lock the next item until the learner spends two minutes on the page.",
+              feedback: "Time-on-page controls pacing, but it does not confirm understanding or improve the learning experience."
+            }
+          ]
+        },
+        {
+          type: "quiz",
+          nav: "Knowledge Check",
+          kicker: "Step 4",
+          title: "Knowledge check",
+          summary: "Answer each question, then submit to see your score and review explanations.",
+          questions: [
+            {
+              prompt: "What makes a Canvas module feel more dynamic?",
+              options: [
+                "A long reading with no learner choices",
+                "Frequent, purposeful actions with immediate feedback",
+                "Decorative styling without practice"
+              ],
+              answer: 1,
+              explanation: "Dynamic modules ask learners to do something meaningful with the content and respond with useful feedback."
+            },
+            {
+              prompt: "Which design move most directly supports retention?",
+              options: [
+                "Replacing every paragraph with an image",
+                "Asking learners to apply the idea in a realistic situation",
+                "Using the same color for every interface element"
+              ],
+              answer: 1,
+              explanation: "Application strengthens memory because learners connect the idea to use, not just recognition."
+            },
+            {
+              prompt: "What should feedback explain?",
+              options: [
+                "Only whether the answer is right or wrong",
+                "Why the answer works and how to improve the reasoning",
+                "The learner's final course grade"
+              ],
+              answer: 1,
+              explanation: "Good feedback teaches the reasoning behind the answer so learners can transfer the skill."
+            },
+            {
+              prompt: "Which item is best suited for a quick knowledge check?",
+              options: [
+                "A focused question tied to one learning target",
+                "A broad essay that introduces new material",
+                "A question with several unrelated correct answers"
+              ],
+              answer: 0,
+              explanation: "Knowledge checks work best when they measure a specific target and give clear feedback."
+            },
+            {
+              prompt: "When customizing this module for your course, what should change first?",
+              options: [
+                "The learning target, examples, scenario, and questions",
+                "Only the button colors",
+                "Only the title in the browser tab"
+              ],
+              answer: 0,
+              explanation: "The module becomes course-specific when the learning target and practice moments match your actual outcomes."
+            }
+          ]
+        }
+      ]
+    };
+
+    const state = {
+      activeIndex: 0,
+      completed: new Set(),
+      scenarioChoice: null
+    };
+
+    const courseTitle = document.getElementById("courseTitle");
+    const moduleEyebrow = document.getElementById("moduleEyebrow");
+    const moduleTitle = document.getElementById("moduleTitle");
+    const moduleIntro = document.getElementById("moduleIntro");
+    const lessonNav = document.getElementById("lessonNav");
+    const lessonStage = document.getElementById("lessonStage");
+    const progressBar = document.getElementById("progressBar");
+    const progressLabel = document.getElementById("progressLabel");
+
+    function init() {
+      courseTitle.textContent = moduleData.courseTitle;
+      moduleEyebrow.textContent = moduleData.eyebrow;
+      moduleTitle.textContent = moduleData.title;
+      moduleIntro.textContent = moduleData.intro;
+      renderNav();
+      renderSections();
+      setActive(0);
+      updateProgress();
+    }
+
+    function renderNav() {
+      lessonNav.innerHTML = moduleData.sections.map((section, index) => `
+        <button class="nav-btn" type="button" data-index="${index}">
+          <span>${index + 1}</span>
+          <span>${section.nav}</span>
+        </button>
+      `).join("");
+
+      lessonNav.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => setActive(Number(button.dataset.index)));
+      });
+    }
+
+    function renderSections() {
+      lessonStage.innerHTML = moduleData.sections.map((section, index) => `
+        <article class="lesson-panel" data-panel="${index}" ${section.type === "quiz" ? 'id="check"' : ""}>
+          <header class="panel-header">
+            <p class="panel-kicker">${section.kicker}</p>
+            <h2>${section.title}</h2>
+            <p>${section.summary}</p>
+          </header>
+          <div class="panel-body">
+            ${renderBody(section, index)}
+          </div>
+          <footer class="panel-footer">
+            <button class="btn secondary" type="button" data-prev="${index}" ${index === 0 ? "disabled" : ""}>Back</button>
+            <button class="btn" type="button" data-next="${index}">${index === moduleData.sections.length - 1 ? "Finish module" : "Continue"}</button>
+          </footer>
+        </article>
+      `).join("");
+
+      lessonStage.querySelectorAll("[data-prev]").forEach((button) => {
+        button.addEventListener("click", () => setActive(Number(button.dataset.prev) - 1));
+      });
+
+      lessonStage.querySelectorAll("[data-next]").forEach((button) => {
+        button.addEventListener("click", () => completeAndContinue(Number(button.dataset.next)));
+      });
+
+      bindInteractions();
+    }
+
+    function renderBody(section, index) {
+      if (section.type === "concepts") {
+        return `
+          <div class="callout">
+            <strong>${section.calloutTitle}</strong>
+            <span>${section.calloutBody}</span>
+          </div>
+          <div class="reveal-grid">
+            ${section.cards.map((card) => `
+              <button class="reveal-card" type="button" aria-expanded="false">
+                <strong>${card.title}</strong>
+                <p>${card.body}</p>
+              </button>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      if (section.type === "process") {
+        return `
+          <div class="timeline">
+            ${section.steps.map((step) => `
+              <div class="timeline-item">
+                <div>
+                  <h3>${step.title}</h3>
+                  <p>${step.body}</p>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      if (section.type === "scenario") {
+        return `
+          <div class="scenario" data-scenario="${index}">
+            <div class="scenario-options">
+              ${section.options.map((option, optionIndex) => `
+                <button class="scenario-option" type="button" data-option="${optionIndex}">${option.text}</button>
+              `).join("")}
+            </div>
+            <div class="scenario-feedback" aria-live="polite">Choose the response you would use, then review the coaching note.</div>
+          </div>
+        `;
+      }
+
+      if (section.type === "quiz") {
+        return `
+          <form class="knowledge-check" id="knowledgeCheck">
+            ${section.questions.map((question, questionIndex) => `
+              <fieldset class="question-card" data-question="${questionIndex}">
+                <legend class="sr-only">Question ${questionIndex + 1}</legend>
+                <h3>${questionIndex + 1}. ${question.prompt}</h3>
+                <div class="answer-list">
+                  ${question.options.map((option, optionIndex) => `
+                    <label class="answer">
+                      <input type="radio" name="question-${questionIndex}" value="${optionIndex}">
+                      <span>${option}</span>
+                    </label>
+                  `).join("")}
+                </div>
+              </fieldset>
+            `).join("")}
+            <button class="btn" type="submit">Submit knowledge check</button>
+            <div class="quiz-feedback" id="quizFeedback" aria-live="polite"></div>
+          </form>
+        `;
+      }
+
+      return "";
+    }
+
+    function bindInteractions() {
+      lessonStage.querySelectorAll(".reveal-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          card.setAttribute("aria-expanded", "true");
+          card.style.background = "#f8fafc";
+        });
+      });
+
+      lessonStage.querySelectorAll(".scenario").forEach((scenario) => {
+        const section = moduleData.sections[Number(scenario.dataset.scenario)];
+        const feedback = scenario.querySelector(".scenario-feedback");
+        scenario.querySelectorAll(".scenario-option").forEach((button) => {
+          button.addEventListener("click", () => {
+            scenario.querySelectorAll(".scenario-option").forEach((item) => item.classList.remove("is-selected"));
+            button.classList.add("is-selected");
+            state.scenarioChoice = Number(button.dataset.option);
+            feedback.textContent = section.options[state.scenarioChoice].feedback;
+            markComplete(Number(scenario.dataset.scenario));
+          });
+        });
+      });
+
+      const quiz = document.getElementById("knowledgeCheck");
+      if (quiz) {
+        quiz.addEventListener("submit", gradeQuiz);
+      }
+    }
+
+    function setActive(index) {
+      state.activeIndex = Math.max(0, Math.min(index, moduleData.sections.length - 1));
+      lessonStage.querySelectorAll(".lesson-panel").forEach((panel, panelIndex) => {
+        panel.classList.toggle("is-active", panelIndex === state.activeIndex);
+      });
+
+      lessonNav.querySelectorAll(".nav-btn").forEach((button, buttonIndex) => {
+        button.setAttribute("aria-current", String(buttonIndex === state.activeIndex));
+        button.classList.toggle("is-complete", state.completed.has(buttonIndex));
+      });
+    }
+
+    function completeAndContinue(index) {
+      markComplete(index);
+      if (index < moduleData.sections.length - 1) {
+        setActive(index + 1);
+        document.getElementById("lesson").scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        updateProgress();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    function markComplete(index) {
+      state.completed.add(index);
+      updateProgress();
+      setActive(state.activeIndex);
+    }
+
+    function updateProgress() {
+      const percentage = Math.round((state.completed.size / moduleData.sections.length) * 100);
+      progressBar.style.width = `${percentage}%`;
+      progressLabel.textContent = `${percentage}%`;
+    }
+
+    function gradeQuiz(event) {
+      event.preventDefault();
+      const quizSectionIndex = moduleData.sections.findIndex((section) => section.type === "quiz");
+      const quizSection = moduleData.sections[quizSectionIndex];
+      let score = 0;
+      const explanations = [];
+
+      quizSection.questions.forEach((question, questionIndex) => {
+        const selected = document.querySelector(`input[name="question-${questionIndex}"]:checked`);
+        const selectedValue = selected ? Number(selected.value) : null;
+        const card = document.querySelector(`[data-question="${questionIndex}"]`);
+        card.querySelectorAll(".answer").forEach((answer, optionIndex) => {
+          answer.classList.remove("is-correct", "is-wrong");
+          if (optionIndex === question.answer) {
+            answer.classList.add("is-correct");
+          } else if (optionIndex === selectedValue) {
+            answer.classList.add("is-wrong");
+          }
+        });
+
+        if (selectedValue === question.answer) {
+          score += 1;
+        }
+
+        explanations.push(`<p><strong>Question ${questionIndex + 1}:</strong> ${question.explanation}</p>`);
+      });
+
+      const feedback = document.getElementById("quizFeedback");
+      feedback.classList.add("is-visible");
+      feedback.innerHTML = `
+        <p class="quiz-score">${score} / ${quizSection.questions.length}</p>
+        <p>${score === quizSection.questions.length ? "Excellent. You are ready to move on." : "Review the explanations below, then try the check again if your course requires mastery."}</p>
+        ${explanations.join("")}
+      `;
+      markComplete(quizSectionIndex);
+      feedback.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    init();
+  </script>
+</body>
+</html>

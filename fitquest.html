@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitQuest RPG — Your Fitness Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07071a;--surface:#0f0f2e;--surface2:#1a1a3e;--surface3:#252550;
+  --gold:#e8b84b;--gold2:#ffd700;--green:#44dd44;--red:#ff4444;
+  --blue:#4488ff;--purple:#aa44ff;--cyan:#44eeff;--orange:#ff8844;
+  --text:#f0f0f0;--muted:#8888aa;--border:rgba(232,184,75,0.25);
+  --pixel:2px;
+}
+*{margin:0;padding:0;box-sizing:border-box;image-rendering:pixelated;}
+html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:'Press Start 2P',monospace;overflow-x:hidden;}
+
+/* ── SCREEN SYSTEM ── */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;padding:16px;}
+.screen.active{display:flex;}
+
+/* ── PIXEL BORDER ── */
+.pixel-box{
+  background:var(--surface);
+  border:3px solid var(--gold);
+  box-shadow:4px 4px 0 #000, inset 0 0 0 1px rgba(232,184,75,0.1);
+  padding:20px;
+}
+.pixel-box-blue{border-color:var(--blue);box-shadow:4px 4px 0 #000, 0 0 20px rgba(68,136,255,0.2);}
+.pixel-box-green{border-color:var(--green);box-shadow:4px 4px 0 #000, 0 0 20px rgba(68,221,68,0.2);}
+.pixel-box-purple{border-color:var(--purple);box-shadow:4px 4px 0 #000, 0 0 20px rgba(170,68,255,0.2);}
+.pixel-box-red{border-color:var(--red);box-shadow:4px 4px 0 #000;}
+
+/* ── BUTTONS ── */
+.btn{
+  font-family:'Press Start 2P',monospace;font-size:10px;
+  padding:12px 20px;cursor:pointer;border:2px solid;
+  transition:all 0.08s;display:inline-block;text-decoration:none;
+  background:var(--surface2);
+}
+.btn:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 #000;}
+.btn:active{transform:translate(0,0);box-shadow:none;}
+.btn-gold{color:var(--gold);border-color:var(--gold);}
+.btn-gold:hover{background:var(--gold);color:#000;}
+.btn-green{color:var(--green);border-color:var(--green);}
+.btn-green:hover{background:var(--green);color:#000;}
+.btn-blue{color:var(--blue);border-color:var(--blue);}
+.btn-blue:hover{background:var(--blue);color:#fff;}
+.btn-red{color:var(--red);border-color:var(--red);}
+.btn-red:hover{background:var(--red);color:#fff;}
+.btn-purple{color:var(--purple);border-color:var(--purple);}
+.btn-purple:hover{background:var(--purple);color:#fff;}
+.btn-sm{font-size:8px;padding:8px 14px;}
+.btn-lg{font-size:12px;padding:16px 28px;}
+.btn-block{display:block;width:100%;text-align:center;margin-bottom:10px;}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+/* ── HP/XP BARS ── */
+.bar-wrap{width:100%;background:#111;height:14px;border:2px solid rgba(255,255,255,0.1);margin:4px 0;}
+.bar-fill{height:100%;transition:width .6s;}
+.bar-xp{background:linear-gradient(90deg,#e8b84b,#ffd700);}
+.bar-hp{background:linear-gradient(90deg,#44dd44,#88ff88);}
+.bar-streak{background:linear-gradient(90deg,#ff8844,#ffcc44);}
+.bar-energy{background:linear-gradient(90deg,#4488ff,#44eeff);}
+
+/* ── PIXEL SPRITE (CSS drawn) ── */
+canvas.sprite{image-rendering:pixelated;display:block;}
+
+/* ── TITLE SCREEN ── */
+#screen-title{justify-content:center;text-align:center;}
+.title-logo{font-size:clamp(20px,5vw,36px);color:var(--gold);text-shadow:4px 4px 0 #000,8px 8px 0 rgba(232,184,75,0.3);line-height:1.4;margin-bottom:8px;}
+.title-sub{font-size:10px;color:var(--cyan);margin-bottom:40px;letter-spacing:2px;}
+.title-blink{animation:blink 1.2s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:0;}
+.star{position:absolute;background:#fff;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:.8}50%{opacity:.1}}
+
+/* ── CHARACTER CREATION ── */
+.class-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:560px;margin:16px 0;}
+.class-card{
+  cursor:pointer;padding:16px;border:2px solid var(--muted);
+  background:var(--surface2);transition:all .1s;text-align:center;
+}
+.class-card:hover,.class-card.selected{border-color:var(--gold);background:var(--surface3);box-shadow:0 0 16px rgba(232,184,75,.3);}
+.class-icon{font-size:32px;display:block;margin-bottom:8px;}
+.class-name{font-size:9px;color:var(--gold);margin-bottom:6px;}
+.class-desc{font-size:7px;color:var(--muted);line-height:1.6;}
+
+/* ── PIXEL INPUT ── */
+.pixel-input{
+  font-family:'Press Start 2P',monospace;font-size:11px;
+  background:var(--surface2);color:var(--text);
+  border:2px solid var(--gold);padding:10px 14px;
+  outline:none;width:100%;
+}
+.pixel-input:focus{border-color:var(--cyan);box-shadow:0 0 10px rgba(68,238,255,.2);}
+.pixel-label{font-size:9px;color:var(--muted);margin-bottom:8px;display:block;}
+
+/* ── DASHBOARD ── */
+#screen-dashboard{padding:12px;}
+.dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:700px;margin:0 auto;}
+.dashboard-full{grid-column:1/-1;}
+.stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:8px;}
+.stat-val{color:var(--gold);}
+.section-title{font-size:9px;color:var(--cyan);margin-bottom:12px;border-bottom:1px solid rgba(68,238,255,.2);padding-bottom:6px;letter-spacing:1px;}
+
+/* ── NAV ── */
+.nav-bar{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);border-top:2px solid var(--gold);
+  display:flex;z-index:100;
+}
+.nav-btn{
+  flex:1;padding:10px 4px;font-family:'Press Start 2P',monospace;
+  font-size:7px;background:none;border:none;color:var(--muted);
+  cursor:pointer;border-right:1px solid rgba(232,184,75,.15);
+  display:flex;flex-direction:column;align-items:center;gap:4px;transition:color .1s;
+}
+.nav-btn:last-child{border-right:none;}
+.nav-btn.active,.nav-btn:hover{color:var(--gold);}
+.nav-icon{font-size:16px;}
+
+/* ── QUEST SCROLL ── */
+.quest-item{
+  padding:14px;border:2px solid var(--border);background:var(--surface2);
+  margin-bottom:10px;cursor:pointer;transition:all .1s;
+}
+.quest-item:hover{border-color:var(--gold);transform:translate(-2px,-2px);box-shadow:4px 4px 0 #000;}
+.quest-item.active-quest{border-color:var(--green);background:rgba(68,221,68,.05);}
+.quest-item.completed{border-color:var(--muted);opacity:.6;}
+.quest-item.locked{opacity:.4;cursor:not-allowed;}
+.quest-title{font-size:9px;color:var(--gold);margin-bottom:6px;}
+.quest-desc{font-size:7px;color:var(--muted);line-height:1.7;margin-bottom:8px;}
+.quest-tags{display:flex;gap:6px;flex-wrap:wrap;}
+.tag{font-size:7px;padding:3px 7px;background:var(--surface3);border:1px solid;}
+
+/* ── WORKOUT LOG ── */
+.exercise-row{
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px;
+  align-items:center;margin-bottom:8px;
+}
+.ex-name{font-size:8px;color:var(--text);}
+.ex-input{
+  font-family:'Press Start 2P',monospace;font-size:8px;
+  background:var(--surface3);color:var(--gold);
+  border:1px solid var(--border);padding:5px;text-align:center;width:100%;
+}
+.ex-label{font-size:6px;color:var(--muted);text-align:center;margin-bottom:2px;}
+
+/* ── REWARDS ── */
+.reward-card{
+  padding:16px;border:3px solid;margin-bottom:12px;
+  background:var(--surface2);position:relative;overflow:hidden;
+}
+.reward-card.locked{border-color:var(--muted);opacity:.7;}
+.reward-card.unlocked{border-color:var(--gold);}
+.reward-card.claimed{border-color:var(--green);}
+.reward-tier{font-size:8px;letter-spacing:2px;margin-bottom:6px;}
+.reward-name{font-size:10px;margin-bottom:8px;}
+.reward-xp{font-size:8px;color:var(--muted);}
+.reward-lock{position:absolute;top:12px;right:12px;font-size:20px;}
+.reward-progress{margin-top:10px;}
+
+/* ── LEVEL UP OVERLAY ── */
+#levelup-overlay{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.9);justify-content:center;align-items:center;
+  flex-direction:column;text-align:center;
+}
+#levelup-overlay.show{display:flex;}
+.levelup-title{font-size:28px;color:var(--gold2);text-shadow:0 0 30px var(--gold2);animation:pulse 0.5s ease infinite alternate;}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.05)}}
+.levelup-flash{animation:flash .2s ease 3;}
+@keyframes flash{0%,100%{background:rgba(0,0,0,.9)}50%{background:rgba(232,184,75,.15)}}
+
+/* ── NOTIFICATION TOAST ── */
+#toast{
+  position:fixed;top:16px;right:16px;z-index:998;
+  background:var(--surface3);border:2px solid var(--green);
+  padding:10px 14px;font-size:8px;color:var(--green);
+  max-width:240px;transform:translateX(120%);transition:transform .3s;
+  box-shadow:4px 4px 0 #000;
+}
+#toast.show{transform:translateX(0);}
+
+/* ── CHARTS / PROGRESS ── */
+.progress-track{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px;}
+.progress-day{
+  width:18px;height:18px;border:1px solid var(--border);
+  background:var(--surface);font-size:6px;
+  display:flex;align-items:center;justify-content:center;cursor:help;
+}
+.progress-day.done{background:var(--green);border-color:var(--green);color:#000;}
+.progress-day.missed{background:rgba(255,68,68,.3);border-color:var(--red);}
+.progress-day.rest{background:var(--surface3);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:480px){
+  .dashboard-grid{grid-template-columns:1fr;}
+  .class-grid{grid-template-columns:1fr 1fr;}
+  .exercise-row{grid-template-columns:2fr 1fr 1fr 1fr;}
+}
+
+/* ── SETUP WIZARD SPECIFIC ── */
+.wizard-step{display:none;}
+.wizard-step.active{display:block;}
+.wizard-progress{display:flex;gap:6px;margin-bottom:20px;}
+.w-dot{width:10px;height:10px;background:var(--surface3);border:2px solid var(--muted);}
+.w-dot.done{background:var(--gold);border-color:var(--gold);}
+.w-dot.active{background:var(--cyan);border-color:var(--cyan);}
+
+.reward-setup-row{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;margin-bottom:12px;}
+.reward-tier-badge{font-size:7px;padding:6px 4px;text-align:center;border:1px solid;}
+
+/* ── STREAK FIRE ── */
+.streak-display{font-size:28px;text-align:center;margin:8px 0;}
+.streak-num{font-size:20px;color:var(--orange);display:block;margin-top:4px;}
+
+/* ── SCROLLABLE CONTENT ── */
+.scroll-area{overflow-y:auto;max-height:calc(100vh - 180px);padding-right:4px;padding-bottom:60px;}
+.scroll-area::-webkit-scrollbar{width:4px;}
+.scroll-area::-webkit-scrollbar-track{background:var(--surface);}
+.scroll-area::-webkit-scrollbar-thumb{background:var(--gold);}
+
+/* hide screens not showing */
+.page-section{display:none;}
+.page-section.active{display:block;}
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<!-- STARS BG -->
+<div class="stars" id="stars-bg"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TITLE SCREEN
+═══════════════════════════════════════════════════════ -->
+<div class="screen active" id="screen-title">
+  <div style="z-index:1;text-align:center;max-width:560px;width:100%;padding:20px;">
+    <canvas id="title-sprite" width="64" height="64" style="margin:0 auto 20px;display:block;width:96px;height:96px;"></canvas>
+    <div class="title-logo">FIT<br><span style="color:var(--cyan)">QUEST</span></div>
+    <div class="title-sub">RPG</div>
+    <div style="font-size:8px;color:var(--muted);margin-bottom:40px;line-height:1.8;">
+      Real workouts. Real rewards.<br>Your hero's journey starts now.
+    </div>
+    <button class="btn btn-gold btn-lg" onclick="checkSave()">▶ PRESS START</button>
+    <div style="margin-top:20px;">
+      <button class="btn btn-blue btn-sm" onclick="showScreen('screen-setup')">NEW GAME</button>
+      <span style="color:var(--muted);font-size:8px;margin:0 8px;">·</span>
+      <button class="btn btn-sm" style="color:var(--muted);border-color:var(--muted);" onclick="clearSave()">ERASE DATA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SETUP WIZARD
+═══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-setup" style="padding:16px;">
+  <div style="width:100%;max-width:560px;">
+
+    <!-- Progress dots -->
+    <div class="wizard-progress" id="wizard-dots">
+      <div class="w-dot active"></div>
+      <div class="w-dot"></div>
+      <div class="w-dot"></div>
+      <div class="w-dot"></div>
+    </div>
+
+    <!-- STEP 1: Name + Class -->
+    <div class="wizard-step active" id="ws-1">
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">HERO CREATION</div>
+        <label class="pixel-label">ENTER YOUR NAME, HERO</label>
+        <input class="pixel-input" type="text" id="hero-name" maxlength="12" placeholder="Your name..." />
+      </div>
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">CHOOSE YOUR CLASS</div>
+        <div class="class-grid">
+          <div class="class-card" onclick="selectClass('WARRIOR')" id="class-WARRIOR">
+            <canvas id="sprite-WARRIOR" width="32" height="32" style="width:48px;height:48px;margin:0 auto 8px;display:block;"></canvas>
+            <div class="class-name">⚔ WARRIOR</div>
+            <div class="class-desc">Build muscle & strength. Gym-focused. Heavy compounds, progressive overload. For those who want to get jacked.</div>
+          </div>
+          <div class="class-card" onclick="selectClass('RANGER')" id="class-RANGER">
+            <canvas id="sprite-RANGER" width="32" height="32" style="width:48px;height:48px;margin:0 auto 8px;display:block;"></canvas>
+            <div class="class-name">🏹 RANGER</div>
+            <div class="class-desc">Cardio & endurance king. Peloton rides, runs, HIIT. Burn fat and build stamina. Fast and relentless.</div>
+          </div>
+          <div class="class-card" onclick="selectClass('PALADIN')" id="class-PALADIN">
+            <canvas id="sprite-PALADIN" width="32" height="32" style="width:48px;height:48px;margin:0 auto 8px;display:block;"></canvas>
+            <div class="class-name">🛡 PALADIN</div>
+            <div class="class-desc">Hybrid warrior. Gym + cardio balanced. Build muscle AND endurance. The complete athlete.</div>
+          </div>
+          <div class="class-card" onclick="selectClass('SHADOW')" id="class-SHADOW">
+            <canvas id="sprite-SHADOW" width="32" height="32" style="width:48px;height:48px;margin:0 auto 8px;display:block;"></canvas>
+            <div class="class-name">🌑 SHADOW</div>
+            <div class="class-desc">No gym needed. Calisthenics, bodyweight, home workouts. Start anywhere. Barrier: zero.</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-gold btn-block" onclick="wizardNext(1)">NEXT ▶</button>
+    </div>
+
+    <!-- STEP 2: Fitness Level + Equipment -->
+    <div class="wizard-step" id="ws-2">
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">YOUR STARTING LEVEL</div>
+        <div style="font-size:8px;color:var(--muted);margin-bottom:14px;line-height:1.8;">Be honest. The game will adapt. No judgment here.</div>
+        <div id="level-options">
+          <div class="class-card" onclick="selectLevel('beginner')" id="lvl-beginner" style="text-align:left;margin-bottom:8px;">
+            <div class="class-name">⭐ BEGINNER</div>
+            <div class="class-desc">New to consistent training. Can't do 10 pushups or ran less than a mile in the past month.</div>
+          </div>
+          <div class="class-card" onclick="selectLevel('intermediate')" id="lvl-intermediate" style="text-align:left;margin-bottom:8px;">
+            <div class="class-name">⭐⭐ INTERMEDIATE</div>
+            <div class="class-desc">Trained on and off. Can do 10+ pushups, familiar with basic exercises, some gym experience.</div>
+          </div>
+          <div class="class-card" onclick="selectLevel('advanced')" id="lvl-advanced" style="text-align:left;">
+            <div class="class-name">⭐⭐⭐ ADVANCED</div>
+            <div class="class-desc">6+ months consistent training. Compound lifts, basic programming knowledge, solid base.</div>
+          </div>
+        </div>
+      </div>
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">AVAILABLE EQUIPMENT</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="font-size:8px;cursor:pointer;display:flex;gap:10px;align-items:center;color:var(--text);">
+            <input type="checkbox" id="eq-gym" style="width:16px;height:16px;accent-color:var(--gold);"> 🏋 GYM ACCESS (barbells, machines, free weights)
+          </label>
+          <label style="font-size:8px;cursor:pointer;display:flex;gap:10px;align-items:center;color:var(--text);">
+            <input type="checkbox" id="eq-peloton" style="width:16px;height:16px;accent-color:var(--gold);"> 🚴 PELOTON / STATIONARY BIKE
+          </label>
+          <label style="font-size:8px;cursor:pointer;display:flex;gap:10px;align-items:center;color:var(--text);">
+            <input type="checkbox" id="eq-dumbbells" style="width:16px;height:16px;accent-color:var(--gold);"> 💪 DUMBBELLS AT HOME
+          </label>
+          <label style="font-size:8px;cursor:pointer;display:flex;gap:10px;align-items:center;color:var(--text);">
+            <input type="checkbox" id="eq-pullupbar" style="width:16px;height;16px;accent-color:var(--gold);"> 🔄 PULL-UP BAR
+          </label>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="color:var(--muted);border-color:var(--muted);" onclick="wizardBack(2)">◀ BACK</button>
+        <button class="btn btn-gold" style="flex:1;" onclick="wizardNext(2)">NEXT ▶</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Days per week + primary goal -->
+    <div class="wizard-step" id="ws-3">
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">TRAINING SCHEDULE</div>
+        <label class="pixel-label">HOW MANY DAYS/WEEK CAN YOU TRAIN?</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="days-selector">
+          <button class="btn btn-sm" onclick="selectDays(2)" id="days-2">2 DAYS</button>
+          <button class="btn btn-sm" onclick="selectDays(3)" id="days-3">3 DAYS</button>
+          <button class="btn btn-sm" onclick="selectDays(4)" id="days-4">4 DAYS</button>
+          <button class="btn btn-sm" onclick="selectDays(5)" id="days-5">5 DAYS</button>
+        </div>
+        <label class="pixel-label">PRIMARY GOAL (pick one)</label>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="goal-selector">
+          <div class="class-card" onclick="selectGoal('muscle')" id="goal-muscle" style="padding:10px;text-align:left;">
+            <div class="class-name">💪 BUILD MUSCLE</div>
+            <div class="class-desc">Progressive overload, hypertrophy focus. 8-12 rep ranges. 6-12 weeks to see real change.</div>
+          </div>
+          <div class="class-card" onclick="selectGoal('fat')" id="goal-fat" style="padding:10px;text-align:left;">
+            <div class="class-name">🔥 BURN FAT</div>
+            <div class="class-desc">Higher frequency, mixed cardio + weights. Maintain muscle while dropping fat.</div>
+          </div>
+          <div class="class-card" onclick="selectGoal('strength')" id="goal-strength" style="padding:10px;text-align:left;">
+            <div class="class-name">🏆 BUILD STRENGTH</div>
+            <div class="class-desc">Lower rep, heavier weight. Powerlifting fundamentals. 1-5 rep ranges.</div>
+          </div>
+          <div class="class-card" onclick="selectGoal('endurance')" id="goal-endurance" style="padding:10px;text-align:left;">
+            <div class="class-name">⚡ BUILD ENDURANCE</div>
+            <div class="class-desc">Cardio performance, longer zones, aerobic base. Peloton & running focused.</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="color:var(--muted);border-color:var(--muted);" onclick="wizardBack(3)">◀ BACK</button>
+        <button class="btn btn-gold" style="flex:1;" onclick="wizardNext(3)">NEXT ▶</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Set Rewards -->
+    <div class="wizard-step" id="ws-4">
+      <div class="pixel-box" style="margin-bottom:12px;">
+        <div class="section-title">SET YOUR LOOT</div>
+        <div style="font-size:7px;color:var(--muted);margin-bottom:16px;line-height:1.8;">
+          This is the secret weapon. Define real rewards you'll earn by leveling up. Gaming gear, food, purchases — whatever motivates YOU. You'll unlock these by earning XP.
+        </div>
+        <div id="reward-inputs">
+          <!-- filled by JS -->
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-sm" style="color:var(--muted);border-color:var(--muted);" onclick="wizardBack(4)">◀ BACK</button>
+        <button class="btn btn-gold btn-lg" style="flex:1;" onclick="finishSetup()">⚔ BEGIN QUEST</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN APP (Dashboard, Quests, Log, Rewards, Stats)
+═══════════════════════════════════════════════════════ -->
+<div class="screen" id="screen-app">
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <button class="nav-btn active" onclick="showPage('page-dashboard')" id="nav-dashboard">
+      <span class="nav-icon">🗺</span>HUB
+    </button>
+    <button class="nav-btn" onclick="showPage('page-quests')" id="nav-quests">
+      <span class="nav-icon">⚔</span>QUESTS
+    </button>
+    <button class="nav-btn" onclick="showPage('page-log')" id="nav-log">
+      <span class="nav-icon">📋</span>LOG
+    </button>
+    <button class="nav-btn" onclick="showPage('page-rewards')" id="nav-rewards">
+      <span class="nav-icon">🏆</span>REWARDS
+    </button>
+    <button class="nav-btn" onclick="showPage('page-stats')" id="nav-stats">
+      <span class="nav-icon">📊</span>STATS
+    </button>
+  </nav>
+
+  <div style="width:100%;max-width:700px;margin:0 auto;padding-bottom:80px;">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div class="page-section active" id="page-dashboard">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+        <canvas id="hero-sprite-main" width="32" height="32" style="width:56px;height:56px;flex-shrink:0;"></canvas>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:var(--gold);" id="dash-name">HERO</div>
+          <div style="font-size:8px;color:var(--cyan);margin:3px 0;" id="dash-class">CLASS</div>
+          <div style="font-size:7px;color:var(--muted);" id="dash-level">LVL 1 — 0 XP</div>
+        </div>
+        <div style="text-align:center;">
+          <div class="streak-display">🔥</div>
+          <div style="font-size:7px;color:var(--orange);" id="dash-streak">0 DAY STREAK</div>
+        </div>
+      </div>
+
+      <!-- XP Bar -->
+      <div style="margin-bottom:16px;" class="pixel-box">
+        <div class="stat-row">
+          <span>XP PROGRESS</span>
+          <span class="stat-val" id="dash-xp-text">0 / 500</span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill bar-xp" id="dash-xp-bar" style="width:0%"></div></div>
+        <div style="font-size:7px;color:var(--muted);margin-top:6px;" id="dash-next-reward">Next reward: ??? at 500 XP</div>
+      </div>
+
+      <!-- Today's Quest -->
+      <div class="pixel-box pixel-box-green" style="margin-bottom:12px;">
+        <div class="section-title">TODAY'S QUEST</div>
+        <div id="today-quest-area">
+          <!-- filled by JS -->
+        </div>
+      </div>
+
+      <!-- Quick Stats Grid -->
+      <div class="dashboard-grid" style="margin-bottom:12px;">
+        <div class="pixel-box">
+          <div class="section-title" style="font-size:7px;">TOTAL WORKOUTS</div>
+          <div style="font-size:24px;color:var(--gold);text-align:center;" id="stat-total-workouts">0</div>
+        </div>
+        <div class="pixel-box">
+          <div class="section-title" style="font-size:7px;">THIS WEEK</div>
+          <div style="font-size:24px;color:var(--cyan);text-align:center;" id="stat-this-week">0/3</div>
+        </div>
+        <div class="pixel-box pixel-box-purple dashboard-full">
+          <div class="section-title" style="font-size:7px;">WEEKLY BATTLE MAP</div>
+          <div class="progress-track" id="weekly-map"></div>
+        </div>
+      </div>
+
+      <!-- Active Quest Summary -->
+      <div class="pixel-box" id="active-quest-summary" style="margin-bottom:12px;">
+        <div class="section-title">ACTIVE QUEST CHAIN</div>
+        <div id="active-quest-info"><!-- filled by JS --></div>
+      </div>
+
+      <!-- Boss Battle Teaser -->
+      <div class="pixel-box pixel-box-red" id="boss-panel" style="margin-bottom:12px;display:none;">
+        <div class="section-title" style="color:var(--red);">⚠ BOSS BATTLE APPROACHING</div>
+        <div id="boss-info" style="font-size:8px;color:var(--muted);line-height:1.8;"></div>
+      </div>
+    </div>
+
+    <!-- ── QUESTS PAGE ── -->
+    <div class="page-section" id="page-quests">
+      <div class="scroll-area">
+        <div style="padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--gold);">QUEST LOG</div>
+          <div style="font-size:7px;color:var(--muted);margin-top:4px;" id="quest-program-label">Your personalized program</div>
+        </div>
+        <div id="quest-list"><!-- filled by JS --></div>
+      </div>
+    </div>
+
+    <!-- ── LOG PAGE ── -->
+    <div class="page-section" id="page-log">
+      <div class="scroll-area">
+        <div style="padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--gold);" id="log-quest-title">LOG WORKOUT</div>
+          <div style="font-size:7px;color:var(--muted);margin-top:4px;" id="log-date-display">Today</div>
+        </div>
+        <div id="log-content"><!-- filled by JS --></div>
+      </div>
+    </div>
+
+    <!-- ── REWARDS PAGE ── -->
+    <div class="page-section" id="page-rewards">
+      <div class="scroll-area">
+        <div style="padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--gold);">LOOT VAULT</div>
+          <div style="font-size:7px;color:var(--muted);margin-top:4px;">Your personal reward system. Earn XP → unlock rewards.</div>
+        </div>
+        <div style="margin-bottom:12px;" class="pixel-box">
+          <div class="stat-row"><span>TOTAL XP EARNED</span><span class="stat-val" id="rewards-total-xp">0</span></div>
+          <div class="stat-row"><span>CURRENT LEVEL</span><span class="stat-val" id="rewards-level">1</span></div>
+        </div>
+        <div id="rewards-list"><!-- filled by JS --></div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-blue btn-sm btn-block" onclick="editRewards()">✏ EDIT REWARDS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATS PAGE ── -->
+    <div class="page-section" id="page-stats">
+      <div class="scroll-area">
+        <div style="padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:12px;">
+          <div style="font-size:11px;color:var(--gold);">YOUR LEGEND</div>
+        </div>
+        <div class="dashboard-grid" style="margin-bottom:12px;">
+          <div class="pixel-box">
+            <div class="section-title" style="font-size:7px;">TOTAL XP</div>
+            <div style="font-size:18px;color:var(--gold);text-align:center;" id="stats-total-xp">0</div>
+          </div>
+          <div class="pixel-box">
+            <div class="section-title" style="font-size:7px;">LONGEST STREAK</div>
+            <div style="font-size:18px;color:var(--orange);text-align:center;" id="stats-best-streak">0🔥</div>
+          </div>
+          <div class="pixel-box">
+            <div class="section-title" style="font-size:7px;">WORKOUTS DONE</div>
+            <div style="font-size:18px;color:var(--cyan);text-align:center;" id="stats-workouts">0</div>
+          </div>
+          <div class="pixel-box">
+            <div class="section-title" style="font-size:7px;">REWARDS EARNED</div>
+            <div style="font-size:18px;color:var(--green);text-align:center;" id="stats-rewards-earned">0</div>
+          </div>
+        </div>
+        <div class="pixel-box" style="margin-bottom:12px;">
+          <div class="section-title">30-DAY HISTORY</div>
+          <div class="progress-track" id="history-map"><!-- filled by JS --></div>
+        </div>
+        <div class="pixel-box" style="margin-bottom:12px;">
+          <div class="section-title">WORKOUT HISTORY</div>
+          <div id="workout-history-list" style="font-size:7px;color:var(--muted);line-height:2;"><!-- filled by JS --></div>
+        </div>
+        <div style="margin-top:16px;text-align:center;">
+          <button class="btn btn-red btn-sm" onclick="if(confirm('Reset all progress?'))clearSave()">⚠ RESET ALL DATA</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEVEL UP OVERLAY -->
+<div id="levelup-overlay">
+  <div class="pixel-box" style="text-align:center;max-width:320px;width:90%;padding:30px;">
+    <div style="font-size:11px;color:var(--cyan);margin-bottom:8px;">LEVEL UP!</div>
+    <div class="levelup-title" id="levelup-num">LVL 2</div>
+    <div style="font-size:8px;color:var(--gold);margin:16px 0;" id="levelup-class-bonus"></div>
+    <canvas id="levelup-sprite" width="32" height="32" style="width:64px;height:64px;margin:0 auto 16px;display:block;"></canvas>
+    <div style="font-size:8px;color:var(--muted);margin-bottom:20px;" id="levelup-msg"></div>
+    <button class="btn btn-gold btn-block" onclick="closeLevelup()">AWESOME!</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">+100 XP — Quest Complete!</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA MODEL
+// ════════════════════════════════════════════════════════════
+const SAVE_KEY = 'fitquest_v2';
+
+const XP_PER_LEVEL = [0,500,1100,1900,2900,4100,5600,7300,9200,11400,14000];
+// level 1 needs 500, level 2 needs 600 more, etc.
+
+const LEVEL_TITLES = {
+  WARRIOR:['Iron Novice','Grunt','Soldier','Knight','Iron Knight','Champion','Warlord','Titan','Iron Lord','War God','LEGEND'],
+  RANGER:['Wanderer','Scout','Tracker','Hunter','Ranger','Hawk','Falcon','Storm','Wind Rider','Apex Hunter','LEGEND'],
+  PALADIN:['Squire','Initiate','Crusader','Knight','Holy Knight','Templar','Champion','Zealot','Paragon','Divine','LEGEND'],
+  SHADOW:['Lurker','Rogue','Infiltrator','Phantom','Shadow','Specter','Assassin','Wraith','Reaper','Void Walker','LEGEND'],
+};
+
+const CLASS_COLORS = {
+  WARRIOR:'#ff4444',RANGER:'#44dd44',PALADIN:'#e8b84b',SHADOW:'#aa44ff'
+};
+
+// XP values
+const XP_WORKOUT = 100;
+const XP_STREAK_BONUS = 25; // per day streak
+const XP_BOSS = 500;
+const XP_QUEST_COMPLETE = 200;
+
+let G = null; // game state
+
+function defaultState(){
+  return {
+    hero:{name:'HERO',class:'WARRIOR',level:1,xp:0,totalXP:0,streak:0,lastWorkoutDate:'',longestStreak:0},
+    setup:{fitnessLevel:'beginner',daysPerWeek:3,goal:'muscle',equipment:[]},
+    rewards:[
+      {tier:'COMMON',name:'Cheat meal of choice',xpRequired:500,claimed:false},
+      {tier:'UNCOMMON',name:'Buy a new game',xpRequired:1500,claimed:false},
+      {tier:'RARE',name:'New gym gear / apparel',xpRequired:3000,claimed:false},
+      {tier:'EPIC',name:'Major purchase / experience',xpRequired:6000,claimed:false},
+      {tier:'LEGENDARY',name:'THE BIG DREAM REWARD',xpRequired:12000,claimed:false},
+    ],
+    workoutHistory:[], // [{date,questId,exercises,xpEarned,notes}]
+    currentQuestIndex:0,
+    completedQuests:[],
+    bossesDefeated:[],
+    todayDone:false,
+    lastLogDate:'',
+    weeklyMap:{}, // date -> 'done'|'rest'|'missed'
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+// WORKOUT PROGRAMS (the real content)
+// ════════════════════════════════════════════════════════════
+
+function buildProgram(cls, goal, level, days, equipment){
+  // Returns array of quest objects
+  const useGym = equipment.includes('gym');
+  const usePeloton = equipment.includes('peloton');
+  const useDB = equipment.includes('dumbbells');
+
+  if(cls === 'WARRIOR'){
+    return buildWarriorProgram(goal, level, days, useGym, useDB);
+  } else if(cls === 'RANGER'){
+    return buildRangerProgram(goal, level, days, usePeloton);
+  } else if(cls === 'PALADIN'){
+    return buildPaladinProgram(goal, level, days, useGym, usePeloton);
+  } else {
+    return buildShadowProgram(goal, level, days);
+  }
+}
+
+function buildWarriorProgram(goal, level, days, useGym, useDB){
+  const isStrength = goal === 'strength';
+  const reps = isStrength ? '3-5' : '8-12';
+  const sets = isStrength ? '5' : '3-4';
+
+  const equipment = useGym ? 'Barbell' : (useDB ? 'Dumbbell' : 'Bodyweight');
+
+  const quests = [
+    {
+      id:'w1',title:'FOUNDATION ARC',
+      subtitle:'Weeks 1-4: Build the base',
+      description:`Establish movement patterns and baseline strength. Every legend starts here. Focus on form over weight — this phase builds the neurological foundation that makes everything else possible.`,
+      weeks:4, type:'strength',
+      workoutDays: days === 2 ? ['Full Body A','Full Body B'] :
+                   days === 3 ? ['Push Day','Pull Day','Leg Day'] :
+                   ['Upper A','Lower A','Upper B','Lower B'],
+      workouts: buildWarriorWorkouts(goal, level, days, equipment, 'foundation'),
+      xpReward:300, boss:{name:'FORM CHECK',desc:'Complete 10 perfect-form reps on each main lift with your current weight. Film yourself if you can.', xpReward:500}
+    },
+    {
+      id:'w2',title:'FORGING ARC',
+      subtitle:'Weeks 5-8: Progressive overload',
+      description:`Time to add weight. You've built the patterns — now we stress them. Add 2.5-5 lbs to main lifts every 1-2 weeks. This is where real gains begin. Trust the process.`,
+      weeks:4, type:'strength',
+      workouts: buildWarriorWorkouts(goal, level, days, equipment, 'forging'),
+      xpReward:400, boss:{name:'STRENGTH TEST',desc:'Attempt a new personal record on your main lift (Squat or Bench or Deadlift). Warm up properly. Hit a new 5RM.', xpReward:500}
+    },
+    {
+      id:'w3',title:'CRUCIBLE ARC',
+      subtitle:'Weeks 9-12: Volume phase',
+      description:`Increase total training volume. More sets, maintained intensity. This is the hypertrophy window — muscle is built here. Your body is now adapted enough to handle the stress.`,
+      weeks:4, type:'hypertrophy',
+      workouts: buildWarriorWorkouts(goal, level, days, equipment, 'crucible'),
+      xpReward:500, boss:{name:'IRON TRIAL',desc:'Complete a full workout without rest longer than 90 seconds between sets. No phones. Pure focus.', xpReward:500}
+    },
+    {
+      id:'w4',title:'DELOAD + RESET',
+      subtitle:'Week 13: Recovery is gains',
+      description:`Mandatory deload. Drop to 60% weight, same movements. Your body grows during recovery, not just training. Skipping this is the #1 mistake beginners make. Do it.`,
+      weeks:1, type:'deload',
+      workouts: buildWarriorWorkouts(goal, level, days, equipment, 'deload'),
+      xpReward:200, boss:null
+    },
+    {
+      id:'w5',title:'EVOLUTION ARC',
+      subtitle:'Weeks 14-17: Intermediate programming',
+      description:`Your foundation is built. Now we introduce undulating periodization — varying intensity and volume across the week. Beginner gains are ending; smart programming begins.`,
+      weeks:4, type:'strength',
+      workouts: buildWarriorWorkouts(goal, level, days, equipment, 'evolution'),
+      xpReward:600, boss:{name:'TRANSFORMATION CHECK',desc:'Compare photos from week 1 vs now. Log your current 5RM on main lift vs. starting weight. Celebrate the math.', xpReward:500}
+    },
+  ];
+  return quests;
+}
+
+function buildWarriorWorkouts(goal, level, days, equipment, phase){
+  const isGym = equipment === 'Barbell';
+  const isDB = equipment === 'Dumbbell';
+
+  const phases = {
+    foundation:{
+      'Push Day':[
+        {name: isGym ? 'Barbell Bench Press' : 'Dumbbell Bench Press', sets:'3', reps:'8-10', note:'Focus on chest touch, full ROM', rest:'90s'},
+        {name: isGym ? 'Overhead Press' : 'DB Shoulder Press', sets:'3', reps:'8-10', note:'Squeeze glutes at top, no excessive arch', rest:'90s'},
+        {name:'Incline DB Press', sets:'3', reps:'10-12', note:'Feel the stretch at bottom', rest:'60s'},
+        {name:'Tricep Pushdowns', sets:'3', reps:'12-15', note:'Keep elbows tucked', rest:'60s'},
+        {name:'Lateral Raises', sets:'3', reps:'15', note:'Light weight, strict form, no swinging', rest:'45s'},
+      ],
+      'Pull Day':[
+        {name: isGym ? 'Barbell Row' : 'DB Row', sets:'3', reps:'8-10', note:'Pull to hip, not chest. Retract scapula', rest:'90s'},
+        {name:'Lat Pulldown / Pull-ups', sets:'3', reps:'8-10', note:'Full dead hang at bottom, chin over bar at top', rest:'90s'},
+        {name:'Face Pulls', sets:'3', reps:'15', note:'External rotation at end, huge for shoulder health', rest:'60s'},
+        {name:'Hammer Curls', sets:'3', reps:'10-12', note:'Slow eccentric (3 counts down)', rest:'60s'},
+        {name:'Cable Row / Seated Row', sets:'3', reps:'12', note:'Pause at contraction', rest:'60s'},
+      ],
+      'Leg Day':[
+        {name: isGym ? 'Barbell Squat' : 'Goblet Squat', sets:'4', reps:'8-10', note:'Break parallel, knees track toes', rest:'2min'},
+        {name: isGym ? 'Romanian Deadlift' : 'DB Romanian Deadlift', sets:'3', reps:'10-12', note:'Hip hinge, feel hamstring stretch', rest:'90s'},
+        {name:'Leg Press', sets:'3', reps:'12-15', note:'Full ROM, slow down', rest:'90s'},
+        {name:'Leg Curl', sets:'3', reps:'12-15', note:'Isolate the hamstring', rest:'60s'},
+        {name:'Calf Raises', sets:'4', reps:'15-20', note:'Pause at top, full stretch at bottom', rest:'45s'},
+      ],
+      'Full Body A':[
+        {name: isGym ? 'Barbell Squat' : 'Goblet Squat', sets:'3', reps:'8', note:'Main movement — prioritize form', rest:'2min'},
+        {name: isGym ? 'Bench Press' : 'DB Bench Press', sets:'3', reps:'8', note:'Main push — controlled down', rest:'90s'},
+        {name: isGym ? 'Barbell Row' : 'DB Row', sets:'3', reps:'8', note:'Main pull — full ROM', rest:'90s'},
+        {name:'DB Lunges', sets:'2', reps:'10 each', note:'Balance focus', rest:'60s'},
+        {name:'Plank', sets:'3', reps:'30-60s', note:'Core bracing, not just holding', rest:'45s'},
+      ],
+      'Full Body B':[
+        {name: isGym ? 'Deadlift' : 'DB Deadlift', sets:'3', reps:'6-8', note:'Hip hinge king — protect your back', rest:'2min'},
+        {name: isGym ? 'Overhead Press' : 'DB Shoulder Press', sets:'3', reps:'8', note:'Core tight, press to lockout', rest:'90s'},
+        {name:'Lat Pulldown / Pull-ups', sets:'3', reps:'8-10', note:'Squeeze lats at bottom', rest:'90s'},
+        {name:'DB Lateral Raises', sets:'2', reps:'15', note:'Shoulder health — don\'t skip', rest:'45s'},
+        {name:'Glute Bridge', sets:'3', reps:'15', note:'Squeeze hard at top', rest:'45s'},
+      ],
+      'Upper A':[
+        {name: isGym ? 'Bench Press' : 'DB Bench', sets:'4', reps:'8', note:'Strength-focused', rest:'2min'},
+        {name: isGym ? 'Barbell Row' : 'DB Row', sets:'4', reps:'8', note:'Match bench strength', rest:'2min'},
+        {name: isGym ? 'Overhead Press' : 'DB OHP', sets:'3', reps:'10', note:'Volume work', rest:'90s'},
+        {name:'Lat Pulldown', sets:'3', reps:'10', note:'Volume work', rest:'90s'},
+        {name:'Tricep Dips / Pushdowns', sets:'3', reps:'12', note:'Accessory', rest:'60s'},
+        {name:'Curls', sets:'3', reps:'12', note:'Accessory', rest:'60s'},
+      ],
+      'Lower A':[
+        {name: isGym ? 'Barbell Squat' : 'Goblet Squat', sets:'4', reps:'8', note:'Strength day', rest:'2min'},
+        {name: isGym ? 'Romanian Deadlift' : 'DB RDL', sets:'3', reps:'10', note:'Hip hinge', rest:'90s'},
+        {name:'Leg Press', sets:'3', reps:'12', note:'Volume', rest:'90s'},
+        {name:'Leg Curl', sets:'3', reps:'12', note:'Volume', rest:'60s'},
+        {name:'Walking Lunges', sets:'2', reps:'10 each', note:'Balance', rest:'60s'},
+      ],
+      'Upper B':[
+        {name: isGym ? 'Incline Bench' : 'Incline DB', sets:'4', reps:'10-12', note:'Hypertrophy — squeeze at top', rest:'90s'},
+        {name:'Cable Row / Seated Row', sets:'4', reps:'10-12', note:'Constant tension', rest:'90s'},
+        {name:'DB Lateral Raises', sets:'4', reps:'15', note:'3 sets straight, no break', rest:'45s'},
+        {name:'Face Pulls', sets:'3', reps:'15', note:'Rear delts & rotator cuff', rest:'45s'},
+        {name:'Hammer Curls', sets:'3', reps:'12', note:'Eccentric focus', rest:'60s'},
+        {name:'Skull Crushers', sets:'3', reps:'12', note:'Elbows in', rest:'60s'},
+      ],
+      'Lower B':[
+        {name: isGym ? 'Deadlift' : 'DB Deadlift', sets:'4', reps:'6', note:'Heavy — strength day', rest:'3min'},
+        {name:'Bulgarian Split Squat', sets:'3', reps:'10 each', note:'Hate this, love the results', rest:'90s'},
+        {name:'Leg Extension', sets:'3', reps:'15', note:'Quad isolation', rest:'60s'},
+        {name:'Lying Leg Curl', sets:'3', reps:'12', note:'Hamstring focus', rest:'60s'},
+        {name:'Calf Raises', sets:'4', reps:'20', note:'Don\'t skip calves', rest:'45s'},
+      ],
+    }
+  };
+
+  const phaseMap = {
+    foundation: phases.foundation,
+    forging: phases.foundation, // same movements, add weight
+    crucible: phases.foundation, // add set each exercise
+    deload: phases.foundation,   // 60% weight, 2 sets
+    evolution: phases.foundation,
+  };
+
+  return phaseMap[phase] || phases.foundation;
+}
+
+function buildRangerProgram(goal, level, days, usePeloton){
+  const cardioType = usePeloton ? 'Peloton' : 'Run/Cardio';
+  return [
+    {
+      id:'r1',title:'IGNITION ARC',
+      subtitle:'Weeks 1-4: Aerobic base',
+      description:`Build your aerobic engine. Zone 2 is the foundation of all endurance. 70-75% max heart rate — conversational pace. Most people skip this and burn out. You won't.`,
+      weeks:4, type:'cardio',
+      workouts: buildRangerWorkouts('ignition', usePeloton, days),
+      xpReward:300, boss:{name:'ENDURANCE TEST',desc:usePeloton ? 'Complete a 45-minute ride at steady Zone 2 output. Log your average output (watts).' : 'Complete a 30-minute continuous jog without stopping. Log time and pace.', xpReward:500}
+    },
+    {
+      id:'r2',title:'ACCELERATION ARC',
+      subtitle:'Weeks 5-8: Introduce HIIT',
+      description:`Aerobic base is set. Now we spike intensity. Interval training improves VO2 max, burns more fat, and makes steady-state feel easy. 2x HIIT + 2x Zone 2 per week.`,
+      weeks:4, type:'cardio',
+      workouts: buildRangerWorkouts('acceleration', usePeloton, days),
+      xpReward:400, boss:{name:'INTERVAL GAUNTLET',desc:usePeloton ? '20-minute Power Zone Max ride. Give everything. Log max output achieved.' : '10x 200m sprints with 90s rest. Log total time.', xpReward:500}
+    },
+    {
+      id:'r3',title:'STORM ARC',
+      subtitle:'Weeks 9-12: Peak conditioning',
+      description:`Peak training block. Higher volume, harder intervals. This is where your cardiovascular system transforms. Trust the process — fatigue before fitness.`,
+      weeks:4, type:'cardio',
+      workouts: buildRangerWorkouts('storm', usePeloton, days),
+      xpReward:600, boss:{name:'THE STORM TRIAL',desc:usePeloton ? 'Complete back-to-back rides: 30min HIIT + 20min Zone 2 cooldown. Same day.' : 'Complete 5K in your best time ever. Track it.', xpReward:500}
+    },
+  ];
+}
+
+function buildRangerWorkouts(phase, usePeloton, days){
+  const workouts = {
+    ignition:{
+      'Zone 2 Ride':[
+        {name:usePeloton?'Peloton Zone 2 Ride':'Easy Run/Walk', sets:'1', reps:'30-40 min', note:usePeloton?'Target: 50-65% FTP. Conversational pace. Can sing along to music.':'Pace: can hold full conversation. Zone 2 HR.', rest:'N/A'},
+        {name:'Post-Ride Stretch', sets:'1', reps:'10 min', note:'Hip flexors, hamstrings, calves. Non-negotiable.', rest:'N/A'},
+      ],
+      'Strength Cross-Train':[
+        {name:'Bodyweight Squats', sets:'3', reps:'15', note:'Legs support your cardio — don\'t skip', rest:'60s'},
+        {name:'Push-ups', sets:'3', reps:'10-15', note:'Upper body balance', rest:'60s'},
+        {name:'Glute Bridge', sets:'3', reps:'15', note:'Posterior chain', rest:'45s'},
+        {name:'Plank', sets:'3', reps:'30-45s', note:'Core stability = better form under fatigue', rest:'45s'},
+        {name:'Dead Bug', sets:'3', reps:'10 each', note:'Anti-rotation core', rest:'45s'},
+      ],
+      'Recovery Ride':[
+        {name:usePeloton?'Peloton Recovery Ride':'Easy Walk','sets':'1','reps':'20-30 min',note:usePeloton?'Under 50% FTP. Spin easy. Active recovery.':'Slow walk. Active recovery, not workout.', rest:'N/A'},
+      ],
+      'HIIT Intro':[
+        {name:usePeloton?'Peloton HIIT Ride':'Interval Run', sets:'1', reps:'20 min', note:usePeloton?'20-min ride with 30s on / 30s off intervals. RMP 80+ on "on" intervals.':'5 min warmup, then 8x (30s hard / 90s walk)', rest:'N/A'},
+        {name:'Cool Down', sets:'1', reps:'5 min', note:'Drop to easy pace immediately after', rest:'N/A'},
+      ],
+    }
+  };
+  return workouts.ignition; // simplified — same base structure
+}
+
+function buildPaladinProgram(goal, level, days, useGym, usePeloton){
+  return [
+    {
+      id:'p1',title:'CRUSADER\'S OATH',
+      subtitle:'Weeks 1-4: Balanced foundation',
+      description:`Paladins train everything. Your week alternates strength and cardio, building both systems simultaneously. Lower ceiling per discipline — higher total athleticism.`,
+      weeks:4, type:'hybrid',
+      workouts:{
+        'Strength Day A':[
+          {name:useGym?'Barbell Squat':'Goblet Squat',sets:'3',reps:'8-10',note:'Foundational movement',rest:'2min'},
+          {name:useGym?'Bench Press':'Push-ups / DB Press',sets:'3',reps:'8-10',note:'Upper push',rest:'90s'},
+          {name:useGym?'Barbell Row':'DB Row',sets:'3',reps:'8-10',note:'Upper pull',rest:'90s'},
+          {name:'Plank',sets:'3',reps:'30s',note:'Core bracing',rest:'45s'},
+        ],
+        'Cardio Day':[
+          {name:usePeloton?'Peloton Ride':'Run / Bike / Jump Rope',sets:'1',reps:'25-35 min',note:usePeloton?'Zone 2 + 1 sprint segment':'Moderate pace with 2 hard pushes',rest:'N/A'},
+          {name:'Stretch',sets:'1',reps:'10 min',note:'Full body, focus on hips',rest:'N/A'},
+        ],
+        'Strength Day B':[
+          {name:useGym?'Deadlift':'DB Romanian Deadlift',sets:'3',reps:'6-8',note:'Hip hinge pattern',rest:'2min'},
+          {name:useGym?'Overhead Press':'DB Shoulder Press',sets:'3',reps:'8-10',note:'Vertical push',rest:'90s'},
+          {name:'Lat Pulldown / Pull-ups',sets:'3',reps:'8-10',note:'Vertical pull',rest:'90s'},
+          {name:'Lunges',sets:'2',reps:'10 each',note:'Unilateral leg',rest:'60s'},
+        ],
+        'HIIT Day':[
+          {name:usePeloton?'Peloton HIIT':'Cardio Circuit',sets:'1',reps:'20 min',note:usePeloton?'High output intervals, 20-min ride':'Burpees / jump squats / mountain climbers circuit',rest:'N/A'},
+        ],
+      },
+      xpReward:300, boss:{name:'PALADIN TRIAL',desc:'On same day: complete a strength workout AND a 20-minute cardio session. Both full effort.', xpReward:500}
+    },
+    {
+      id:'p2',title:'HOLY WARRIOR ARC',
+      subtitle:'Weeks 5-10: Intensify both paths',
+      description:`Both your strength and cardio base are established. Now we push harder on each. Strength lifts go heavier. Cardio sessions include structured intervals. This is where paladins pull ahead.`,
+      weeks:6, type:'hybrid',
+      workouts:{
+        'Strength Day A':[
+          {name:useGym?'Barbell Squat':'Goblet Squat',sets:'4',reps:'6-8',note:'Add 5-10lbs from Arc 1',rest:'2min'},
+          {name:useGym?'Incline Bench':'Incline DB',sets:'4',reps:'8-10',note:'Upper chest focus',rest:'90s'},
+          {name:'Pull-ups / Lat Pulldown',sets:'4',reps:'8-10',note:'Heavier than Arc 1',rest:'90s'},
+          {name:'DB Lateral Raises',sets:'3',reps:'15',note:'Shoulder health',rest:'45s'},
+        ],
+        'Cardio Day':[
+          {name:usePeloton?'Peloton Power Zone Ride':'Interval Run',sets:'1',reps:'35-45 min',note:usePeloton?'Power Zone ride — stay in zone 3-4 mostly':'Negative split — second half faster than first',rest:'N/A'},
+        ],
+        'Strength Day B':[
+          {name:useGym?'Deadlift':'DB Deadlift',sets:'4',reps:'5',note:'Heavy pulling — protect your back',rest:'3min'},
+          {name:useGym?'Overhead Press':'DB OHP',sets:'4',reps:'6-8',note:'Heavier from Arc 1',rest:'90s'},
+          {name:'Cable Row / DB Row',sets:'4',reps:'8-10',note:'Horizontal pull',rest:'90s'},
+          {name:'Bulgarian Split Squat',sets:'3',reps:'8 each',note:'Hardest leg exercise. Worth it.',rest:'90s'},
+        ],
+        'HIIT Day':[
+          {name:usePeloton?'Peloton HIIT 45':'HIIT Circuit',sets:'1',reps:'30 min',note:usePeloton?'45-min HIIT ride OR 30-min ride + 15 min bodyweight circuit':'4 rounds: 10 burpees / 15 jump squats / 20 mountain climbers / 30s plank',rest:'N/A'},
+        ],
+      },
+      xpReward:500, boss:{name:'DUAL GAUNTLET',desc:'In one week: hit a new 5RM on Squat or Deadlift AND complete your longest cardio session ever.', xpReward:500}
+    },
+  ];
+}
+
+function buildShadowProgram(goal, level, days){
+  return [
+    {
+      id:'s1',title:'AWAKENING',
+      subtitle:'Weeks 1-4: Zero to moving',
+      description:`No gym. No excuses. Your body is the weight. Calisthenics builds real, functional strength. Start where you are — the only rule is consistency.`,
+      weeks:4, type:'bodyweight',
+      workouts:{
+        'Day A — Push/Legs':[
+          {name:'Push-ups (any variation)',sets:'3',reps:'max-2',note:'Stop 2 reps before failure. Form over ego.',rest:'90s'},
+          {name:'Bodyweight Squats',sets:'4',reps:'15-20',note:'Full depth, 2s down, explode up',rest:'60s'},
+          {name:'Pike Push-ups',sets:'3',reps:'8-12',note:'Shoulder-focused push-up',rest:'90s'},
+          {name:'Reverse Lunges',sets:'3',reps:'10 each',note:'Step back, controlled',rest:'60s'},
+          {name:'Tricep Bench Dips',sets:'3',reps:'10-15',note:'Chair/bench/floor',rest:'60s'},
+        ],
+        'Day B — Pull/Core':[
+          {name:'Pull-ups / Inverted Rows',sets:'3',reps:'max-2',note:'No bar: use table for inverted rows',rest:'2min'},
+          {name:'Superman Hold',sets:'3',reps:'10+3s hold',note:'Lower back and glutes',rest:'60s'},
+          {name:'Plank',sets:'3',reps:'30-60s',note:'Quality over time',rest:'45s'},
+          {name:'Bicycle Crunches',sets:'3',reps:'20 total',note:'Slow and controlled',rest:'45s'},
+          {name:'Glute Bridge',sets:'3',reps:'15',note:'Squeeze at top for 1s',rest:'45s'},
+        ],
+        'Day C — Full Body':[
+          {name:'Burpees',sets:'4',reps:'8',note:'The exercise you hate but need',rest:'90s'},
+          {name:'Jump Squats',sets:'3',reps:'10',note:'Land softly, absorb the impact',rest:'60s'},
+          {name:'Push-up + Row (with DB if available)',sets:'3',reps:'8 each',note:'Core stability challenge',rest:'90s'},
+          {name:'Mountain Climbers',sets:'3',reps:'20 total',note:'Cardio + core',rest:'60s'},
+          {name:'Wall Sit',sets:'3',reps:'30-60s',note:'Burn is a feature not a bug',rest:'60s'},
+        ],
+      },
+      xpReward:300, boss:{name:'SHADOW TRIAL',desc:'Complete all 3 workout types in a single week without missing a session. Log all 3.', xpReward:500}
+    },
+    {
+      id:'s2',title:'ASCENSION',
+      subtitle:'Weeks 5-10: Harder progressions',
+      description:`Time to make it harder. Progress calisthenics by slowing reps, adding pauses, elevating feet, adding plyometrics. The ceiling is higher than you think.`,
+      weeks:6, type:'bodyweight',
+      workouts:{
+        'Day A — Push/Legs':[
+          {name:'Decline Push-ups',sets:'4',reps:'8-12',note:'Feet elevated = more chest upper',rest:'90s'},
+          {name:'Jump Squats',sets:'4',reps:'10',note:'Plyometric power',rest:'90s'},
+          {name:'Diamond Push-ups',sets:'3',reps:'8-12',note:'Tricep killer',rest:'90s'},
+          {name:'Bulgarian Split Squat (bodyweight)',sets:'3',reps:'10 each',note:'Rear foot elevated',rest:'90s'},
+          {name:'Pike Push-ups (slow)',sets:'3',reps:'8',note:'3s down, pause, explode',rest:'90s'},
+        ],
+        'Day B — Pull/Core':[
+          {name:'Pull-ups / Negatives',sets:'4',reps:'max or 5 negatives',note:'Negatives = jump up, lower slowly over 5s',rest:'2min'},
+          {name:'Hollow Body Hold',sets:'3',reps:'20-30s',note:'The gymnast core exercise. Look it up.',rest:'60s'},
+          {name:'Side Plank',sets:'3',reps:'30s each',note:'Don\'t skip unilateral core',rest:'45s'},
+          {name:'Archer Row (table/bar)',sets:'3',reps:'8 each',note:'One-arm progression',rest:'90s'},
+        ],
+        'Day C — HIIT Bodyweight':[
+          {name:'Tabata Burpees',sets:'8',reps:'20s on / 10s off',note:'4 minutes of suffering. Worth it.',rest:'between rounds only'},
+          {name:'100 Squat Challenge',sets:'1',reps:'100',note:'Break into sets. Time yourself. Beat it next week.',rest:'as needed'},
+          {name:'Push-up Ladder',sets:'1',reps:'1-2-3-4-5-4-3-2-1',note:'Total = 25. Rest only between rungs.',rest:'10s between rungs'},
+        ],
+      },
+      xpReward:500, boss:{name:'THE GAUNTLET',desc:'Complete: 50 push-ups + 50 squats + 50 sit-ups + 50 lunges (each leg) in as few sets as possible. Log total time.', xpReward:500}
+    },
+  ];
+}
+
+// ════════════════════════════════════════════════════════════
+// SPRITE DRAWING (8-bit pixel art via Canvas)
+// ════════════════════════════════════════════════════════════
+
+const SPRITES = {
+  WARRIOR:[
+    '00111100',
+    '01111110',
+    '01111110',
+    '00111100',
+    '01111110',
+    '11111111',
+    '00111100',
+    '00100100',
+  ],
+  RANGER:[
+    '00111100',
+    '01111110',
+    '01100110',
+    '00111100',
+    '00111100',
+    '01111110',
+    '01100110',
+    '01100110',
+  ],
+  PALADIN:[
+    '00011000',
+    '00111100',
+    '01111110',
+    '01111110',
+    '11111111',
+    '11111111',
+    '00100100',
+    '01100110',
+  ],
+  SHADOW:[
+    '00111100',
+    '01111110',
+    '01010110',
+    '00111100',
+    '00111100',
+    '01011010',
+    '01000010',
+    '01000010',
+  ],
+  TITLE:[
+    '0011111100',
+    '0111111110',
+    '1111001111',
+    '1110000111',
+    '1110110111',
+    '1111001111',
+    '0111111110',
+    '0011111100',
+  ]
+};
+
+function drawSprite(canvasId, type, color){
+  const c = document.getElementById(canvasId);
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  const pattern = SPRITES[type] || SPRITES.WARRIOR;
+  const pw = Math.floor(c.width / pattern[0].length);
+  const ph = Math.floor(c.height / pattern.length);
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.fillStyle = color || CLASS_COLORS[type] || '#e8b84b';
+  for(let r=0;r<pattern.length;r++){
+    for(let col=0;col<pattern[r].length;col++){
+      if(pattern[r][col]==='1'){
+        ctx.fillRect(col*pw, r*ph, pw, ph);
+      }
+    }
+  }
+}
+
+function drawTitleSprite(){
+  const c = document.getElementById('title-sprite');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  const cols = [
+    '#ff4444','#e8b84b','#44dd44','#aa44ff',
+    '#4488ff','#44eeff','#ff8844','#ffffff'
+  ];
+  const pattern = SPRITES.TITLE;
+  const pw = Math.floor(c.width/pattern[0].length);
+  const ph = Math.floor(c.height/pattern.length);
+  ctx.clearRect(0,0,c.width,c.height);
+  for(let r=0;r<pattern.length;r++){
+    ctx.fillStyle = cols[r % cols.length];
+    for(let col=0;col<pattern[r].length;col++){
+      if(pattern[r][col]==='1'){
+        ctx.fillRect(col*pw,r*ph,pw,ph);
+      }
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// SETUP WIZARD LOGIC
+// ════════════════════════════════════════════════════════════
+
+let setup = {
+  name:'', heroClass:'', fitnessLevel:'', daysPerWeek:3, goal:'', equipment:[],
+  rewards:[]
+};
+
+function selectClass(cls){
+  setup.heroClass = cls;
+  document.querySelectorAll('.class-card[id^="class-"]').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('class-'+cls);
+  if(el) el.classList.add('selected');
+}
+
+function selectLevel(lvl){
+  setup.fitnessLevel = lvl;
+  document.querySelectorAll('[id^="lvl-"]').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('lvl-'+lvl);
+  if(el) el.classList.add('selected');
+}
+
+function selectDays(n){
+  setup.daysPerWeek = n;
+  document.querySelectorAll('[id^="days-"]').forEach(el=>{
+    el.classList.remove('btn-gold');
+    el.classList.add();
+    el.style.background='';el.style.color='';
+  });
+  const el = document.getElementById('days-'+n);
+  if(el){el.classList.add('btn-gold');el.style.background='var(--gold)';el.style.color='#000';}
+}
+
+function selectGoal(g){
+  setup.goal = g;
+  document.querySelectorAll('[id^="goal-"]').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('goal-'+g);
+  if(el) el.classList.add('selected');
+}
+
+const REWARD_TIERS = [
+  {tier:'COMMON',color:'#aaaaaa',xp:500,placeholder:'e.g. Cheat meal, extra screen time'},
+  {tier:'UNCOMMON',color:'#44dd44',xp:1500,placeholder:'e.g. Buy a new game, movie night'},
+  {tier:'RARE',color:'#4488ff',xp:3000,placeholder:'e.g. New gym gear, gaming peripheral'},
+  {tier:'EPIC',color:'#aa44ff',xp:6000,placeholder:'e.g. Console/headset, mini vacation'},
+  {tier:'LEGENDARY',color:'#ffd700',xp:12000,placeholder:'e.g. Your dream item, major experience'},
+];
+
+function buildRewardInputs(){
+  const container = document.getElementById('reward-inputs');
+  container.innerHTML = '';
+  REWARD_TIERS.forEach((rt,i)=>{
+    container.innerHTML += `
+      <div class="reward-setup-row">
+        <div class="reward-tier-badge" style="color:${rt.color};border-color:${rt.color};font-size:6px;">
+          ${rt.tier}<br><span style="color:var(--muted);font-size:5px;">${rt.xp.toLocaleString()} XP</span>
+        </div>
+        <input class="pixel-input" style="font-size:8px;border-color:${rt.color};"
+          id="reward-input-${i}" placeholder="${rt.placeholder}" />
+      </div>
+    `;
+  });
+}
+
+function wizardNext(step){
+  if(step===1){
+    const name = document.getElementById('hero-name').value.trim();
+    if(!name){toast('Enter your hero name!');return;}
+    if(!setup.heroClass){toast('Choose your class!');return;}
+    setup.name = name.toUpperCase();
+  }
+  if(step===2){
+    if(!setup.fitnessLevel){toast('Choose your starting level!');return;}
+    const eqMap = ['gym','peloton','dumbbells','pullupbar'];
+    setup.equipment = eqMap.filter(id=>document.getElementById('eq-'+id)?.checked);
+  }
+  if(step===3){
+    if(!setup.goal){toast('Choose your primary goal!');return;}
+    buildRewardInputs();
+  }
+
+  document.getElementById('ws-'+step).classList.remove('active');
+  document.getElementById('ws-'+(step+1)).classList.add('active');
+  updateWizardDots(step+1);
+}
+
+function wizardBack(step){
+  document.getElementById('ws-'+step).classList.remove('active');
+  document.getElementById('ws-'+(step-1)).classList.add('active');
+  updateWizardDots(step-1);
+}
+
+function updateWizardDots(current){
+  const dots = document.getElementById('wizard-dots').children;
+  for(let i=0;i<dots.length;i++){
+    dots[i].className = 'w-dot';
+    if(i < current-1) dots[i].classList.add('done');
+    else if(i === current-1) dots[i].classList.add('active');
+  }
+}
+
+function finishSetup(){
+  // Collect rewards
+  setup.rewards = REWARD_TIERS.map((rt,i)=>{
+    const val = document.getElementById('reward-input-'+i)?.value.trim();
+    return {
+      tier: rt.tier,
+      name: val || rt.placeholder,
+      xpRequired: rt.xp,
+      claimed: false,
+    };
+  });
+
+  // Build game state
+  G = defaultState();
+  G.hero.name = setup.name;
+  G.hero.class = setup.heroClass;
+  G.setup.fitnessLevel = setup.fitnessLevel;
+  G.setup.daysPerWeek = setup.daysPerWeek;
+  G.setup.goal = setup.goal;
+  G.setup.equipment = setup.equipment;
+  G.rewards = setup.rewards;
+
+  G.program = buildProgram(setup.heroClass, setup.goal, setup.fitnessLevel, setup.daysPerWeek, setup.equipment);
+
+  saveGame();
+  initApp();
+  showScreen('screen-app');
+}
+
+// ════════════════════════════════════════════════════════════
+// APP INIT & RENDER
+// ════════════════════════════════════════════════════════════
+
+function initApp(){
+  checkDailyReset();
+  renderDashboard();
+  renderQuests();
+  renderLog();
+  renderRewards();
+  renderStats();
+  drawSprite('hero-sprite-main', G.hero.class, CLASS_COLORS[G.hero.class]);
+}
+
+function checkDailyReset(){
+  const today = todayStr();
+  if(G.lastLogDate !== today){
+    G.todayDone = false;
+    // check if yesterday was missed for streak
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const ys = dateStr(yesterday);
+    if(G.lastLogDate && G.lastLogDate !== ys && G.lastLogDate !== today){
+      // missed a day — reset streak
+      G.hero.streak = 0;
+    }
+  }
+}
+
+function todayStr(){
+  return dateStr(new Date());
+}
+
+function dateStr(d){
+  return d.toISOString().slice(0,10);
+}
+
+function xpToLevel(totalXP){
+  let level = 1;
+  for(let i=0;i<XP_PER_LEVEL.length;i++){
+    if(totalXP >= XP_PER_LEVEL[i]) level = i+1;
+    else break;
+  }
+  return Math.min(level, XP_PER_LEVEL.length);
+}
+
+function xpForLevel(level){
+  return XP_PER_LEVEL[Math.min(level-1, XP_PER_LEVEL.length-1)] || 0;
+}
+
+function xpForNextLevel(level){
+  return XP_PER_LEVEL[Math.min(level, XP_PER_LEVEL.length-1)] || 99999;
+}
+
+function getTitle(){
+  const titles = LEVEL_TITLES[G.hero.class] || LEVEL_TITLES.WARRIOR;
+  return titles[Math.min(G.hero.level-1, titles.length-1)];
+}
+
+function getProgram(){
+  return G.program || buildProgram(G.hero.class, G.setup.goal, G.setup.fitnessLevel, G.setup.daysPerWeek, G.setup.equipment);
+}
+
+function getCurrentQuest(){
+  const prog = getProgram();
+  return prog[Math.min(G.currentQuestIndex, prog.length-1)];
+}
+
+function getTodayWorkout(){
+  const q = getCurrentQuest();
+  if(!q || !q.workouts) return null;
+  const days = Object.keys(q.workouts);
+  if(!days.length) return null;
+  // Cycle through workout days based on completed workouts count
+  const totalDone = G.workoutHistory.filter(w=>w.questId===q.id).length;
+  const idx = totalDone % days.length;
+  const name = days[idx];
+  return {name, exercises: q.workouts[name]};
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER DASHBOARD
+// ════════════════════════════════════════════════════════════
+
+function renderDashboard(){
+  if(!G) return;
+  const level = G.hero.level;
+  const xpInLevel = G.hero.totalXP - xpForLevel(level);
+  const xpNeeded = xpForNextLevel(level) - xpForLevel(level);
+  const pct = Math.min(100, (xpInLevel/xpNeeded)*100);
+
+  document.getElementById('dash-name').textContent = G.hero.name;
+  document.getElementById('dash-class').textContent = `${G.hero.class} — ${getTitle()}`;
+  document.getElementById('dash-level').textContent = `LVL ${level} — ${G.hero.totalXP.toLocaleString()} TOTAL XP`;
+  document.getElementById('dash-streak').textContent = `${G.hero.streak} DAY STREAK`;
+  document.getElementById('dash-xp-text').textContent = `${xpInLevel} / ${xpNeeded} XP`;
+  document.getElementById('dash-xp-bar').style.width = pct+'%';
+
+  // Next reward
+  const nextReward = G.rewards.find(r=>!r.claimed && r.xpRequired > G.hero.totalXP);
+  if(nextReward){
+    const remaining = nextReward.xpRequired - G.hero.totalXP;
+    document.getElementById('dash-next-reward').textContent = `Next reward: "${nextReward.name}" in ${remaining.toLocaleString()} XP`;
+  } else {
+    const unclaimed = G.rewards.find(r=>!r.claimed && r.xpRequired <= G.hero.totalXP);
+    document.getElementById('dash-next-reward').textContent = unclaimed ? `🎉 REWARD READY TO CLAIM: "${unclaimed.name}"!` : '🏆 All rewards claimed!';
+  }
+
+  // Today's quest
+  const today = getTodayWorkout();
+  const todayArea = document.getElementById('today-quest-area');
+  const q = getCurrentQuest();
+  if(G.todayDone){
+    todayArea.innerHTML = `
+      <div style="text-align:center;padding:16px;">
+        <div style="font-size:20px;margin-bottom:8px;">✅</div>
+        <div style="font-size:9px;color:var(--green);">QUEST COMPLETE</div>
+        <div style="font-size:7px;color:var(--muted);margin-top:6px;">Come back tomorrow, hero.</div>
+      </div>`;
+  } else if(today){
+    todayArea.innerHTML = `
+      <div style="font-size:9px;color:var(--text);margin-bottom:6px;">${today.name}</div>
+      <div style="font-size:7px;color:var(--muted);margin-bottom:12px;">${today.exercises.length} exercises · Tap LOG to begin</div>
+      <button class="btn btn-green btn-block" onclick="showPage('page-log');showNav('nav-log');">⚔ START WORKOUT</button>
+    `;
+  } else {
+    todayArea.innerHTML = `<div style="font-size:7px;color:var(--muted);text-align:center;padding:16px;">No workout programmed — check Quest Log</div>`;
+  }
+
+  // Stats
+  document.getElementById('stat-total-workouts').textContent = G.workoutHistory.length;
+  const thisWeek = getThisWeekWorkouts();
+  document.getElementById('stat-this-week').textContent = `${thisWeek}/${G.setup.daysPerWeek}`;
+
+  // Weekly map
+  renderWeeklyMap();
+
+  // Active quest
+  const activeArea = document.getElementById('active-quest-info');
+  if(q){
+    const questDone = G.workoutHistory.filter(w=>w.questId===q.id).length;
+    const totalNeeded = q.weeks * G.setup.daysPerWeek;
+    const questPct = Math.min(100, (questDone/totalNeeded)*100);
+    activeArea.innerHTML = `
+      <div style="font-size:9px;color:var(--gold);margin-bottom:4px;">${q.title}</div>
+      <div style="font-size:7px;color:var(--muted);margin-bottom:10px;">${q.subtitle}</div>
+      <div class="stat-row"><span style="font-size:7px;">SESSIONS</span><span class="stat-val">${questDone}/${totalNeeded}</span></div>
+      <div class="bar-wrap"><div class="bar-fill bar-xp" style="width:${questPct}%"></div></div>
+      ${q.boss ? `<div style="font-size:7px;color:var(--red);margin-top:8px;">⚠ Boss: ${q.boss.name}</div>` : ''}
+    `;
+  }
+
+  // Boss panel
+  if(q && q.boss){
+    const questDone = G.workoutHistory.filter(w=>w.questId===q.id).length;
+    const totalNeeded = q.weeks * G.setup.daysPerWeek;
+    if(questDone >= totalNeeded * 0.8){
+      document.getElementById('boss-panel').style.display='block';
+      document.getElementById('boss-info').innerHTML = `
+        <div style="font-size:9px;color:var(--red);margin-bottom:6px;">⚔ ${q.boss.name}</div>
+        <div style="color:var(--muted);margin-bottom:10px;">${q.boss.desc}</div>
+        <button class="btn btn-red btn-sm" onclick="completeBoss()">CHALLENGE BOSS (+${q.boss.xpReward} XP)</button>
+      `;
+    }
+  }
+}
+
+function getThisWeekWorkouts(){
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+  const mondayStr = dateStr(monday);
+  return G.workoutHistory.filter(w=>w.date >= mondayStr).length;
+}
+
+function renderWeeklyMap(){
+  const map = document.getElementById('weekly-map');
+  const now = new Date();
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(); d.setDate(now.getDate()-i);
+    days.push(dateStr(d));
+  }
+  const dayNames = ['M','T','W','T','F','S','S'];
+  map.innerHTML = days.map((d,i)=>{
+    const w = G.workoutHistory.find(x=>x.date===d);
+    const cls = w ? 'done' : (d < todayStr() ? '' : '');
+    const label = dayNames[new Date(d+'T12:00:00').getDay()===0?6:new Date(d+'T12:00:00').getDay()-1];
+    return `<div style="text-align:center;">
+      <div style="font-size:6px;color:var(--muted);margin-bottom:2px;">${label}</div>
+      <div class="progress-day ${w?'done':''}" title="${d}: ${w?'Completed':'—'}">${w?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER QUESTS
+// ════════════════════════════════════════════════════════════
+
+function renderQuests(){
+  if(!G) return;
+  const prog = getProgram();
+  const list = document.getElementById('quest-list');
+  document.getElementById('quest-program-label').textContent = `${G.hero.class} · ${G.setup.goal.toUpperCase()} · ${G.setup.fitnessLevel.toUpperCase()}`;
+  list.innerHTML = '';
+  prog.forEach((q,i)=>{
+    const isDone = G.completedQuests.includes(q.id);
+    const isActive = i === G.currentQuestIndex && !isDone;
+    const isLocked = i > G.currentQuestIndex;
+    const questDone = G.workoutHistory.filter(w=>w.questId===q.id).length;
+    const totalNeeded = q.weeks * G.setup.daysPerWeek;
+    const pct = Math.min(100,(questDone/totalNeeded)*100);
+    const tierColor = isDone ? 'var(--muted)' : isActive ? 'var(--green)' : isLocked ? 'var(--muted)' : 'var(--gold)';
+    list.innerHTML += `
+      <div class="quest-item ${isActive?'active-quest':''} ${isDone?'completed':''} ${isLocked?'locked':''}">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+          <div class="quest-title" style="color:${tierColor}">${isDone?'✅ ':isActive?'⚔ ':isLocked?'🔒 ':''}${q.title}</div>
+          <div style="font-size:7px;color:var(--muted);">WEEK ${Array.from({length:q.weeks},(_,j)=>i===0?j+1:q.weeks*i+j+1).join('')? q.weeks + 'wk':q.weeks+'wk'}</div>
+        </div>
+        <div class="quest-desc">${q.description}</div>
+        <div class="quest-tags">
+          <span class="tag" style="color:var(--cyan);border-color:var(--cyan);">${q.type}</span>
+          <span class="tag" style="color:var(--gold);border-color:var(--gold);">+${q.xpReward} XP</span>
+          ${q.boss ? `<span class="tag" style="color:var(--red);border-color:var(--red);">Boss: ${q.boss.name}</span>` : ''}
+        </div>
+        ${!isLocked ? `
+        <div style="margin-top:10px;">
+          <div class="stat-row" style="margin-bottom:4px;"><span style="font-size:7px;">PROGRESS</span><span style="font-size:7px;color:var(--gold);">${questDone}/${totalNeeded}</span></div>
+          <div class="bar-wrap"><div class="bar-fill bar-xp" style="width:${pct}%"></div></div>
+        </div>` : ''}
+        ${isActive && !isDone ? `<button class="btn btn-green btn-sm" style="margin-top:10px;" onclick="showPage('page-log');showNav('nav-log');">LOG TODAY'S WORKOUT</button>` : ''}
+        ${isDone ? `<div style="font-size:7px;color:var(--green);margin-top:8px;">QUEST COMPLETE — ${q.xpReward} XP earned</div>` : ''}
+      </div>
+    `;
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER WORKOUT LOG
+// ════════════════════════════════════════════════════════════
+
+function renderLog(){
+  if(!G) return;
+  const today = getTodayWorkout();
+  const q = getCurrentQuest();
+  const logContent = document.getElementById('log-content');
+  const dateDisplay = document.getElementById('log-date-display');
+  const title = document.getElementById('log-quest-title');
+
+  const now = new Date();
+  dateDisplay.textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+
+  if(G.todayDone){
+    logContent.innerHTML = `
+      <div class="pixel-box pixel-box-green" style="text-align:center;padding:30px;">
+        <div style="font-size:28px;margin-bottom:12px;">🏆</div>
+        <div style="font-size:11px;color:var(--green);margin-bottom:8px;">WORKOUT LOGGED!</div>
+        <div style="font-size:8px;color:var(--muted);margin-bottom:16px;">You crushed it today, ${G.hero.name}.</div>
+        <div style="font-size:8px;color:var(--gold);">+${XP_WORKOUT + (G.hero.streak > 1 ? XP_STREAK_BONUS * Math.min(G.hero.streak,5) : 0)} XP EARNED</div>
+      </div>
+    `;
+    return;
+  }
+
+  if(!today){
+    logContent.innerHTML = `<div style="font-size:8px;color:var(--muted);text-align:center;padding:20px;">No workout scheduled. Start a quest first!</div>`;
+    return;
+  }
+
+  title.textContent = today.name;
+
+  const phaseNote = q ? getPhaseNote(q) : '';
+
+  logContent.innerHTML = `
+    <div class="pixel-box" style="margin-bottom:12px;">
+      <div style="font-size:8px;color:var(--gold);margin-bottom:4px;">${q ? q.title : 'WORKOUT'}</div>
+      <div style="font-size:7px;color:var(--cyan);margin-bottom:8px;">${today.name}</div>
+      ${phaseNote ? `<div style="font-size:7px;color:var(--orange);line-height:1.7;padding:8px;background:rgba(255,136,68,.08);border:1px solid rgba(255,136,68,.2);">${phaseNote}</div>` : ''}
+    </div>
+
+    <div class="pixel-box" style="margin-bottom:12px;">
+      <div class="section-title">EXERCISES</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:4px;margin-bottom:8px;">
+        <div style="font-size:6px;color:var(--muted);">EXERCISE</div>
+        <div style="font-size:6px;color:var(--muted);text-align:center;">SETS</div>
+        <div style="font-size:6px;color:var(--muted);text-align:center;">REPS</div>
+        <div style="font-size:6px;color:var(--muted);text-align:center;">WEIGHT</div>
+      </div>
+      <div id="exercise-rows">
+        ${today.exercises.map((ex,i)=>`
+          <div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);">
+            <div style="font-size:8px;color:var(--text);margin-bottom:4px;">${ex.name}</div>
+            <div style="font-size:7px;color:var(--muted);margin-bottom:6px;line-height:1.6;">📌 ${ex.note}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+              <div>
+                <div style="font-size:6px;color:var(--muted);margin-bottom:2px;">TARGET SETS</div>
+                <div style="font-size:8px;color:var(--cyan);">${ex.sets}</div>
+              </div>
+              <div>
+                <div style="font-size:6px;color:var(--muted);margin-bottom:2px;">TARGET REPS</div>
+                <div style="font-size:8px;color:var(--cyan);">${ex.reps}</div>
+              </div>
+              <div>
+                <div style="font-size:6px;color:var(--muted);margin-bottom:2px;">WEIGHT/NOTES</div>
+                <input class="ex-input" type="text" id="weight-${i}" placeholder="${ex.rest==='N/A'?'mins':'lbs/kg'}" />
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="pixel-box" style="margin-bottom:12px;">
+      <div class="section-title">NOTES / HOW DID IT FEEL?</div>
+      <textarea class="pixel-input" id="workout-notes" rows="2" placeholder="Optional: how was it? New PRs? Energy level?" style="resize:none;font-size:8px;"></textarea>
+    </div>
+
+    <button class="btn btn-green btn-lg btn-block" onclick="submitWorkout()">
+      ⚔ COMPLETE QUEST (+${XP_WORKOUT} XP)
+    </button>
+  `;
+}
+
+function getPhaseNote(q){
+  const notes = {
+    'FOUNDATION ARC': '💡 COACH TIP: This week is about form, not weight. Pick a weight you can lift with perfect technique for all sets. Your ego will want to go heavier. Don\'t.',
+    'FORGING ARC': '💡 COACH TIP: Add 2.5-5 lbs to your main lifts vs last week. Consistency compounds. Small progress every session = massive gains over time.',
+    'CRUCIBLE ARC': '💡 COACH TIP: Volume phase — you\'ll feel more tired. That\'s the point. Sleep 7-9 hours. Eat enough protein (0.8g per lb bodyweight minimum). Recovery IS the workout.',
+    'DELOAD + RESET': '💡 COACH TIP: Use 60% of your normal weight. Same movements, less stress. This WILL feel too easy. That is the point. Your CNS is recovering. Trust the process.',
+    'EVOLUTION ARC': '💡 COACH TIP: You\'re officially intermediate. Undulating periodization means some days are heavy-low, some are moderate-medium. Both are required. Don\'t skip the moderate days.',
+    'IGNITION ARC': '💡 COACH TIP: Keep your heart rate below 75% max. If you can\'t hold a conversation, slow down. Zone 2 feels embarrassingly easy at first. That\'s correct.',
+    'ACCELERATION ARC': '💡 COACH TIP: On HIIT days, the "on" intervals should feel unsustainable. If you\'re not gasping at the end of each sprint, you\'re not going hard enough.',
+    'CRUSADER\'S OATH': '💡 COACH TIP: Paladin training is about balance. Don\'t let either the strength or cardio feel like the "main" training. Both matter equally.',
+    'AWAKENING': '💡 COACH TIP: Bodyweight training is NOT easier than weights — it\'s just different. Controlled, slow reps with full range of motion build serious muscle.',
+  };
+  return notes[q.title] || '';
+}
+
+function submitWorkout(){
+  const today = getTodayWorkout();
+  const q = getCurrentQuest();
+  if(!today) return;
+
+  // Collect logged data
+  const logged = today.exercises.map((ex,i)=>({
+    name:ex.name,
+    weight: document.getElementById('weight-'+i)?.value || '',
+    sets:ex.sets, reps:ex.reps
+  }));
+  const notes = document.getElementById('workout-notes')?.value || '';
+
+  // XP calculation
+  let xpEarned = XP_WORKOUT;
+  const streakBonus = G.hero.streak > 0 ? XP_STREAK_BONUS * Math.min(G.hero.streak+1, 5) : 0;
+  xpEarned += streakBonus;
+
+  // Update state
+  G.workoutHistory.push({
+    date: todayStr(),
+    questId: q ? q.id : 'free',
+    workoutName: today.name,
+    exercises: logged,
+    notes,
+    xpEarned
+  });
+
+  // Streak
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const ys = dateStr(yesterday);
+  if(G.lastLogDate === ys || G.lastLogDate === todayStr()){
+    G.hero.streak++;
+  } else {
+    G.hero.streak = 1;
+  }
+  G.hero.longestStreak = Math.max(G.hero.longestStreak, G.hero.streak);
+  G.lastLogDate = todayStr();
+  G.todayDone = true;
+
+  // Award XP
+  const prevLevel = G.hero.level;
+  G.hero.totalXP += xpEarned;
+  G.hero.level = xpToLevel(G.hero.totalXP);
+
+  // Check quest completion
+  if(q){
+    const questDone = G.workoutHistory.filter(w=>w.questId===q.id).length;
+    const totalNeeded = q.weeks * G.setup.daysPerWeek;
+    if(questDone >= totalNeeded && !G.completedQuests.includes(q.id)){
+      G.completedQuests.push(q.id);
+      G.hero.totalXP += q.xpReward;
+      G.hero.level = xpToLevel(G.hero.totalXP);
+      G.currentQuestIndex = Math.min(G.currentQuestIndex+1, getProgram().length-1);
+      setTimeout(()=>toast(`🏆 QUEST COMPLETE: ${q.title}! +${q.xpReward} BONUS XP`),1500);
+    }
+  }
+
+  saveGame();
+
+  // Check rewards unlocked
+  checkRewardUnlocks();
+
+  // Level up?
+  if(G.hero.level > prevLevel){
+    showLevelUp(G.hero.level);
+  } else {
+    const streakMsg = streakBonus > 0 ? ` + ${streakBonus} STREAK BONUS` : '';
+    toast(`⚔ +${xpEarned} XP${streakMsg} · ${G.hero.streak} day streak!`);
+  }
+
+  // Re-render everything
+  renderLog();
+  renderDashboard();
+  renderQuests();
+  renderRewards();
+  renderStats();
+}
+
+function completeBoss(){
+  const q = getCurrentQuest();
+  if(!q || !q.boss) return;
+  if(G.bossesDefeated.includes(q.id)) return;
+  G.bossesDefeated.push(q.id);
+  G.hero.totalXP += q.boss.xpReward;
+  const prevLevel = G.hero.level;
+  G.hero.level = xpToLevel(G.hero.totalXP);
+  saveGame();
+  if(G.hero.level > prevLevel) showLevelUp(G.hero.level);
+  else toast(`💥 BOSS DEFEATED: ${q.boss.name}! +${q.boss.xpReward} XP`);
+  renderDashboard();
+  renderRewards();
+  renderStats();
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER REWARDS
+// ════════════════════════════════════════════════════════════
+
+const TIER_COLORS = {
+  COMMON:'#aaaaaa',UNCOMMON:'#44dd44',RARE:'#4488ff',EPIC:'#aa44ff',LEGENDARY:'#ffd700'
+};
+
+function renderRewards(){
+  if(!G) return;
+  document.getElementById('rewards-total-xp').textContent = G.hero.totalXP.toLocaleString();
+  document.getElementById('rewards-level').textContent = G.hero.level;
+
+  const list = document.getElementById('rewards-list');
+  list.innerHTML = '';
+  G.rewards.forEach((r,i)=>{
+    const unlocked = G.hero.totalXP >= r.xpRequired;
+    const color = TIER_COLORS[r.tier] || '#aaa';
+    const pct = Math.min(100,(G.hero.totalXP/r.xpRequired)*100);
+    list.innerHTML += `
+      <div class="reward-card ${r.claimed?'claimed':unlocked?'unlocked':'locked'}" style="border-color:${r.claimed?'var(--green)':unlocked?color:'var(--muted)'}">
+        <div class="reward-lock">${r.claimed?'✅':unlocked?'🔓':'🔒'}</div>
+        <div class="reward-tier" style="color:${color};">${r.tier}</div>
+        <div class="reward-name" style="color:${r.claimed?'var(--green)':unlocked?color:'var(--muted)'};">${r.name}</div>
+        <div class="reward-xp">${r.xpRequired.toLocaleString()} XP REQUIRED · YOU HAVE: ${G.hero.totalXP.toLocaleString()}</div>
+        ${!unlocked ? `
+          <div class="reward-progress">
+            <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${color};"></div></div>
+            <div style="font-size:7px;color:var(--muted);margin-top:4px;">${(r.xpRequired-G.hero.totalXP).toLocaleString()} XP away</div>
+          </div>` : ''}
+        ${unlocked && !r.claimed ? `
+          <button class="btn btn-sm" style="margin-top:12px;color:${color};border-color:${color};" onclick="claimReward(${i})">🎁 CLAIM REWARD</button>
+        ` : ''}
+        ${r.claimed ? `<div style="font-size:7px;color:var(--green);margin-top:8px;">CLAIMED — YOU EARNED THIS!</div>` : ''}
+      </div>
+    `;
+  });
+}
+
+function claimReward(i){
+  G.rewards[i].claimed = true;
+  saveGame();
+  renderRewards();
+  renderStats();
+  toast(`🎁 REWARD CLAIMED: ${G.rewards[i].name}`);
+}
+
+function checkRewardUnlocks(){
+  G.rewards.forEach(r=>{
+    if(!r.claimed && G.hero.totalXP >= r.xpRequired){
+      // Will show on rewards page
+    }
+  });
+  const justUnlocked = G.rewards.find(r=>!r.claimed && G.hero.totalXP >= r.xpRequired);
+  if(justUnlocked){
+    setTimeout(()=>toast(`🔓 REWARD UNLOCKED: "${justUnlocked.name}"! Go to REWARDS to claim.`), 2000);
+  }
+}
+
+function editRewards(){
+  // Simple prompt-based edit
+  G.rewards.forEach((r,i)=>{
+    const newName = prompt(`Edit reward (${r.tier} · ${r.xpRequired} XP):`, r.name);
+    if(newName !== null && newName.trim()) G.rewards[i].name = newName.trim();
+  });
+  saveGame();
+  renderRewards();
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER STATS
+// ════════════════════════════════════════════════════════════
+
+function renderStats(){
+  if(!G) return;
+  document.getElementById('stats-total-xp').textContent = G.hero.totalXP.toLocaleString();
+  document.getElementById('stats-best-streak').textContent = G.hero.longestStreak+'🔥';
+  document.getElementById('stats-workouts').textContent = G.workoutHistory.length;
+  document.getElementById('stats-rewards-earned').textContent = G.rewards.filter(r=>r.claimed).length;
+
+  // 30-day history
+  const histMap = document.getElementById('history-map');
+  const days30 = [];
+  for(let i=29;i>=0;i--){
+    const d = new Date(); d.setDate(new Date().getDate()-i);
+    days30.push(dateStr(d));
+  }
+  histMap.innerHTML = days30.map(d=>{
+    const w = G.workoutHistory.find(x=>x.date===d);
+    return `<div class="progress-day ${w?'done':''}" title="${d}">${w?'✓':''}</div>`;
+  }).join('');
+
+  // Workout list
+  const histList = document.getElementById('workout-history-list');
+  const recent = [...G.workoutHistory].reverse().slice(0,20);
+  if(!recent.length){
+    histList.innerHTML = '<div>No workouts logged yet. Your legend begins now.</div>';
+  } else {
+    histList.innerHTML = recent.map(w=>`
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text);">${w.date} · ${w.workoutName||'Workout'}</span>
+        <span style="color:var(--gold);">+${w.xpEarned} XP</span>
+      </div>
+    `).join('');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// LEVEL UP OVERLAY
+// ════════════════════════════════════════════════════════════
+
+function showLevelUp(level){
+  const overlay = document.getElementById('levelup-overlay');
+  overlay.classList.add('show','levelup-flash');
+  document.getElementById('levelup-num').textContent = 'LVL '+level;
+  document.getElementById('levelup-class-bonus').textContent = getTitle();
+  document.getElementById('levelup-msg').textContent = getLevelUpMsg(level);
+  drawSprite('levelup-sprite', G.hero.class, CLASS_COLORS[G.hero.class]);
+  setTimeout(()=>overlay.classList.remove('levelup-flash'), 700);
+}
+
+function getLevelUpMsg(level){
+  const msgs = [
+    '', // 0
+    'The journey begins.',
+    'Your body is adapting. Science is working.',
+    'You are no longer a beginner. Embrace it.',
+    'Intermediate territory. Most people quit here. Not you.',
+    'HALFWAY to Elite. Your friends have noticed.',
+    'The compound effect is visible now.',
+    'Advanced. You have earned the right to give advice.',
+    'Elite territory. You are the person others want to be.',
+    'Legendary status approaches.',
+    'THE LEGEND. You did it. You are built different.',
+  ];
+  return msgs[Math.min(level, msgs.length-1)] || 'Keep pushing.';
+}
+
+function closeLevelup(){
+  document.getElementById('levelup-overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// SAVE / LOAD
+// ════════════════════════════════════════════════════════════
+
+function saveGame(){
+  if(G) localStorage.setItem(SAVE_KEY, JSON.stringify(G));
+}
+
+function loadGame(){
+  try{
+    const s = localStorage.getItem(SAVE_KEY);
+    if(s){
+      G = JSON.parse(s);
+      if(!G.program) G.program = buildProgram(G.hero.class, G.setup.goal, G.setup.fitnessLevel, G.setup.daysPerWeek, G.setup.equipment);
+      return true;
+    }
+  }catch(e){console.error(e);}
+  return false;
+}
+
+function clearSave(){
+  localStorage.removeItem(SAVE_KEY);
+  G = null;
+  showScreen('screen-title');
+}
+
+function checkSave(){
+  if(loadGame()){
+    initApp();
+    showScreen('screen-app');
+  } else {
+    showScreen('screen-setup');
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showPage(id){
+  document.querySelectorAll('.page-section').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showNav(id){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+document.querySelectorAll('.nav-btn').forEach(b=>{
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════════════════════════════════
+// STARS BACKGROUND
+// ════════════════════════════════════════════════════════════
+
+function initStars(){
+  const bg = document.getElementById('stars-bg');
+  for(let i=0;i<80;i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random()*2+1;
+    s.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      animation-duration:${Math.random()*3+2}s;
+      animation-delay:${Math.random()*3}s;
+    `;
+    bg.appendChild(s);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// BOOT
+// ════════════════════════════════════════════════════════════
+
+initStars();
+drawTitleSprite();
+
+// Draw class sprites after DOM is ready
+setTimeout(()=>{
+  ['WARRIOR','RANGER','PALADIN','SHADOW'].forEach(cls=>{
+    drawSprite('sprite-'+cls, cls, CLASS_COLORS[cls]);
+  });
+},100);
+
+</script>
+</body>
+</html>

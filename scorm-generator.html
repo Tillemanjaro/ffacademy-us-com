@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCORM Studio — PowerPoint → Interactive eLearning</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --brand-1:#6C63FF; --brand-2:#FF6584; --brand-3:#43C6AC;
+    --brand-dark:#0F0E2A; --brand-darker:#07061A;
+    --card-bg:rgba(255,255,255,0.06); --card-border:rgba(255,255,255,0.10);
+    --text-primary:#F0EFF8; --text-secondary:#A9A7C9; --text-muted:#6E6C88;
+    --radius:18px; --shadow:0 8px 40px rgba(108,99,255,0.15);
+    --transition:all 0.3s cubic-bezier(0.23,1,0.32,1);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--brand-darker);color:var(--text-primary);min-height:100vh;}
+  a{color:var(--brand-1);}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+
+  /* top bar */
+  .app-nav{position:sticky;top:0;z-index:100;background:rgba(7,6,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .logo{font-size:15px;font-weight:800;letter-spacing:0.5px;display:flex;align-items:center;gap:10px;}
+  .logo .dot{width:9px;height:9px;border-radius:50%;background:var(--brand-3);box-shadow:0 0 12px var(--brand-3);}
+  .logo small{font-weight:600;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;font-size:10px;}
+  .steps{display:flex;gap:8px;font-size:12px;color:var(--text-muted);align-items:center;}
+  .steps b{color:var(--text-secondary);font-weight:700;}
+  .steps .on{color:var(--brand-1);}
+
+  .btn{display:inline-flex;align-items:center;gap:9px;padding:13px 26px;border-radius:50px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:var(--transition);letter-spacing:0.3px;}
+  .btn-primary{background:linear-gradient(135deg,var(--brand-1),#9B88FF);color:#fff;box-shadow:0 4px 20px rgba(108,99,255,0.4);}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,99,255,0.5);}
+  .btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none;}
+  .btn-ghost{background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--card-border);}
+  .btn-ghost:hover{background:rgba(108,99,255,0.15);color:var(--text-primary);}
+  .btn-sm{padding:8px 16px;font-size:12px;}
+  .btn-success{background:linear-gradient(135deg,#43C6AC,#1a8a6e);color:#fff;box-shadow:0 4px 20px rgba(67,198,172,0.35);}
+
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  /* upload */
+  #panel-upload{min-height:calc(100vh - 60px);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;background:radial-gradient(ellipse 120% 80% at 50% -10%,rgba(108,99,255,0.28) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 90%,rgba(67,198,172,0.12) 0%,transparent 50%);}
+  #panel-upload.active{display:flex;}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--brand-3);margin-bottom:22px;}
+  .big-title{font-size:clamp(34px,6vw,58px);font-weight:800;line-height:1.1;background:linear-gradient(135deg,#fff,#A9A7C9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:18px;}
+  .big-title .accent{-webkit-text-fill-color:transparent;background:linear-gradient(135deg,var(--brand-1),var(--brand-2));-webkit-background-clip:text;background-clip:text;}
+  .lede{font-size:18px;color:var(--text-secondary);line-height:1.7;max-width:600px;margin:0 auto 40px;}
+  .dropzone{width:100%;max-width:620px;border:2px dashed var(--card-border);border-radius:var(--radius);background:var(--card-bg);padding:48px 32px;cursor:pointer;transition:var(--transition);}
+  .dropzone:hover,.dropzone.drag{border-color:var(--brand-1);background:rgba(108,99,255,0.10);}
+  .dropzone .dz-icon{font-size:46px;margin-bottom:14px;}
+  .dropzone h3{font-size:19px;font-weight:700;margin-bottom:8px;}
+  .dropzone p{font-size:14px;color:var(--text-muted);}
+  .dropzone .browse{color:var(--brand-1);font-weight:700;text-decoration:underline;}
+  .feat-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px;}
+  .feat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);background:var(--card-bg);border:1px solid var(--card-border);padding:9px 16px;border-radius:50px;}
+
+  /* editor */
+  #panel-editor{padding:32px 0 120px;}
+  .editor-head{margin-bottom:28px;}
+  .editor-head h2{font-size:26px;font-weight:800;margin-bottom:8px;}
+  .editor-head p{color:var(--text-secondary);font-size:15px;}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:22px;margin-bottom:28px;}
+  .settings-grid .full{grid-column:1/-1;}
+  label.fld{display:block;font-size:12px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;}
+  input.txt,textarea.txt,select.txt{width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:10px;padding:11px 14px;color:var(--text-primary);font-size:14px;font-family:inherit;transition:var(--transition);}
+  input.txt:focus,textarea.txt:focus,select.txt:focus{outline:none;border-color:var(--brand-1);background:rgba(108,99,255,0.06);}
+  textarea.txt{resize:vertical;line-height:1.6;}
+  select.txt{cursor:pointer;}
+
+  .slide-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:0;margin-bottom:16px;overflow:hidden;transition:var(--transition);}
+  .slide-card.dragging{opacity:0.4;}
+  .sc-head{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none;}
+  .sc-head:hover{background:rgba(255,255,255,0.03);}
+  .sc-grip{color:var(--text-muted);cursor:grab;font-size:16px;}
+  .sc-index{width:30px;height:30px;border-radius:8px;background:rgba(108,99,255,0.18);color:#9B88FF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+  .sc-title{flex:1;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .type-badge{font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;padding:5px 12px;border-radius:50px;background:rgba(67,198,172,0.15);color:var(--brand-3);border:1px solid rgba(67,198,172,0.3);white-space:nowrap;}
+  .sc-chevron{color:var(--text-muted);transition:transform 0.3s;}
+  .slide-card.open .sc-chevron{transform:rotate(180deg);}
+  .sc-body{max-height:0;overflow:hidden;transition:max-height 0.35s ease;}
+  .slide-card.open .sc-body{max-height:2400px;}
+  .sc-body-inner{padding:4px 20px 22px;border-top:1px solid var(--card-border);}
+  .field{margin-top:16px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .mini-note{font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;}
+  .opt-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .opt-row input[type=radio]{width:18px;height:18px;accent-color:var(--brand-3);flex-shrink:0;}
+  .opt-row input.txt{flex:1;}
+  .opt-row .del{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px 8px;}
+  .opt-row .del:hover{color:var(--brand-2);}
+  .add-link{background:none;border:1px dashed var(--card-border);color:var(--brand-1);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;margin-top:4px;}
+  .add-link:hover{background:rgba(108,99,255,0.08);border-color:var(--brand-1);}
+  .del-slide{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:13px;margin-top:18px;display:inline-flex;align-items:center;gap:6px;}
+  .del-slide:hover{color:var(--brand-2);}
+
+  .export-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,6,26,0.92);backdrop-filter:blur(20px);border-top:1px solid var(--card-border);padding:16px 24px;display:none;align-items:center;justify-content:space-between;gap:16px;z-index:100;}
+  .export-bar.show{display:flex;}
+  .export-bar .info{font-size:13px;color:var(--text-muted);}
+  .export-bar .info b{color:var(--text-secondary);}
+  .actions{display:flex;gap:10px;}
+
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(30px);background:#1A1833;border:1px solid var(--card-border);border-radius:12px;padding:14px 22px;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:all 0.4s;z-index:200;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .spinner{width:44px;height:44px;border:4px solid var(--card-border);border-top-color:var(--brand-1);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 18px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #panel-loading{min-height:calc(100vh - 60px);display:none;flex-direction:column;align-items:center;justify-content:center;}
+  #panel-loading.active{display:flex;}
+  #panel-loading p{color:var(--text-secondary);}
+  /* AI panel */
+  .ai-panel{background:linear-gradient(135deg,rgba(108,99,255,0.10),rgba(67,198,172,0.05));border:1px solid rgba(108,99,255,0.25);border-radius:var(--radius);padding:22px;margin-bottom:28px;}
+  .ai-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+  .ai-head b{font-size:16px;}
+  .ai-spark{font-size:16px;}
+  .ai-note{font-size:12px;color:var(--text-muted);}
+  .ai-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:50px;background:rgba(255,255,255,0.08);color:var(--text-muted);margin-left:6px;}
+  .ai-badge.on{background:rgba(67,198,172,0.18);color:var(--brand-3);}
+  .ai-modes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px;}
+  .ai-mode{display:flex;flex-direction:column;gap:4px;align-items:flex-start;text-align:left;padding:13px 15px;border-radius:12px;border:2px solid var(--card-border);background:rgba(255,255,255,0.03);color:var(--text-secondary);font-size:14px;font-weight:700;cursor:pointer;transition:var(--transition);}
+  .ai-mode small{font-weight:400;font-size:11px;color:var(--text-muted);}
+  .ai-mode:hover{border-color:var(--brand-1);}
+  .ai-mode.active{border-color:var(--brand-1);background:rgba(108,99,255,0.14);color:var(--text-primary);}
+  .ai-config{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--card-border);}
+  .ai-config.show{display:block;}
+  #aiCfgActions.show{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .ai-config code{background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:5px;font-size:12px;}
+  @media(max-width:640px){.settings-grid,.row2{grid-template-columns:1fr;}.steps{display:none;}.ai-modes{grid-template-columns:1fr 1fr;}}
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<nav class="app-nav">
+  <div class="logo"><span class="dot"></span>SCORM Studio <small>by Nick Tillem</small></div>
+  <div class="steps">
+    <span id="st1" class="on"><b>1</b> Upload</span>
+    <span>›</span>
+    <span id="st2"><b>2</b> Review &amp; Edit</span>
+    <span>›</span>
+    <span id="st3"><b>3</b> Export SCORM</span>
+  </div>
+</nav>
+
+<!-- STEP 1: UPLOAD -->
+<section id="panel-upload" class="panel active">
+  <div class="eyebrow">◆ PowerPoint → Interactive eLearning · No AI · No keys · 100% in your browser</div>
+  <h1 class="big-title">Turn a deck into an<br><span class="accent">interactive SCORM course</span></h1>
+  <p class="lede">Upload a PowerPoint. Studio extracts every slide and maps it to rich interactions — flip cards, timelines, accordions, knowledge checks — in the same style as your Adult Learning Theories module. Review, edit, and export a SCORM 1.2 package for any LMS.</p>
+  <div class="dropzone" id="dropzone">
+    <div class="dz-icon">📊</div>
+    <h3>Drop your .pptx here</h3>
+    <p>or <span class="browse">browse your files</span> · nothing is uploaded anywhere</p>
+  </div>
+  <input type="file" id="fileInput" accept=".pptx" style="display:none">
+  <div class="feat-row">
+    <div class="feat">🔒 Fully offline</div>
+    <div class="feat">✏️ Editable before export</div>
+    <div class="feat">🎓 SCORM 1.2 (Canvas, Cornerstone, Docebo…)</div>
+    <div class="feat">💸 Free forever</div>
+  </div>
+</section>
+
+<!-- LOADING -->
+<section id="panel-loading" class="panel">
+  <div class="spinner"></div>
+  <p id="loadMsg">Reading your slides…</p>
+</section>
+
+<!-- STEP 2: EDITOR -->
+<section id="panel-editor" class="panel">
+  <div class="wrap">
+    <div class="editor-head">
+      <h2>Review &amp; edit your course</h2>
+      <p>We auto-detected an interaction for each slide. Change any type, edit the text, and fill in answers for knowledge checks. Drag to reorder.</p>
+    </div>
+    <div class="settings-grid">
+      <div class="full">
+        <label class="fld">Course title</label>
+        <input class="txt" id="courseTitle" placeholder="e.g. Adult Learning Theories">
+      </div>
+      <div class="full">
+        <label class="fld">Subtitle / description</label>
+        <textarea class="txt" id="courseDesc" rows="2" placeholder="One or two sentences shown on the title screen."></textarea>
+      </div>
+      <div>
+        <label class="fld">Passing score (%)</label>
+        <input class="txt" id="passScore" type="number" min="0" max="100" value="70">
+      </div>
+      <div>
+        <label class="fld">Estimated time</label>
+        <input class="txt" id="estTime" placeholder="e.g. 20 min">
+      </div>
+    </div>
+
+    <!-- AI ASSIST -->
+    <div class="ai-panel" id="aiPanel">
+      <div class="ai-head">
+        <div><span class="ai-spark">✨</span> <b>AI Assist</b> <span class="ai-badge" id="aiStatus">Off</span></div>
+        <div class="ai-note">Optional. Powers objectives, quiz drafting &amp; rewrites. Costs you nothing — see modes below.</div>
+      </div>
+      <div class="ai-modes">
+        <button class="ai-mode active" data-mode="off">🚫 Off<small>Rules only, no AI</small></button>
+        <button class="ai-mode" data-mode="local">🖥️ Local model<small>Runs in your browser · free · private</small></button>
+        <button class="ai-mode" data-mode="byok">🔑 My own key<small>Bring your OpenAI/Anthropic key</small></button>
+        <button class="ai-mode" data-mode="proxy">🔒 Hosted key<small>Password-gated shared key</small></button>
+      </div>
+      <div class="ai-config" id="aiCfgLocal">
+        <p class="mini-note">Downloads a small model (~1&ndash;3&nbsp;GB, cached after first use) and runs it on this device with WebGPU. Nothing leaves your browser. Best on a machine with a decent GPU.</p>
+        <button class="btn btn-ghost btn-sm" id="aiLoadLocal">⬇ Load local model</button>
+        <span class="mini-note" id="aiLocalStatus" style="margin-left:10px"></span>
+      </div>
+      <div class="ai-config" id="aiCfgByok">
+        <div class="row2">
+          <div><label class="fld">Provider</label><select class="txt" id="aiProvider"><option value="anthropic">Anthropic (Claude)</option><option value="openai">OpenAI</option></select></div>
+          <div><label class="fld">Model</label><input class="txt" id="aiModel" placeholder="e.g. claude-haiku-4-5"></div>
+        </div>
+        <div class="field"><label class="fld">API key <span style="color:var(--text-muted);text-transform:none;font-weight:400">(stays in this browser, sent only to the provider)</span></label><input class="txt" id="aiKey" type="password" placeholder="sk-... / your key"></div>
+        <label class="mini-note" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="aiRemember"> Remember on this device (localStorage)</label>
+      </div>
+      <div class="ai-config" id="aiCfgProxy">
+        <div class="field"><label class="fld">Proxy URL</label><input class="txt" id="aiProxyUrl" placeholder="https://your-worker.workers.dev"></div>
+        <div class="field"><label class="fld">Access password</label><input class="txt" id="aiProxyPass" type="password" placeholder="the password you set on the Worker"></div>
+        <p class="mini-note">Your key lives on the Worker (a server), never here. Requests are password-checked and spend-capped there. See <code>ai-proxy.worker.js</code>.</p>
+      </div>
+      <div class="ai-config" id="aiCfgActions">
+        <button class="btn btn-ghost btn-sm" id="aiTestBtn">⚡ Test connection</button>
+        <button class="btn btn-primary btn-sm" id="aiObjectivesBtn">✨ Draft learning objectives</button>
+        <span class="mini-note" id="aiActionStatus" style="margin-left:10px"></span>
+        <div id="aiObjectivesWrap" style="display:none;margin-top:14px"><label class="fld">Learning objectives</label><textarea class="txt" id="aiObjectives" rows="4" placeholder="By the end of this module, learners will be able to..."></textarea></div>
+      </div>
+    </div>
+
+    <div id="slideList"></div>
+  </div>
+</section>
+
+<div class="export-bar" id="exportBar">
+  <div class="info">Package: <b id="pkgStats">0 screens</b></div>
+  <div class="actions">
+    <button class="btn btn-ghost btn-sm" id="previewBtn">👁 Preview course</button>
+    <button class="btn btn-success" id="exportBtn">⬇ Download SCORM package</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   SCORM STUDIO — client-side PPTX → interactive SCORM 1.2 generator
+   No network calls, no AI, no keys. Everything runs in this browser tab.
+===================================================================== */
+
+/* ---------- interaction type registry ---------- */
+var TYPES = {
+  hero:      {label:'Title screen',   desc:'Course landing / section opener.'},
+  content:   {label:'Content',        desc:'Heading, intro and info cards or bullets.'},
+  flipcards: {label:'Flip cards',     desc:'Term on the front, definition on the back. Tap to reveal.'},
+  accordion: {label:'Accordion',      desc:'Expandable list of points.'},
+  timeline:  {label:'Timeline',       desc:'Ordered steps, phases or a process.'},
+  callout:   {label:'Callout',        desc:'A single highlighted takeaway.'},
+  quote:     {label:'Quote',          desc:'A pull-quote with attribution.'},
+  quiz:      {label:'Knowledge check',desc:'Multiple-choice question, scored toward completion.'}
+};
+var TYPE_ORDER = ['content','flipcards','accordion','timeline','callout','quote','quiz','hero'];
+
+var deck = [];          // array of screen models
+var settings = {title:'',desc:'',pass:70,time:''};
+
+/* =====================================================================
+   1. PARSE PPTX
+===================================================================== */
+var XN = { // helper: get elements by tag name across the xml doc
+  all:function(node,tag){return Array.prototype.slice.call(node.getElementsByTagName(tag));}
+};
+
+async function parsePptx(buffer){
+  var zip = await JSZip.loadAsync(buffer);
+
+  // collect slide files in numeric order
+  var slideNames = Object.keys(zip.files)
+    .filter(function(n){return /^ppt\/slides\/slide\d+\.xml$/.test(n);})
+    .sort(function(a,b){return num(a)-num(b);});
+
+  var media = {}; // path -> dataURL (loaded lazily)
+  var slides = [];
+  for(var i=0;i<slideNames.length;i++){
+    var name = slideNames[i];
+    var xml = await zip.file(name).async('string');
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+
+    // --- title vs body text ---
+    var title = '';
+    var bullets = [];
+    var shapes = XN.all(doc,'p:sp');
+    shapes.forEach(function(sp){
+      var ph = sp.getElementsByTagName('p:ph')[0];
+      var phType = ph ? (ph.getAttribute('type')||'') : '';
+      var paras = XN.all(sp,'a:p');
+      var texts = paras.map(function(p){
+        return XN.all(p,'a:t').map(function(t){return t.textContent;}).join('').trim();
+      }).filter(function(s){return s.length;});
+      if(!texts.length) return;
+      if(!title && (phType==='title'||phType==='ctrTitle')){
+        title = texts.join(' ');
+      } else {
+        bullets = bullets.concat(texts);
+      }
+    });
+    // fallback: first text becomes title if none flagged
+    if(!title && bullets.length){ title = bullets.shift(); }
+
+    // --- speaker notes (best-effort via rels) ---
+    var notes = '';
+    try{
+      var relName = 'ppt/slides/_rels/'+base(name)+'.rels';
+      if(zip.file(relName)){
+        var relXml = await zip.file(relName).async('string');
+        var relDoc = new DOMParser().parseFromString(relXml,'application/xml');
+        var rels = XN.all(relDoc,'Relationship');
+        var noteRel = rels.filter(function(r){return /notesSlide/.test(r.getAttribute('Type'));})[0];
+        if(noteRel){
+          var np = resolvePath('ppt/slides/', noteRel.getAttribute('Target'));
+          if(zip.file(np)){
+            var nXml = await zip.file(np).async('string');
+            var nDoc = new DOMParser().parseFromString(nXml,'application/xml');
+            notes = XN.all(nDoc,'a:t').map(function(t){return t.textContent;}).join(' ')
+                      .replace(/^\s*\d+\s*/,'').trim();
+          }
+        }
+      }
+    }catch(e){/* notes optional */}
+
+    slides.push({title:title||('Slide '+(i+1)), bullets:bullets, notes:notes});
+  }
+  return slides;
+}
+function num(s){var m=s.match(/(\d+)/);return m?parseInt(m[1],10):0;}
+function base(p){return p.split('/').pop();}
+function resolvePath(fromDir, target){
+  var parts = (fromDir+target).split('/'); var out=[];
+  parts.forEach(function(p){ if(p==='..')out.pop(); else if(p!=='.'&&p!=='')out.push(p); });
+  return out.join('/');
+}
+
+/* =====================================================================
+   2. AUTO-MAP slides -> interaction models
+===================================================================== */
+function splitTermDef(s){
+  var m = s.split(/\s*[:–—]\s*| - /);
+  if(m.length>=2 && m[0].length && m[0].length<70){
+    return {term:m[0].trim(), def:m.slice(1).join(' - ').trim()};
+  }
+  return null;
+}
+function suggestType(slide, index){
+  var t = (slide.title||'').toLowerCase();
+  var b = slide.bullets;
+  if(index===0) return 'hero';
+  if(/quiz|knowledge check|question|assessment|test yourself|check your understanding|pop quiz/.test(t)) return 'quiz';
+  if(/step|phase|stage|\bprocess\b|timeline|journey|roadmap|sequence/.test(t) || b.some(function(x){return /^\s*\d+[\.\)]/.test(x);})) return 'timeline';
+  if(b.length>=2 && b.filter(function(x){return splitTermDef(x);}).length>=Math.ceil(b.length*0.6)) return 'flipcards';
+  if(b.length>=3) return 'accordion';
+  if(b.length===1) return 'callout';
+  return 'content';
+}
+
+var ICONS = ['🏗️','💡','🔭','🧩','💬','🤝','⚙️','🎯','📌','🌱','🔑','🚀','📈','🧠','⭐','🔍'];
+
+function buildModel(slide, index){
+  var type = suggestType(slide, index);
+  var m = {type:type, title:slide.title, intro:'', _notes:slide.notes, _source:{title:slide.title, bullets:(slide.bullets||[]).slice(), notes:slide.notes}};
+  var b = slide.bullets;
+  switch(type){
+    case 'hero':
+      m.subtitle = slide.notes || (b.length? b.join(' · ') : '');
+      break;
+    case 'flipcards':
+      m.cards = b.map(function(x,i){
+        var td = splitTermDef(x);
+        return {icon:ICONS[i%ICONS.length], front: td?td.term:x, back: td?td.def:(slide.notes||'Tap to add a definition.')};
+      });
+      break;
+    case 'accordion':
+      m.items = b.map(function(x){
+        var td = splitTermDef(x);
+        return {title: td?td.term:x, body: td?td.def:''};
+      });
+      m.intro = slide.notes;
+      break;
+    case 'timeline':
+      m.items = b.map(function(x,i){
+        var clean = x.replace(/^\s*\d+[\.\)]\s*/,'');
+        var td = splitTermDef(clean);
+        return {step:'Step '+(i+1), title: td?td.term:clean, desc: td?td.def:''};
+      });
+      break;
+    case 'callout':
+      m.body = b[0] || slide.notes || '';
+      m.icon = '💡';
+      break;
+    case 'quote':
+      m.body = b[0]||''; m.cite = '';
+      break;
+    case 'quiz':
+      var q = stripQ(slide.title);
+      if(!q && slide.notes){ m.question = slide.notes; m.context = ''; }
+      else { m.question = q; m.context = slide.notes || ''; }
+      m.options = (b.length? b.slice(0,4) : ['','']);
+      m.correct = 0;
+      m.explanation = '';
+      break;
+    default: // content
+      m.intro = slide.notes || '';
+      m.bullets = b;
+  }
+  return m;
+}
+function stripQ(s){return s.replace(/^(quiz|knowledge check|question)\s*[:\-–]?\s*/i,'').trim();}
+
+/* =====================================================================
+   3. EDITOR UI
+===================================================================== */
+function renderEditor(){
+  document.getElementById('courseTitle').value = settings.title;
+  document.getElementById('courseDesc').value  = settings.desc;
+  document.getElementById('passScore').value   = settings.pass;
+  document.getElementById('estTime').value     = settings.time;
+  var list = document.getElementById('slideList');
+  list.innerHTML = '';
+  deck.forEach(function(m, i){ list.appendChild(slideCard(m, i)); });
+  updateStats();
+  if(typeof aiRefreshButtons==='function') aiRefreshButtons();
+}
+function el(html){var d=document.createElement('div');d.innerHTML=html.trim();return d.firstChild;}
+function esc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function typeOptions(sel){
+  return TYPE_ORDER.map(function(k){
+    return '<option value="'+k+'"'+(k===sel?' selected':'')+'>'+TYPES[k].label+'</option>';
+  }).join('');
+}
+
+function slideCard(m, i){
+  var card = el('<div class="slide-card" draggable="false" data-i="'+i+'"></div>');
+  card.innerHTML =
+    '<div class="sc-head">'
+    + '<span class="sc-grip" title="Drag to reorder">⋮⋮</span>'
+    + '<span class="sc-index">'+(i+1)+'</span>'
+    + '<span class="sc-title">'+esc(m.title||TYPES[m.type].label)+'</span>'
+    + '<span class="type-badge">'+TYPES[m.type].label+'</span>'
+    + '<span class="sc-chevron">▾</span>'
+    + '</div>'
+    + '<div class="sc-body"><div class="sc-body-inner">'
+    +   '<div class="row2">'
+    +     '<div><label class="fld">Interaction type</label><select class="txt js-type">'+typeOptions(m.type)+'</select><div class="mini-note">'+TYPES[m.type].desc+'</div></div>'
+    +     '<div><label class="fld">Screen title</label><input class="txt js-title" value="'+esc(m.title)+'"></div>'
+    +   '</div>'
+    +   '<div class="js-fields"></div>'
+    +   '<button class="del-slide js-del">🗑 Remove this screen</button>'
+    + '</div></div>';
+
+  var head = card.querySelector('.sc-head');
+  head.addEventListener('click', function(e){
+    if(e.target.classList.contains('sc-grip')) return;
+    card.classList.toggle('open');
+  });
+  // drag reorder
+  var grip = card.querySelector('.sc-grip');
+  grip.addEventListener('mousedown', function(){ card.setAttribute('draggable','true'); });
+  card.addEventListener('dragstart', function(e){ dragIdx=i; card.classList.add('dragging'); });
+  card.addEventListener('dragend', function(){ card.classList.remove('dragging'); card.setAttribute('draggable','false'); });
+  card.addEventListener('dragover', function(e){ e.preventDefault(); });
+  card.addEventListener('drop', function(e){ e.preventDefault(); moveSlide(dragIdx, i); });
+
+  card.querySelector('.js-type').addEventListener('change', function(e){
+    changeType(i, e.target.value);
+  });
+  card.querySelector('.js-title').addEventListener('input', function(e){
+    deck[i].title = e.target.value;
+    head.querySelector('.sc-title').textContent = e.target.value || TYPES[deck[i].type].label;
+  });
+  card.querySelector('.js-del').addEventListener('click', function(){
+    if(confirm('Remove this screen from the course?')){ deck.splice(i,1); renderEditor(); }
+  });
+
+  renderFields(card.querySelector('.js-fields'), m, i);
+  return card;
+}
+var dragIdx = -1;
+function moveSlide(from,to){
+  if(from===to||from<0) return;
+  var item = deck.splice(from,1)[0];
+  deck.splice(to,0,item);
+  renderEditor();
+}
+function changeType(i, newType){
+  var m = deck[i];
+  var b = m.bullets || (m.cards?m.cards.map(function(c){return c.front+': '+c.back;}):null)
+          || (m.items?m.items.map(function(x){return (x.title||'')+(x.desc||x.body?': '+(x.desc||x.body):'');}):null)
+          || (m.options||[]);
+  // rebuild from a synthetic slide so mapping helpers apply
+  var synthetic = {title:m.title, bullets: Array.isArray(b)?b.filter(Boolean):[], notes:m._notes||m.intro||''};
+  var rebuilt = buildModel(synthetic, 1); // index 1 avoids hero
+  rebuilt.type = newType;
+  // force the requested type's shape
+  var forced = buildTypedModel(newType, synthetic);
+  forced.title = m.title;
+  deck[i] = forced;
+  renderEditor();
+  // reopen the card
+  var card = document.querySelector('.slide-card[data-i="'+i+'"]');
+  if(card) card.classList.add('open');
+}
+function buildTypedModel(type, slide){
+  var saved = slide;
+  var tmp = buildModel({title:saved.title,bullets:saved.bullets,notes:saved.notes}, 1);
+  if(tmp.type===type) return tmp;
+  // map generic bullets into the target structure
+  var m = {type:type, title:saved.title, intro:saved.notes||'', _notes:saved.notes};
+  var b = saved.bullets||[];
+  if(type==='hero'){ m.subtitle=saved.notes||b.join(' · '); }
+  else if(type==='flipcards'){ m.cards=b.map(function(x,i){var td=splitTermDef(x);return{icon:ICONS[i%ICONS.length],front:td?td.term:x,back:td?td.def:(saved.notes||'Add a definition.')};}); if(!m.cards.length)m.cards=[{icon:ICONS[0],front:'',back:''}]; }
+  else if(type==='accordion'){ m.items=b.map(function(x){var td=splitTermDef(x);return{title:td?td.term:x,body:td?td.def:''};}); if(!m.items.length)m.items=[{title:'',body:''}]; }
+  else if(type==='timeline'){ m.items=b.map(function(x,i){var c=x.replace(/^\s*\d+[\.\)]\s*/,'');var td=splitTermDef(c);return{step:'Step '+(i+1),title:td?td.term:c,desc:td?td.def:''};}); if(!m.items.length)m.items=[{step:'Step 1',title:'',desc:''}]; }
+  else if(type==='callout'){ m.body=b[0]||saved.notes||''; m.icon='💡'; }
+  else if(type==='quote'){ m.body=b[0]||''; m.cite=''; }
+  else if(type==='quiz'){ var qq=stripQ(saved.title); if(!qq&&saved.notes){m.question=saved.notes;m.context='';}else{m.question=qq;m.context=saved.notes||'';} m.options=b.length?b.slice(0,4):['','']; m.correct=0; m.explanation=''; }
+  else { m.bullets=b; m.intro=saved.notes||''; }
+  return m;
+}
+
+/* ---- per-type field editors ---- */
+function renderFields(container, m, i){
+  var h='';
+  function ta(label,val,key,rows){return '<div class="field"><label class="fld">'+label+'</label><textarea class="txt" rows="'+(rows||2)+'" data-key="'+key+'">'+esc(val)+'</textarea></div>';}
+  function tx(label,val,key){return '<div class="field"><label class="fld">'+label+'</label><input class="txt" value="'+esc(val)+'" data-key="'+key+'"></div>';}
+
+  if(m.type==='hero'){
+    h = tx('Subtitle', m.subtitle||'', 'subtitle');
+  } else if(m.type==='content'){
+    h = ta('Intro paragraph', m.intro||'', 'intro',3)
+      + '<div class="field"><label class="fld">Points (one per line — shown as cards)</label><textarea class="txt" rows="5" data-key="bullets" data-list="1">'+esc((m.bullets||[]).join('\n'))+'</textarea></div>';
+  } else if(m.type==='callout'){
+    h = ta('Callout text', m.body||'', 'body',3);
+  } else if(m.type==='quote'){
+    h = ta('Quote', m.body||'', 'body',3) + tx('Attribution', m.cite||'', 'cite');
+  } else if(m.type==='flipcards'){
+    h = ta('Intro (optional)', m.intro||'', 'intro',2) + '<label class="fld" style="margin-top:16px">Cards</label><div class="js-cards"></div><button class="add-link js-add-card">+ Add card</button>';
+  } else if(m.type==='accordion'){
+    h = ta('Intro (optional)', m.intro||'', 'intro',2) + '<label class="fld" style="margin-top:16px">Items</label><div class="js-items"></div><button class="add-link js-add-item">+ Add item</button>';
+  } else if(m.type==='timeline'){
+    h = ta('Intro (optional)', m.intro||'', 'intro',2) + '<label class="fld" style="margin-top:16px">Steps</label><div class="js-items"></div><button class="add-link js-add-item">+ Add step</button>';
+  } else if(m.type==='quiz'){
+    h = '<button class="add-link js-ai-quiz" style="display:none;border-color:var(--brand-1);color:var(--brand-1);margin:4px 0 4px">✨ Draft question + distractors with AI</button>'
+      + ta('Question', m.question||'', 'question',2)
+      + ta('Context / scenario (optional)', m.context||'', 'context',2)
+      + '<label class="fld" style="margin-top:16px">Answer options — select the correct one</label><div class="js-opts"></div><button class="add-link js-add-opt">+ Add option</button>'
+      + ta('Explanation shown after answering', m.explanation||'', 'explanation',2);
+  }
+  container.innerHTML = h;
+
+  // bind simple text/textarea fields
+  Array.prototype.forEach.call(container.querySelectorAll('[data-key]'), function(inp){
+    inp.addEventListener('input', function(){
+      var key = inp.getAttribute('data-key');
+      if(inp.getAttribute('data-list')){ m[key] = inp.value.split('\n').map(function(s){return s.trim();}).filter(Boolean); }
+      else { m[key] = inp.value; }
+    });
+  });
+
+  // repeatable groups
+  if(m.type==='flipcards') renderCards(container.querySelector('.js-cards'), m, container);
+  if(m.type==='accordion'||m.type==='timeline') renderItems(container.querySelector('.js-items'), m, container);
+  if(m.type==='quiz') renderOpts(container.querySelector('.js-opts'), m);
+
+  var addC=container.querySelector('.js-add-card'); if(addC)addC.onclick=function(){m.cards.push({icon:ICONS[m.cards.length%ICONS.length],front:'',back:''});renderCards(container.querySelector('.js-cards'),m,container);};
+  var addI=container.querySelector('.js-add-item'); if(addI)addI.onclick=function(){ if(m.type==='timeline')m.items.push({step:'Step '+(m.items.length+1),title:'',desc:''}); else m.items.push({title:'',body:''}); renderItems(container.querySelector('.js-items'),m,container);};
+  var addO=container.querySelector('.js-add-opt'); if(addO)addO.onclick=function(){m.options.push('');renderOpts(container.querySelector('.js-opts'),m);};
+  var aiQ=container.querySelector('.js-ai-quiz'); if(aiQ){ aiQ.style.display=(typeof AI!=='undefined'&&AI.mode!=='off')?'inline-flex':'none'; aiQ.onclick=function(){draftQuiz(m,container,i);}; }
+}
+function renderCards(box, m, container){
+  box.innerHTML='';
+  m.cards.forEach(function(c,idx){
+    var row=el('<div class="field" style="border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-top:10px;"></div>');
+    row.innerHTML='<div class="row2"><input class="txt" style="max-width:70px" value="'+esc(c.icon)+'" data-f="icon" title="Emoji icon"><input class="txt" value="'+esc(c.front)+'" placeholder="Front (term)" data-f="front"></div>'
+      +'<textarea class="txt" rows="2" style="margin-top:8px" placeholder="Back (definition)" data-f="back">'+esc(c.back)+'</textarea>'
+      +'<button class="del js-rm" style="float:right;background:none;border:none;color:var(--text-muted);cursor:pointer;">remove</button>';
+    row.querySelectorAll('[data-f]').forEach(function(inp){inp.addEventListener('input',function(){c[inp.getAttribute('data-f')]=inp.value;});});
+    row.querySelector('.js-rm').onclick=function(){m.cards.splice(idx,1);renderCards(box,m,container);};
+    box.appendChild(row);
+  });
+}
+function renderItems(box, m, container){
+  box.innerHTML='';
+  m.items.forEach(function(it,idx){
+    var isTl = m.type==='timeline';
+    var row=el('<div class="field" style="border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-top:10px;"></div>');
+    row.innerHTML=(isTl?'<input class="txt" style="max-width:120px;margin-bottom:8px" value="'+esc(it.step)+'" data-f="step" placeholder="Step 1">':'')
+      +'<input class="txt" value="'+esc(it.title)+'" placeholder="Title" data-f="title">'
+      +'<textarea class="txt" rows="2" style="margin-top:8px" placeholder="Description" data-f="'+(isTl?'desc':'body')+'">'+esc(isTl?it.desc:it.body)+'</textarea>'
+      +'<button class="del js-rm" style="float:right;background:none;border:none;color:var(--text-muted);cursor:pointer;">remove</button>';
+    row.querySelectorAll('[data-f]').forEach(function(inp){inp.addEventListener('input',function(){it[inp.getAttribute('data-f')]=inp.value;});});
+    row.querySelector('.js-rm').onclick=function(){m.items.splice(idx,1);renderItems(box,m,container);};
+    box.appendChild(row);
+  });
+}
+function renderOpts(box, m){
+  box.innerHTML='';
+  m.options.forEach(function(opt,idx){
+    var row=el('<div class="opt-row"></div>');
+    row.innerHTML='<input type="radio" name="correct-'+Math.random().toString(36).slice(2)+'" '+(m.correct===idx?'checked':'')+'>'
+      +'<input class="txt" value="'+esc(opt)+'" placeholder="Option '+String.fromCharCode(65+idx)+'">'
+      +'<button class="del">×</button>';
+    var radio=row.querySelector('input[type=radio]'); radio.name='correct-'+box.dataset.grp;
+    radio.onchange=function(){m.correct=idx;};
+    row.querySelector('.txt').addEventListener('input',function(e){m.options[idx]=e.target.value;});
+    row.querySelector('.del').onclick=function(){m.options.splice(idx,1);if(m.correct>=m.options.length)m.correct=0;renderOpts(box,m);};
+    box.appendChild(row);
+  });
+}
+
+function updateStats(){
+  var q = deck.filter(function(m){return m.type==='quiz';}).length;
+  document.getElementById('pkgStats').textContent = deck.length+' screens'+(q?' · '+q+' scored question'+(q>1?'s':''):'');
+}
+
+/* bind course settings */
+['courseTitle','courseDesc','passScore','estTime'].forEach(function(id){
+  document.addEventListener('input',function(e){
+    if(e.target.id==='courseTitle')settings.title=e.target.value;
+    if(e.target.id==='courseDesc')settings.desc=e.target.value;
+    if(e.target.id==='passScore')settings.pass=parseInt(e.target.value,10)||0;
+    if(e.target.id==='estTime')settings.time=e.target.value;
+  });
+});
+
+/* =====================================================================
+   4. FLOW / EVENTS
+===================================================================== */
+var dz=document.getElementById('dropzone'), fi=document.getElementById('fileInput');
+dz.onclick=function(){fi.click();};
+fi.onchange=function(){ if(fi.files[0]) handleFile(fi.files[0]); };
+['dragenter','dragover'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');});});
+['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');});});
+dz.addEventListener('drop',function(e){ var f=e.dataTransfer.files[0]; if(f) handleFile(f); });
+
+function show(id){ ['upload','loading','editor'].forEach(function(p){document.getElementById('panel-'+p).classList.toggle('active',p===id);}); }
+function setStep(n){ ['st1','st2','st3'].forEach(function(id,i){document.getElementById(id).classList.toggle('on',i<n);}); }
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2600); }
+
+async function handleFile(file){
+  if(!/\.pptx$/i.test(file.name)){ toast('Please choose a .pptx file'); return; }
+  show('loading'); setStep(2);
+  document.getElementById('loadMsg').textContent='Reading your slides…';
+  try{
+    var buf = await file.arrayBuffer();
+    var slides = await parsePptx(buf);
+    if(!slides.length){ toast('No slides found in that file'); show('upload'); return; }
+    deck = slides.map(function(s,i){return buildModel(s,i);});
+    settings.title = deck[0] && deck[0].type==='hero' ? deck[0].title : file.name.replace(/\.pptx$/i,'');
+    settings.desc  = deck[0] && deck[0].subtitle || '';
+    settings.pass  = 70; settings.time='';
+    renderEditor();
+    show('editor'); setStep(3);
+    document.getElementById('exportBar').classList.add('show');
+    toast('Imported '+slides.length+' slides — review below');
+  }catch(err){
+    console.error(err); toast('Could not read that file: '+err.message); show('upload');
+  }
+}
+
+/* =====================================================================
+   4b. AI ASSIST — three engines, all zero-cost to the app owner
+   (local model in-browser · user's own key · password-gated proxy)
+===================================================================== */
+/* Baked-in hosted proxy so the site works on the owner's tokens out of the box.
+   The key itself lives ONLY on the Worker (server-side, encrypted); only the
+   Worker URL + a rotatable, spend-capped access password are here — safe to ship. */
+var BAKED_PROXY_URL  = '/api/ai';
+var BAKED_PROXY_PASS = 'tillem070226';
+var AI = {mode:'proxy', provider:'anthropic', model:'', key:'', proxyUrl:BAKED_PROXY_URL, proxyPass:BAKED_PROXY_PASS, localEngine:null, localReady:false};
+try{var _s=JSON.parse(localStorage.getItem('scormstudio_ai')||'{}');AI.provider=_s.provider||'anthropic';AI.model=_s.model||'';if(_s.proxyUrl)AI.proxyUrl=_s.proxyUrl;if(_s.remember)AI.key=_s.key||'';}catch(e){}
+
+var SYS_ID='You are an expert instructional designer. You write clear, concise, learner-centered content and assessment aligned to good pedagogy. Return ONLY what is asked — no preamble, no markdown fences.';
+
+function aiWire(){
+  document.querySelectorAll('.ai-mode').forEach(function(btn){
+    btn.onclick=function(){document.querySelectorAll('.ai-mode').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');AI.mode=btn.getAttribute('data-mode');aiSyncUI();};
+  });
+  function bind(id,key){var el=document.getElementById(id);if(el)el.addEventListener('input',function(){AI[key]=el.value;aiPersist();});}
+  bind('aiModel','model');bind('aiKey','key');bind('aiProxyUrl','proxyUrl');bind('aiProxyPass','proxyPass');
+  var prov=document.getElementById('aiProvider');
+  prov.onchange=function(){AI.provider=prov.value;var mi=document.getElementById('aiModel');mi.placeholder=prov.value==='openai'?'e.g. gpt-4o-mini':'e.g. claude-haiku-4-5';aiPersist();};
+  document.getElementById('aiRemember').onchange=aiPersist;
+  document.getElementById('aiLoadLocal').onclick=loadLocalModel;
+  document.getElementById('aiTestBtn').onclick=aiTest;
+  document.getElementById('aiObjectivesBtn').onclick=genObjectives;
+  if(AI.key)document.getElementById('aiKey').value=AI.key;
+  if(AI.model)document.getElementById('aiModel').value=AI.model;
+  if(AI.provider)prov.value=AI.provider;
+  if(AI.proxyUrl)document.getElementById('aiProxyUrl').value=AI.proxyUrl;
+  if(AI.proxyPass)document.getElementById('aiProxyPass').value=AI.proxyPass;
+  document.querySelectorAll('.ai-mode').forEach(function(b){b.classList.toggle('active', b.getAttribute('data-mode')===AI.mode);});
+  aiSyncUI();
+}
+function aiPersist(){var r=document.getElementById('aiRemember')&&document.getElementById('aiRemember').checked;var d={remember:r,provider:AI.provider,model:AI.model,proxyUrl:AI.proxyUrl};if(r)d.key=AI.key;try{localStorage.setItem('scormstudio_ai',JSON.stringify(d));}catch(e){}}
+function aiSyncUI(){
+  ['Local','Byok','Proxy'].forEach(function(n){var c=document.getElementById('aiCfg'+n);if(c)c.classList.toggle('show',AI.mode===n.toLowerCase());});
+  document.getElementById('aiCfgActions').classList.toggle('show',AI.mode!=='off');
+  var st=document.getElementById('aiStatus');var L={off:'Off',local:'Local model',byok:'Your key',proxy:'Hosted key'};
+  st.textContent=L[AI.mode];st.classList.toggle('on',AI.mode!=='off');
+  aiRefreshButtons();
+}
+function aiRefreshButtons(){document.querySelectorAll('.js-ai-quiz').forEach(function(b){b.style.display=AI.mode==='off'?'none':'inline-flex';});}
+
+/* ---- router + adapters ---- */
+async function askAI(system,prompt,maxTokens){
+  maxTokens=maxTokens||700;
+  if(AI.mode==='local')return await askLocal(system,prompt,maxTokens);
+  if(AI.mode==='byok')return AI.provider==='openai'?await askOpenAI(system,prompt,maxTokens):await askAnthropic(system,prompt,maxTokens);
+  if(AI.mode==='proxy')return await askProxy(system,prompt,maxTokens);
+  throw new Error('Turn on an AI engine first');
+}
+async function askAnthropic(system,prompt,mt){
+  if(!AI.key)throw new Error('Enter your Anthropic API key');
+  var r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':AI.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:AI.model||'claude-haiku-4-5',max_tokens:mt,system:system,messages:[{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('Anthropic '+r.status+': '+(await r.text()).slice(0,160));
+  var j=await r.json();return (j.content||[]).map(function(c){return c.text||'';}).join('');
+}
+async function askOpenAI(system,prompt,mt){
+  if(!AI.key)throw new Error('Enter your OpenAI API key');
+  var r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+AI.key},body:JSON.stringify({model:AI.model||'gpt-4o-mini',max_tokens:mt,messages:[{role:'system',content:system},{role:'user',content:prompt}]})});
+  if(!r.ok)throw new Error('OpenAI '+r.status+': '+(await r.text()).slice(0,160));
+  var j=await r.json();return j.choices[0].message.content;
+}
+async function askProxy(system,prompt,mt){
+  if(!AI.proxyUrl)throw new Error('Enter the proxy URL');
+  var r=await fetch(AI.proxyUrl.replace(/\/+$/,''),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({password:AI.proxyPass,system:system,prompt:prompt,max_tokens:mt})});
+  if(r.status===401)throw new Error('Wrong password');
+  if(r.status===429)throw new Error('Daily limit reached on the hosted key');
+  if(!r.ok)throw new Error('Proxy '+r.status+': '+(await r.text()).slice(0,160));
+  var j=await r.json();return j.text||j.completion||'';
+}
+async function loadLocalModel(){
+  var st=document.getElementById('aiLocalStatus');st.textContent='Loading engine…';
+  try{
+    if(!navigator.gpu)throw new Error('This browser has no WebGPU (try Chrome/Edge)');
+    if(!window.__webllm)window.__webllm=await import('https://esm.run/@mlc-ai/web-llm');
+    AI.localEngine=await window.__webllm.CreateMLCEngine('Llama-3.2-1B-Instruct-q4f16_1-MLC',{initProgressCallback:function(p){st.textContent=p.text||'Loading…';}});
+    AI.localReady=true;st.textContent='Local model ready ✓';aiRefreshButtons();
+  }catch(e){st.textContent='✗ '+e.message;}
+}
+async function askLocal(system,prompt,mt){
+  if(!AI.localReady)throw new Error('Click “Load local model” first');
+  var r=await AI.localEngine.chat.completions.create({messages:[{role:'system',content:system},{role:'user',content:prompt}],max_tokens:mt});
+  return r.choices[0].message.content;
+}
+function parseJSON(s){try{return JSON.parse(s);}catch(e){}var m=s&&s.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(e){}}return null;}
+
+/* ---- generative features ---- */
+async function aiTest(){
+  var st=document.getElementById('aiActionStatus');st.textContent='Testing…';
+  try{var r=await askAI('You are a helpful assistant.','Reply with exactly: OK',16);st.textContent=/ok/i.test(r)?'Connection works ✓':'Responded ✓';}
+  catch(e){st.textContent='✗ '+e.message;}
+}
+async function genObjectives(){
+  var st=document.getElementById('aiActionStatus');st.textContent='Drafting objectives…';
+  try{
+    var content=deck.map(function(m){var s=m._source||{};return (s.title||m.title)+': '+((s.bullets||[]).join('; '));}).join('\n').slice(0,3500);
+    var prompt='Course: '+(document.getElementById('courseTitle').value||'Untitled')+'\n\nSource outline:\n'+content+'\n\nWrite 3-5 measurable learning objectives using Bloom action verbs, each starting "Learners will be able to". One per line, no numbering or bullets.';
+    var r=await askAI(SYS_ID,prompt,350);
+    document.getElementById('aiObjectivesWrap').style.display='block';
+    document.getElementById('aiObjectives').value=(r||'').trim();
+    st.textContent='Done ✓ — review below';
+  }catch(e){st.textContent='✗ '+e.message;}
+}
+async function draftQuiz(m,container,i){
+  var btn=container.querySelector('.js-ai-quiz');var old=btn?btn.textContent:'';if(btn)btn.textContent='Drafting…';
+  try{
+    var s=m._source||{title:m.title,bullets:[],notes:''};
+    var prompt='Source content:\nTitle: '+s.title+'\nPoints: '+((s.bullets||[]).join('; '))+'\nNotes: '+(s.notes||'')+'\n\nWrite ONE multiple-choice knowledge-check question testing real understanding of this content. Exactly 4 options, exactly one correct; distractors must be plausible but clearly wrong to someone who understands the material. Respond as JSON only: {"question":"","options":["","","",""],"correct":0,"explanation":""}';
+    var r=await askAI(SYS_ID,prompt,450);
+    var d=parseJSON(r);
+    if(d&&d.question){m.question=d.question;if(Array.isArray(d.options)&&d.options.length>=2)m.options=d.options;m.correct=typeof d.correct==='number'?d.correct:0;m.explanation=d.explanation||'';renderFields(container,m,i);toast('AI draft ready — review it');}
+    else toast('AI reply was not valid JSON — try again');
+  }catch(e){toast('✗ '+e.message);}
+  finally{var b=container.querySelector('.js-ai-quiz');if(b)b.textContent=old;}
+}
+
+document.getElementById('exportBtn').onclick = exportScorm;
+document.getElementById('previewBtn').onclick = function(){
+  var html = buildCourseHtml(getCourse());
+  var blob = new Blob([html],{type:'text/html'});
+  window.open(URL.createObjectURL(blob),'_blank');
+};
+
+function getCourse(){
+  settings.title = document.getElementById('courseTitle').value || 'Untitled Course';
+  settings.desc  = document.getElementById('courseDesc').value;
+  settings.pass  = parseInt(document.getElementById('passScore').value,10)||0;
+  settings.time  = document.getElementById('estTime').value;
+  var objEl = document.getElementById('aiObjectives');
+  var objectives = objEl && objEl.value.trim() ? objEl.value.trim() : '';
+  // strip editor-only fields (any key starting with _)
+  var screens = deck.map(function(m){ var c=JSON.parse(JSON.stringify(m)); Object.keys(c).forEach(function(k){if(k[0]==='_')delete c[k];}); return c; });
+  return {title:settings.title, desc:settings.desc, pass:settings.pass, time:settings.time, objectives:objectives, screens:screens};
+}
+
+async function exportScorm(){
+  var course = getCourse();
+  var qCount = course.screens.filter(function(s){return s.type==='quiz';}).length;
+  var missing = course.screens.filter(function(s){return s.type==='quiz' && (!s.question || s.options.filter(Boolean).length<2);});
+  if(missing.length){ toast(missing.length+' knowledge check(s) need a question and 2+ options'); return; }
+
+  var zip = new JSZip();
+  zip.file('index.html', buildCourseHtml(course));
+  zip.file('imsmanifest.xml', buildManifest(course));
+  zip.file('scormdriver_stub.txt', 'Self-contained SCORM 1.2 package. Launch file: index.html. SCORM API is discovered at runtime from the LMS frame.');
+  var blob = await zip.generateAsync({type:'blob'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download = slug(course.title)+'-scorm.zip';
+  a.click();
+  toast('SCORM package downloaded ✓');
+}
+function slug(s){return (s||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'course';}
+
+/* =====================================================================
+   5. BUILD SCORM MANIFEST (1.2)
+===================================================================== */
+function buildManifest(course){
+  var id = 'COURSE-'+slug(course.title).toUpperCase();
+  var t = esc(course.title);
+  return '<?xml version="1.0" encoding="UTF-8"?>\n'
+  +'<manifest identifier="'+id+'" version="1.2"\n'
+  +'  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"\n'
+  +'  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"\n'
+  +'  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n'
+  +'  xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_rootv1p1p2.xsd http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">\n'
+  +'  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>\n'
+  +'  <organizations default="ORG">\n'
+  +'    <organization identifier="ORG"><title>'+t+'</title>\n'
+  +'      <item identifier="ITEM1" identifierref="RES1" isvisible="true"><title>'+t+'</title>\n'
+  +'        <adlcp:masteryscore>'+ (course.pass||0) +'</adlcp:masteryscore>\n'
+  +'      </item>\n'
+  +'    </organization>\n'
+  +'  </organizations>\n'
+  +'  <resources>\n'
+  +'    <resource identifier="RES1" type="webcontent" adlcp:scormtype="sco" href="index.html">\n'
+  +'      <file href="index.html"/>\n'
+  +'    </resource>\n'
+  +'  </resources>\n'
+  +'</manifest>\n';
+}
+
+/* =====================================================================
+   6. BUILD THE COURSE HTML  (design system baked in, data-driven runtime)
+===================================================================== */
+function buildCourseHtml(course){
+  return COURSE_SHELL
+    .replace('{{TITLE}}', esc(course.title))
+    .replace('{{CSS}}', RUNTIME_CSS)
+    .replace('{{DATA}}', JSON.stringify(course).replace(/<\//g,'<\\/'))
+    .replace('{{JS}}', RUNTIME_JS);
+}
+
+/* init AI panel */
+aiWire();
+</script>
+
+<!-- ================= RUNTIME TEMPLATES (baked into every export) ================= -->
+<script id="tpl" type="application/x-template">
+### SHELL ###
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title><style>{{CSS}}</style></head>
+<body><div id="app"></div>
+<script>window.COURSE={{DATA}};</scr'+'ipt>
+<script>{{JS}}</scr'+'ipt>
+</body></html>
+### CSS ###
+:root{--brand-1:#6C63FF;--brand-2:#FF6584;--brand-3:#43C6AC;--brand-dark:#0F0E2A;--brand-darker:#07061A;--card-bg:rgba(255,255,255,0.06);--card-border:rgba(255,255,255,0.10);--text-primary:#F0EFF8;--text-secondary:#A9A7C9;--text-muted:#6E6C88;--radius:18px;--transition:all 0.4s cubic-bezier(0.23,1,0.32,1);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--brand-darker);color:var(--text-primary);min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 28px;border-radius:50px;font-size:15px;font-weight:600;cursor:pointer;border:none;transition:var(--transition);letter-spacing:0.3px;}
+.btn-primary{background:linear-gradient(135deg,var(--brand-1),#9B88FF);color:#fff;box-shadow:0 4px 20px rgba(108,99,255,0.4);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(108,99,255,0.5);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-ghost{background:var(--card-bg);color:var(--text-secondary);border:1px solid var(--card-border);}
+.btn-ghost:hover{background:rgba(108,99,255,0.15);color:var(--text-primary);}
+.btn-success{background:linear-gradient(135deg,#43C6AC,#1a8a6e);color:#fff;}
+.top-nav{position:sticky;top:0;z-index:100;background:rgba(7,6,26,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:20px;}
+.nav-logo{font-size:13px;font-weight:700;color:var(--text-secondary);letter-spacing:1px;text-transform:uppercase;}
+.nav-progress-wrap{flex:1;max-width:420px;}
+.nav-progress-label{font-size:11px;color:var(--text-muted);margin-bottom:5px;display:flex;justify-content:space-between;}
+.progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--brand-1),var(--brand-3));border-radius:4px;transition:width 0.6s ease;}
+#screen-hero{background:radial-gradient(ellipse 120% 80% at 50% -10%,rgba(108,99,255,0.35) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 80%,rgba(67,198,172,0.15) 0%,transparent 50%),var(--brand-darker);align-items:center;justify-content:center;padding:60px 24px;text-align:center;}
+.hero-content{position:relative;z-index:1;max-width:720px;}
+.hero-eyebrow{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:26px;}
+.hero-dot{width:8px;height:8px;border-radius:50%;background:var(--brand-3);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+.hero-eyebrow span{font-size:12px;font-weight:700;color:var(--brand-3);letter-spacing:2px;text-transform:uppercase;}
+.hero-title{font-size:clamp(34px,6vw,60px);font-weight:800;line-height:1.1;background:linear-gradient(135deg,#fff 0%,#A9A7C9 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px;}
+.hero-sub{font-size:18px;color:var(--text-secondary);line-height:1.7;margin-bottom:40px;max-width:560px;margin:0 auto 40px;}
+.hero-meta{display:flex;gap:32px;justify-content:center;margin-bottom:44px;flex-wrap:wrap;}
+.meta-item{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.meta-num{font-size:24px;font-weight:800;color:#fff;}
+.meta-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;}
+.hero-obj{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:22px 26px;margin:0 auto 36px;max-width:560px;text-align:left;}
+.hero-obj-h{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--brand-3);margin-bottom:12px;}
+.hero-obj ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.hero-obj li{font-size:14px;color:var(--text-secondary);line-height:1.5;padding-left:24px;position:relative;}
+.hero-obj li::before{content:'✓';position:absolute;left:0;color:var(--brand-3);font-weight:800;}
+.module-layout{flex:1;max-width:920px;width:100%;margin:0 auto;padding:44px 24px 120px;}
+.module-number{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;color:var(--brand-1);}
+.module-title{font-size:clamp(26px,4vw,38px);font-weight:800;line-height:1.15;margin-bottom:14px;}
+.module-desc{font-size:17px;color:var(--text-secondary);line-height:1.7;max-width:660px;margin-bottom:8px;}
+.info-grid{display:grid;gap:16px;grid-template-columns:1fr 1fr;margin-top:28px;}
+.info-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;transition:var(--transition);}
+.info-card:hover{border-color:rgba(108,99,255,0.3);background:rgba(255,255,255,0.08);}
+.info-card .dot{width:34px;height:34px;border-radius:9px;background:rgba(108,99,255,0.18);color:#9B88FF;display:flex;align-items:center;justify-content:center;font-weight:800;margin-bottom:12px;}
+.info-card p{font-size:14px;color:var(--text-secondary);line-height:1.65;}
+.callout{display:flex;gap:16px;padding:22px 26px;border-radius:14px;margin-top:24px;align-items:flex-start;background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);}
+.callout .ic{font-size:24px;}
+.callout p{font-size:15px;line-height:1.7;color:var(--text-secondary);}
+.quote-block{background:linear-gradient(135deg,rgba(108,99,255,0.12),rgba(67,198,172,0.08));border:1px solid rgba(108,99,255,0.25);border-radius:var(--radius);padding:38px 40px;position:relative;margin-top:28px;}
+.quote-block::before{content:'\201C';position:absolute;top:-6px;left:26px;font-size:80px;color:var(--brand-1);opacity:0.4;font-family:Georgia,serif;line-height:1;}
+.quote-block blockquote{font-size:21px;line-height:1.6;font-style:italic;}
+.quote-block cite{display:block;margin-top:16px;font-size:13px;color:var(--text-muted);font-style:normal;}
+.flip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:28px;}
+.flip-card{height:210px;perspective:1000px;cursor:pointer;}
+.flip-card-inner{position:relative;width:100%;height:100%;transition:transform 0.6s;transform-style:preserve-3d;}
+.flip-card.flipped .flip-card-inner{transform:rotateY(180deg);}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:14px;padding:24px;display:flex;flex-direction:column;justify-content:center;border:1px solid var(--card-border);}
+.flip-front{background:var(--card-bg);align-items:center;text-align:center;}
+.flip-back{background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(67,198,172,0.1));transform:rotateY(180deg);border-color:rgba(108,99,255,0.3);overflow:auto;}
+.flip-front .flip-icon{font-size:38px;margin-bottom:12px;}
+.flip-front .flip-title{font-size:15px;font-weight:700;}
+.flip-front .flip-hint{font-size:11px;color:var(--text-muted);margin-top:8px;}
+.flip-back p{font-size:13px;color:var(--text-secondary);line-height:1.6;}
+.principle-list{display:flex;flex-direction:column;gap:10px;margin-top:28px;}
+.principle-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;overflow:hidden;}
+.principle-header{display:flex;align-items:center;gap:16px;padding:18px 22px;cursor:pointer;user-select:none;}
+.principle-header:hover{background:rgba(255,255,255,0.04);}
+.p-num{width:32px;height:32px;border-radius:50%;background:rgba(108,99,255,0.18);color:#9B88FF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+.p-title{font-size:15px;font-weight:700;flex:1;}
+.p-chevron{color:var(--text-muted);transition:transform 0.3s;}
+.principle-item.open .p-chevron{transform:rotate(180deg);}
+.principle-body{max-height:0;overflow:hidden;transition:max-height 0.4s ease;}
+.principle-item.open .principle-body{max-height:400px;}
+.principle-body-inner{padding:0 22px 20px 70px;font-size:14px;color:var(--text-secondary);line-height:1.7;}
+.timeline{position:relative;padding-left:40px;margin-top:28px;}
+.timeline::before{content:'';position:absolute;left:12px;top:8px;bottom:8px;width:2px;background:linear-gradient(180deg,var(--brand-1),var(--brand-3));}
+.timeline-item{position:relative;margin-bottom:28px;}
+.timeline-item:last-child{margin-bottom:0;}
+.timeline-dot{position:absolute;left:-34px;top:4px;width:16px;height:16px;border-radius:50%;border:3px solid var(--brand-1);background:var(--brand-darker);}
+.timeline-item:nth-child(even) .timeline-dot{border-color:var(--brand-3);}
+.timeline-content{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:20px 24px;}
+.timeline-step{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--brand-1);margin-bottom:6px;}
+.timeline-title{font-size:15px;font-weight:700;margin-bottom:6px;}
+.timeline-desc{font-size:14px;color:var(--text-secondary);line-height:1.65;}
+.quiz-layout{max-width:780px;width:100%;margin:0 auto;padding:44px 24px 120px;flex:1;}
+.quiz-q-counter{font-size:13px;color:var(--text-muted);margin-bottom:8px;}
+.quiz-question{font-size:23px;font-weight:700;line-height:1.45;margin-bottom:24px;}
+.quiz-context{font-size:15px;color:var(--text-secondary);margin-bottom:24px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:18px 22px;line-height:1.65;}
+.quiz-options{display:flex;flex-direction:column;gap:12px;}
+.quiz-option{display:flex;align-items:flex-start;gap:16px;padding:18px 22px;border:2px solid var(--card-border);border-radius:14px;cursor:pointer;transition:var(--transition);background:transparent;text-align:left;width:100%;color:var(--text-secondary);font-size:15px;}
+.quiz-option:hover:not(:disabled){border-color:var(--brand-1);color:var(--text-primary);background:rgba(108,99,255,0.08);}
+.quiz-option.correct-ans{border-color:#43C6AC!important;background:rgba(67,198,172,0.12)!important;color:#43C6AC!important;}
+.quiz-option.wrong-ans{border-color:#FF6584!important;background:rgba(255,101,132,0.12)!important;color:#FF8FA3!important;}
+.quiz-opt-letter{width:30px;height:30px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.quiz-explanation{margin-top:20px;padding:18px 22px;border-radius:12px;font-size:14px;line-height:1.7;display:none;}
+.quiz-explanation.show{display:block;}
+.quiz-explanation.ok{background:rgba(67,198,172,0.1);border:1px solid rgba(67,198,172,0.3);color:#5DD9C1;}
+.quiz-explanation.no{background:rgba(255,101,132,0.1);border:1px solid rgba(255,101,132,0.3);color:#FF8FA3;}
+.quiz-actions{display:flex;justify-content:flex-end;margin-top:28px;}
+#screen-results{align-items:center;justify-content:center;background:radial-gradient(ellipse 100% 70% at 50% 0%,rgba(67,198,172,0.2) 0%,transparent 60%),var(--brand-darker);padding:60px 24px;text-align:center;}
+.results-content{max-width:620px;}
+.results-ring{position:relative;width:190px;height:190px;margin:0 auto 36px;}
+.results-ring svg{transform:rotate(-90deg);}
+.results-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.results-pct b{font-size:46px;font-weight:800;}
+.results-pct span{font-size:13px;color:var(--text-muted);}
+.results-title{font-size:30px;font-weight:800;margin-bottom:12px;}
+.results-sub{font-size:16px;color:var(--text-secondary);margin-bottom:34px;line-height:1.65;}
+.badge{display:inline-block;padding:8px 20px;border-radius:50px;font-weight:700;font-size:14px;margin-bottom:28px;}
+.badge.pass{background:rgba(67,198,172,0.15);color:var(--brand-3);border:1px solid rgba(67,198,172,0.4);}
+.badge.fail{background:rgba(255,101,132,0.15);color:#FF8FA3;border:1px solid rgba(255,101,132,0.4);}
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(7,6,26,0.9);backdrop-filter:blur(20px);border-top:1px solid var(--card-border);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px;z-index:100;}
+.bottom-bar.hidden{display:none;}
+.page-info{font-size:13px;color:var(--text-muted);}
+.nav-btns{display:flex;gap:10px;}
+.fade-up{opacity:0;transform:translateY(20px);animation:fadeUp 0.6s ease forwards;}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+@media(max-width:640px){.info-grid,.flip-grid{grid-template-columns:1fr;}.module-layout,.quiz-layout{padding:28px 16px 120px;}}
+### JS ###
+(function(){
+var C = window.COURSE;
+var screens = C.screens || [];
+// pages: hero(s)+content interactions in order; quizzes grouped into one flow before results
+var contentPages = screens.filter(function(s){return s.type!=='quiz';});
+var quizzes = screens.filter(function(s){return s.type==='quiz';});
+var pages = contentPages.slice();
+if(quizzes.length) pages.push({type:'quizflow', questions:quizzes});
+pages.push({type:'results'});
+
+var idx = 0, answers = {}, finished=false;
+
+/* ---------- SCORM 1.2 wrapper ---------- */
+var SCORM=(function(){
+  var api=null, ready=false;
+  function find(w){var n=0;while(w && !w.API && w.parent && w.parent!==w && n<12){n++;w=w.parent;}return w?w.API:null;}
+  function get(){ if(api)return api; try{api=find(window); if(!api&&window.opener)api=find(window.opener);}catch(e){} return api; }
+  return {
+    init:function(){var a=get();if(a&&!ready){a.LMSInitialize('');ready=true;a.LMSSetValue('cmi.core.lesson_status','incomplete');a.LMSCommit('');}},
+    score:function(raw){var a=get();if(a&&ready){a.LMSSetValue('cmi.core.score.raw',String(raw));a.LMSSetValue('cmi.core.score.min','0');a.LMSSetValue('cmi.core.score.max','100');a.LMSCommit('');}},
+    status:function(s){var a=get();if(a&&ready){a.LMSSetValue('cmi.core.lesson_status',s);a.LMSCommit('');}},
+    finish:function(){var a=get();if(a&&ready){a.LMSFinish('');ready=false;}}
+  };
+})();
+window.addEventListener('load',function(){SCORM.init();});
+window.addEventListener('beforeunload',function(){SCORM.finish();});
+
+function E(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function esc(s){return(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ---------- top nav + shell ---------- */
+function shell(){
+  var app=document.getElementById('app');
+  app.innerHTML='';
+  var nav=E('nav','top-nav');
+  nav.innerHTML='<div class="nav-logo">'+esc(C.title)+'</div>'
+    +'<div class="nav-progress-wrap"><div class="nav-progress-label"><span id="navLbl"></span><span id="navPct">0%</span></div>'
+    +'<div class="progress-bar"><div class="progress-fill" id="navFill" style="width:0%"></div></div></div>'
+    +'<div style="width:80px"></div>';
+  app.appendChild(nav);
+  var host=E('div','',''); host.id='screenHost'; app.appendChild(host);
+  var bar=E('div','bottom-bar'); bar.id='bottomBar';
+  bar.innerHTML='<div class="page-info" id="pageInfo"></div><div class="nav-btns">'
+    +'<button class="btn btn-ghost" id="prevBtn">← Back</button>'
+    +'<button class="btn btn-primary" id="nextBtn">Continue →</button></div>';
+  app.appendChild(bar);
+  document.getElementById('prevBtn').onclick=function(){go(idx-1);};
+  document.getElementById('nextBtn').onclick=function(){go(idx+1);};
+}
+function go(i){ if(i<0||i>=pages.length)return; idx=i; draw(); window.scrollTo(0,0); }
+
+function draw(){
+  var host=document.getElementById('screenHost'); host.innerHTML='';
+  var p=pages[idx];
+  if(p.type==='quizflow') host.appendChild(renderQuiz(p));
+  else if(p.type==='results') host.appendChild(renderResults());
+  else host.appendChild(renderContent(p));
+
+  // progress
+  var pct=Math.round((idx)/(pages.length-1)*100);
+  document.getElementById('navFill').style.width=pct+'%';
+  document.getElementById('navPct').textContent=pct+'%';
+  document.getElementById('navLbl').textContent='Screen '+(idx+1)+' of '+pages.length;
+  document.getElementById('pageInfo').textContent=(p.type==='results'?'Complete':(idx+1)+' / '+pages.length);
+  var bar=document.getElementById('bottomBar');
+  bar.classList.toggle('hidden', p.type==='quizflow'||p.type==='results');
+  document.getElementById('prevBtn').style.visibility = idx===0?'hidden':'visible';
+}
+
+/* ---------- content renderers ---------- */
+function objBlock(){
+  if(!C.objectives) return '';
+  var items=C.objectives.split(/\n+/).map(function(l){return l.replace(/^[\-\*\d\.\)\s]+/,'').trim();}).filter(Boolean);
+  if(!items.length) return '';
+  return '<div class="hero-obj"><div class="hero-obj-h">Learning objectives</div><ul>'+items.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div>';
+}
+function head(m,isHero){
+  if(isHero){
+    var meta='';
+    var bits=[];
+    bits.push(['Screens',String(pages.length)]);
+    if(C.time) bits.push(['Duration',C.time]);
+    if(pages[pages.length-2] && pages[pages.length-2].type==='quizflow') bits.push(['Pass mark',C.pass+'%']);
+    meta=bits.map(function(b){return '<div class="meta-item"><div class="meta-num">'+esc(b[1])+'</div><div class="meta-label">'+esc(b[0])+'</div></div>';}).join('');
+    var s=E('div','screen active'); s.id='screen-hero';
+    s.innerHTML='<div class="hero-content fade-up"><div class="hero-eyebrow"><span class="hero-dot"></span><span>Interactive Module</span></div>'
+      +'<h1 class="hero-title">'+esc(m.title)+'</h1>'
+      +'<p class="hero-sub">'+esc(m.subtitle||C.desc||'')+'</p>'
+      +'<div class="hero-meta">'+meta+'</div>'
+      + objBlock()
+      +'<button class="btn btn-primary" id="startBtn">Begin module →</button></div>';
+    setTimeout(function(){var b=document.getElementById('startBtn');if(b)b.onclick=function(){go(idx+1);};},0);
+    return s;
+  }
+  return null;
+}
+function renderContent(m){
+  if(m.type==='hero'){ return head(m,true); }
+  var s=E('div','screen active');
+  var wrap=E('div','module-layout fade-up');
+  wrap.innerHTML='<div class="module-number">'+ (m._label||'Module') +'</div>'
+    +'<h2 class="module-title">'+esc(m.title)+'</h2>'
+    +(m.intro?'<p class="module-desc">'+esc(m.intro)+'</p>':'');
+  wrap.appendChild(body(m));
+  s.appendChild(wrap);
+  return s;
+}
+function body(m){
+  var box=E('div','');
+  if(m.type==='content'){
+    if(m.bullets && m.bullets.length){
+      var grid=E('div','info-grid');
+      m.bullets.forEach(function(b,i){
+        var td=b.split(/\s*[:–]\s*/);
+        var t=td.length>1?td[0]:''; var p=td.length>1?td.slice(1).join(': '):b;
+        grid.appendChild(E('div','info-card','<div class="dot">'+(i+1)+'</div>'+(t?'<h3 style="font-size:16px;font-weight:700;margin-bottom:6px">'+esc(t)+'</h3>':'')+'<p>'+esc(p)+'</p>'));
+      });
+      box.appendChild(grid);
+    }
+  } else if(m.type==='callout'){
+    box.appendChild(E('div','callout','<div class="ic">'+esc(m.icon||'💡')+'</div><p>'+esc(m.body)+'</p>'));
+  } else if(m.type==='quote'){
+    box.appendChild(E('div','quote-block','<blockquote>'+esc(m.body)+'</blockquote>'+(m.cite?'<cite>— '+esc(m.cite)+'</cite>':'')));
+  } else if(m.type==='flipcards'){
+    var g=E('div','flip-grid');
+    (m.cards||[]).forEach(function(c){
+      var card=E('div','flip-card','<div class="flip-card-inner"><div class="flip-front"><span class="flip-icon">'+esc(c.icon||'💡')+'</span><div class="flip-title">'+esc(c.front)+'</div><div class="flip-hint">Tap to reveal</div></div><div class="flip-back"><p>'+esc(c.back)+'</p></div></div>');
+      card.onclick=function(){card.classList.toggle('flipped');};
+      g.appendChild(card);
+    });
+    box.appendChild(g);
+  } else if(m.type==='accordion'){
+    var list=E('div','principle-list');
+    (m.items||[]).forEach(function(it,i){
+      var item=E('div','principle-item');
+      item.innerHTML='<div class="principle-header"><div class="p-num">'+(i+1)+'</div><div class="p-title">'+esc(it.title)+'</div><div class="p-chevron">▾</div></div><div class="principle-body"><div class="principle-body-inner">'+esc(it.body||'')+'</div></div>';
+      item.querySelector('.principle-header').onclick=function(){item.classList.toggle('open');};
+      list.appendChild(item);
+    });
+    box.appendChild(list);
+  } else if(m.type==='timeline'){
+    var tl=E('div','timeline');
+    (m.items||[]).forEach(function(it){
+      tl.appendChild(E('div','timeline-item','<div class="timeline-dot"></div><div class="timeline-content"><div class="timeline-step">'+esc(it.step||'')+'</div><div class="timeline-title">'+esc(it.title)+'</div>'+(it.desc?'<div class="timeline-desc">'+esc(it.desc)+'</div>':'')+'</div>'));
+    });
+    box.appendChild(tl);
+  }
+  return box;
+}
+
+/* ---------- quiz flow ---------- */
+function renderQuiz(p){
+  var qs=p.questions; var qi={n:0};
+  var s=E('div','screen active');
+  var layout=E('div','quiz-layout fade-up'); s.appendChild(layout);
+  function paint(){
+    var q=qs[qi.n];
+    layout.innerHTML='<div class="quiz-q-counter">Question '+(qi.n+1)+' of '+qs.length+'</div>'
+      +'<div class="progress-bar" style="margin-bottom:28px"><div class="progress-fill" style="width:'+Math.round(qi.n/qs.length*100)+'%"></div></div>'
+      +'<div class="quiz-question">'+esc(q.question)+'</div>'
+      +(q.context?'<div class="quiz-context">'+esc(q.context)+'</div>':'')
+      +'<div class="quiz-options"></div>'
+      +'<div class="quiz-explanation" id="exp"></div>'
+      +'<div class="quiz-actions"><button class="btn btn-primary" id="qNext" disabled>'+(qi.n===qs.length-1?'See results →':'Next question →')+'</button></div>';
+    var opts=layout.querySelector('.quiz-options');
+    q.options.filter(function(o){return o!=='';}).forEach(function(opt,oi){
+      var b=E('button','quiz-option','<span class="quiz-opt-letter">'+String.fromCharCode(65+oi)+'</span><span>'+esc(opt)+'</span>');
+      b.onclick=function(){ answer(q,oi,opts,b); };
+      opts.appendChild(b);
+    });
+    layout.querySelector('#qNext').onclick=function(){
+      if(qi.n<qs.length-1){qi.n++;paint();window.scrollTo(0,0);}
+      else{ go(idx+1); }
+    };
+  }
+  function answer(q,oi,opts,btn){
+    if(answers['q'+qi.n]!=null) return;
+    answers['q'+qi.n]= (oi===q.correct);
+    Array.prototype.forEach.call(opts.children,function(c,ci){
+      c.disabled=true;
+      if(ci===q.correct)c.classList.add('correct-ans');
+      else if(ci===oi)c.classList.add('wrong-ans');
+    });
+    var exp=layout.querySelector('#exp'); var ok=oi===q.correct;
+    exp.className='quiz-explanation show '+(ok?'ok':'no');
+    exp.innerHTML='<strong>'+(ok?'Correct. ':'Not quite. ')+'</strong>'+esc(q.explanation||(ok?'Well reasoned.':'Review the correct answer above.'));
+    layout.querySelector('#qNext').disabled=false;
+  }
+  paint();
+  return s;
+}
+
+/* ---------- results ---------- */
+function renderResults(){
+  var qKeys=Object.keys(answers);
+  var total=(pages[pages.length-2]&&pages[pages.length-2].type==='quizflow')?pages[pages.length-2].questions.length:0;
+  var correct=qKeys.filter(function(k){return answers[k];}).length;
+  var pct= total? Math.round(correct/total*100) : 100;
+  var passed= pct>=(C.pass||0);
+  if(!finished){ finished=true; SCORM.score(pct); SCORM.status(passed?'passed':'completed'); }
+  var s=E('div','screen active'); s.id='screen-results';
+  var circ=2*Math.PI*80; var off=circ*(1-pct/100);
+  s.innerHTML='<div class="results-content fade-up">'
+    +'<div class="results-ring"><svg width="190" height="190"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C63FF"/><stop offset="1" stop-color="#43C6AC"/></linearGradient></defs>'
+    +'<circle cx="95" cy="95" r="80" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="12"/>'
+    +'<circle cx="95" cy="95" r="80" fill="none" stroke="url(#g)" stroke-width="12" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+circ+'" id="ring"/></svg>'
+    +'<div class="results-pct"><b>'+pct+'%</b><span>'+(total?correct+' / '+total+' correct':'Complete')+'</span></div></div>'
+    +'<div class="badge '+(passed?'pass':'fail')+'">'+(passed?'✓ Passed':'Keep going')+'</div>'
+    +'<h2 class="results-title">'+(passed?'Module complete!':'Almost there')+'</h2>'
+    +'<p class="results-sub">'+(total? (passed?'You met the '+C.pass+'% passing mark. Your score has been sent to the LMS.':'You need '+C.pass+'% to pass. Review the module and try again.') : 'You have completed all screens. Your progress has been recorded.')+'</p>'
+    +'<div class="nav-btns" style="justify-content:center"><button class="btn btn-ghost" id="reviewBtn">Review module</button>'+(total&&!passed?'<button class="btn btn-primary" id="retryBtn">Retry</button>':'')+'</div></div>';
+  setTimeout(function(){var r=document.getElementById('ring');if(r)r.style.transition='stroke-dashoffset 1.4s cubic-bezier(0.23,1,0.32,1)',r.style.strokeDashoffset=off;
+    var rv=document.getElementById('reviewBtn');if(rv)rv.onclick=function(){go(0);};
+    var rt=document.getElementById('retryBtn');if(rt)rt.onclick=function(){answers={};finished=false;var qf=pages.map(function(p,i){return p.type==='quizflow'?i:-1;}).filter(function(i){return i>=0;})[0];go(qf!=null?qf:0);};
+  },60);
+  return s;
+}
+
+/* label modules */
+(function(){var n=0;pages.forEach(function(p){if(p.type&&p.type!=='hero'&&p.type!=='results'&&p.type!=='quizflow'){n++;p._label='Module '+n;}});})();
+
+shell(); draw();
+})();
+</script>
+
+<script>
+/* ---- split the runtime templates out of #tpl into the three constants ---- */
+(function(){
+  var raw = document.getElementById('tpl').textContent;
+  var shellPart = raw.split('### CSS ###')[0].replace('### SHELL ###','').trim();
+  var rest = raw.split('### CSS ###')[1];
+  var cssPart = rest.split('### JS ###')[0].trim();
+  var jsPart = rest.split('### JS ###')[1].trim();
+  // the shell has escaped </scr'+'ipt> tokens so it survives being inside this file; unescape now
+  window.COURSE_SHELL = shellPart.replace(/<\/scr'\+'ipt>/g,'</'+'script>');
+  window.RUNTIME_CSS = cssPart;
+  window.RUNTIME_JS = jsPart;
+})();
+</script>
+
+</body>
+</html>

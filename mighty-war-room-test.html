@@ -1,0 +1,1534 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"><style id="mighty-reset-css">/* Basic reset - lowest priority */
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: sans-serif; line-height: 1.5; }</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script id="mighty-interactive-sdk" src="https://sdk.designwithmighty.com/v1/mighty-interactive-sdk.min.js"></script><script id="mighty-rte-bridge" src="https://sdk.designwithmighty.com/mighty-rte-bridge/mighty-rte-bridge.min.js"></script>  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Draft Day War Room — Value-Based Drafting Simulator</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --panel: #121c30;
+            --panel2: #0e1626;
+            --line: #22304d;
+            --ink: #e8eef9;
+            --ink-dim: #9db0cc;
+            --ink-faint: #66799a;
+            --gold: #f5c542;
+            --green: #3ddc84;
+            --red: #ff5d6c;
+            --blue: #4da3ff;
+            --purple: #b48aff;
+            --qb: #e06a9f;
+            --rb: #3ddc84;
+            --wr: #4da3ff;
+            --te: #f5a742;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        body {
+            background: transparent;
+            color: var(--ink);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.45;
+            -webkit-font-smoothing: antialiased
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none
+        }
+
+        .wrap {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 16px
+        }
+
+        /* ---------- Screens ---------- */
+        .screen {
+            display: none
+        }
+
+        .screen.active {
+            display: block
+        }
+
+        /* ---------- Intro ---------- */
+        .hero {
+            text-align: center;
+            padding: 44px 16px 26px
+        }
+
+        .kicker {
+            letter-spacing: .22em;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase
+        }
+
+        .hero h1 {
+            font-size: clamp(30px, 5vw, 52px);
+            font-weight: 900;
+            margin: 10px 0 8px;
+            line-height: 1.05
+        }
+
+        .hero h1 em {
+            font-style: normal;
+            color: var(--gold)
+        }
+
+        .hero p.sub {
+            max-width: 640px;
+            margin: 0 auto;
+            color: var(--ink-dim);
+            font-size: 17px
+        }
+
+        .mission {
+            max-width: 860px;
+            margin: 26px auto;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            text-align: left
+        }
+
+        .mission h2 {
+            font-size: 14px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 10px
+        }
+
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 12px;
+            margin-top: 14px
+        }
+
+        .principle {
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px
+        }
+
+        .principle b {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--ink)
+        }
+
+        .principle span {
+            font-size: 13px;
+            color: var(--ink-dim)
+        }
+
+        .start-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 8px 0 40px
+        }
+
+        .btn {
+            background: var(--gold);
+            color: #1a1405;
+            font-weight: 800;
+            font-size: 16px;
+            padding: 14px 30px;
+            border-radius: 10px;
+            transition: transform .12s
+        }
+
+        .btn:hover {
+            transform: translateY(-2px)
+        }
+
+        .btn.secondary {
+            background: var(--panel);
+            color: var(--ink);
+            border: 1px solid var(--line);
+            font-weight: 600
+        }
+
+        .toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--ink-dim);
+            font-size: 14px;
+            cursor: pointer;
+            user-select: none
+        }
+
+        .toggle input {
+            accent-color: var(--gold);
+            width: 16px;
+            height: 16px
+        }
+
+        /* ---------- Draft header ---------- */
+        .draft-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            margin-bottom: 12px
+        }
+
+        .dh-item {
+            min-width: 110px
+        }
+
+        .dh-item .lbl {
+            font-size: 11px;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--ink-faint)
+        }
+
+        .dh-item .val {
+            font-size: 20px;
+            font-weight: 800
+        }
+
+        .dh-item .val small {
+            font-size: 13px;
+            color: var(--ink-dim);
+            font-weight: 600
+        }
+
+        .clock {
+            font-variant-numeric: tabular-nums
+        }
+
+        .clock.warn .val {
+            color: var(--red);
+            animation: pulse 1s infinite
+        }
+
+        @keyframes pulse {
+            50% {
+                opacity: .55
+            }
+        }
+
+        .onclock-banner {
+            background: linear-gradient(90deg, #3a2f07, #1a1405);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-weight: 800;
+            border-radius: 10px;
+            padding: 10px 16px;
+            text-align: center;
+            margin-bottom: 12px;
+            display: none
+        }
+
+        .onclock-banner.show {
+            display: block;
+            animation: flashIn .4s
+        }
+
+        @keyframes flashIn {
+            from {
+                transform: scale(.97);
+                opacity: 0
+            }
+        }
+
+        /* ---------- Ticker ---------- */
+        .ticker {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 2px 10px;
+            scrollbar-width: thin
+        }
+
+        .tick {
+            flex: 0 0 auto;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            min-width: 118px
+        }
+
+        .tick .who {
+            color: var(--ink-faint);
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        .tick .p {
+            font-weight: 700;
+            white-space: nowrap
+        }
+
+        .tick.you {
+            border-color: var(--gold)
+        }
+
+        .tick .runflag {
+            color: var(--red);
+            font-weight: 800;
+            font-size: 10.5px
+        }
+
+        /* ---------- Main grid ---------- */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 330px;
+            gap: 12px
+        }
+
+        @media(max-width:900px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 14px
+        }
+
+        .panel h3 {
+            font-size: 12px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--ink-faint);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        /* Board */
+        .pos-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap
+        }
+
+        .pos-tab {
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            color: var(--ink-dim);
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .pos-tab[aria-selected="true"] {
+            background: var(--ink);
+            color: #0b1220;
+            border-color: var(--ink)
+        }
+
+        .tierband {
+            margin-bottom: 4px
+        }
+
+        .tier-lbl {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            color: var(--ink-faint);
+            text-transform: uppercase;
+            padding: 8px 4px 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .tier-lbl::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line)
+        }
+
+        .tier-lbl .count {
+            color: var(--gold)
+        }
+
+        .prow {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            color: var(--ink);
+            transition: border-color .12s, background .12s
+        }
+
+        .prow:not([disabled]):hover {
+            border-color: var(--gold)
+        }
+
+        .prow[disabled] {
+            opacity: .9;
+            cursor: default
+        }
+
+        .prow.selected {
+            border-color: var(--gold);
+            background: #1d2437;
+            box-shadow: 0 0 0 1px var(--gold)
+        }
+
+        .posdot {
+            flex: 0 0 auto;
+            width: 38px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 6px;
+            padding: 3px 0;
+            color: #0b1220
+        }
+
+        .posdot.QB {
+            background: var(--qb)
+        }
+
+        .posdot.RB {
+            background: var(--rb)
+        }
+
+        .posdot.WR {
+            background: var(--wr)
+        }
+
+        .posdot.TE {
+            background: var(--te)
+        }
+
+        .prow .nm {
+            flex: 1;
+            font-weight: 700;
+            font-size: 14px
+        }
+
+        .prow .nm small {
+            display: block;
+            font-weight: 500;
+            color: var(--ink-faint);
+            font-size: 11.5px
+        }
+
+        .prow .meta {
+            text-align: right;
+            font-size: 12px;
+            color: var(--ink-dim);
+            font-variant-numeric: tabular-nums
+        }
+
+        .prow .meta b {
+            color: var(--ink)
+        }
+
+        .board-scroll {
+            max-height: 520px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin
+        }
+
+        /* Sidebar */
+        .side {
+            display: flex;
+            flex-direction: column;
+            gap: 12px
+        }
+
+        .roster-slot {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            margin-bottom: 5px;
+            font-size: 13px
+        }
+
+        .roster-slot.empty {
+            color: var(--ink-faint);
+            border-style: dashed
+        }
+
+        .roster-slot .rd {
+            margin-left: auto;
+            color: var(--ink-faint);
+            font-size: 11px
+        }
+
+        /* Radar */
+        .radar-row {
+            margin-bottom: 9px
+        }
+
+        .radar-row .top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 3px
+        }
+
+        .radar-row .top b {
+            font-weight: 800
+        }
+
+        .radar-row .top span {
+            color: var(--ink-dim);
+            font-variant-numeric: tabular-nums
+        }
+
+        .bar {
+            height: 8px;
+            border-radius: 5px;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            overflow: hidden
+        }
+
+        .bar i {
+            display: block;
+            height: 100%;
+            border-radius: 5px
+        }
+
+        .radar-note {
+            font-size: 11.5px;
+            color: var(--ink-faint);
+            margin-top: 8px
+        }
+
+        /* Coach */
+        .coach {
+            border-color: #3c3411
+        }
+
+        .coach-body {
+            font-size: 13.5px;
+            color: var(--ink-dim)
+        }
+
+        .coach-body ul {
+            margin: 6px 0 0 18px
+        }
+
+        .coach-body li {
+            margin-bottom: 6px
+        }
+
+        .coach-body b {
+            color: var(--ink)
+        }
+
+        .confirm-zone {
+            margin-top: 12px;
+            display: none
+        }
+
+        .confirm-zone.show {
+            display: block
+        }
+
+        .confirm-zone .sel-name {
+            font-weight: 800;
+            font-size: 15px;
+            margin-bottom: 8px
+        }
+
+        .btn.full {
+            width: 100%;
+            text-align: center
+        }
+
+        /* Pick feedback modal */
+        .modal-veil {
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 16, .72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 50
+        }
+
+        .modal-veil.show {
+            display: flex
+        }
+
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            max-width: 520px;
+            width: 100%;
+            padding: 24px;
+            max-height: 88vh;
+            overflow-y: auto
+        }
+
+        .grade-chip {
+            display: inline-block;
+            font-weight: 900;
+            font-size: 26px;
+            padding: 6px 18px;
+            border-radius: 10px;
+            margin-bottom: 10px
+        }
+
+        .g-A {
+            background: #11351f;
+            color: var(--green);
+            border: 1px solid var(--green)
+        }
+
+        .g-B {
+            background: #0f2a44;
+            color: var(--blue);
+            border: 1px solid var(--blue)
+        }
+
+        .g-C {
+            background: #3a2f07;
+            color: var(--gold);
+            border: 1px solid var(--gold)
+        }
+
+        .g-D {
+            background: #3b1116;
+            color: var(--red);
+            border: 1px solid var(--red)
+        }
+
+        .modal h2 {
+            font-size: 20px;
+            margin-bottom: 2px
+        }
+
+        .modal .picked-line {
+            color: var(--ink-dim);
+            font-size: 14px;
+            margin-bottom: 12px
+        }
+
+        .fb-list {
+            list-style: none
+        }
+
+        .fb-list li {
+            display: flex;
+            gap: 9px;
+            font-size: 13.5px;
+            color: var(--ink-dim);
+            margin-bottom: 9px
+        }
+
+        .fb-list li b {
+            color: var(--ink)
+        }
+
+        .fb-ic {
+            flex: 0 0 auto
+        }
+
+        .modal .btn {
+            margin-top: 14px
+        }
+
+        /* Recap */
+        .recap-head {
+            text-align: center;
+            padding: 30px 12px 8px
+        }
+
+        .recap-head .big-grade {
+            font-size: 88px;
+            font-weight: 900;
+            line-height: 1
+        }
+
+        .recap-head p {
+            color: var(--ink-dim);
+            max-width: 560px;
+            margin: 8px auto
+        }
+
+        .meters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0
+        }
+
+        .meter .top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px
+        }
+
+        .picks-review .pick-card {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: var(--panel2);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px
+        }
+
+        .pick-card .mini-grade {
+            flex: 0 0 44px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 19px;
+            border-radius: 8px;
+            padding: 8px 0
+        }
+
+        .pick-card .pc-body {
+            flex: 1
+        }
+
+        .pick-card .pc-body b {
+            font-size: 14.5px
+        }
+
+        .pick-card .pc-body .rd-lbl {
+            color: var(--ink-faint);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em
+        }
+
+        .pick-card .pc-body p {
+            font-size: 13px;
+            color: var(--ink-dim);
+            margin-top: 3px
+        }
+
+        .takeaway {
+            background: linear-gradient(135deg, #1a2440, #121c30);
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--gold);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: var(--ink-dim)
+        }
+
+        .takeaway b {
+            color: var(--ink)
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0)
+        }
+
+        .footer-note {
+            text-align: center;
+            color: var(--ink-faint);
+            font-size: 12px;
+            padding: 18px 0 8px
+        }
+    </style>
+
+
+
+    <div class="wrap">
+
+        <!-- ============ INTRO ============ -->
+        <section class="screen active" id="scr-intro">
+            <div class="hero">
+                <div class="kicker" id="ui-kicker">Fantasy Football Academy · Performance Lab</div>
+                <h1 id="ui-title">Draft Day <em>War Room</em></h1>
+                <p class="sub" id="ui-sub">You're on the clock in a live 10-team draft. Nine AI general managers are drafting around
+                    you — and they will punish sloppy picks. Can you draft like a pro?</p>
+            </div>
+            <div class="mission">
+                <h2>Your Mission</h2>
+                <p style="color:var(--ink-dim);font-size:14.5px" id="ui-mission">Make <b style="color:var(--ink)">6 picks</b> from the
+                    5-spot in a snake draft. After every pick, your draft coach grades the
+                    <b style="color:var(--ink)">reasoning</b> behind it — not just the name. To earn an A, you'll need
+                    to apply the four habits of value-based drafting:</p>
+                <div class="principles" id="ui-principles">
+                    <div class="principle">
+                        <b>📊 Draft tiers, not rankings</b><span>Players inside a tier are interchangeable. The costly mistakes happen at tier breaks.</span>
+                    </div>
+                    <div class="principle">
+                        <b>📉 Scarcity drives value</b><span>Take the position that falls off a cliff first. The Drop-off Radar shows you where.</span>
+                    </div>
+                    <div class="principle">
+                        <b>🔥 Don't chase runs</b><span>When a position run starts, panic is contagious. Check the math before you follow the herd.</span>
+                    </div>
+                    <div class="principle">
+                        <b>💰 Respect the market</b><span>ADP is the market price. Reaching 10+ picks early burns value you can never get back.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="start-row">
+                <button class="btn" id="btn-start">🏈 Enter the War Room</button>
+                <label class="toggle"><input type="checkbox" id="opt-timer" checked=""> 60-second pick clock (uncheck for untimed practice)</label>
+            </div>
+        </section>
+
+        <!-- ============ DRAFT ============ -->
+        <section class="screen" id="scr-draft">
+            <div class="draft-head">
+                <div class="dh-item">
+                    <div class="lbl">Round · Pick</div>
+                    <div class="val" id="hd-pick">1 · 1</div>
+                </div>
+                <div class="dh-item">
+                    <div class="lbl">On the clock</div>
+                    <div class="val" id="hd-team" style="font-size:16px">—</div>
+                </div>
+                <div class="dh-item">
+                    <div class="lbl">Your next pick</div>
+                    <div class="val" id="hd-next"><small>—</small></div>
+                </div>
+                <div class="dh-item clock" id="hd-clock-wrap">
+                    <div class="lbl">Pick clock</div>
+                    <div class="val" id="hd-clock">—</div>
+                </div>
+            </div>
+            <div class="onclock-banner" id="onclock">⏱️ YOU'RE ON THE CLOCK — read the board, then commit.</div>
+            <div class="ticker" id="ticker" aria-label="Recent picks"></div>
+
+            <div class="grid">
+                <div class="panel">
+                    <h3>Available players <span id="pool-count" style="letter-spacing:0;color:var(--ink-dim)"></span>
+                    </h3>
+                    <div class="pos-tabs" role="tablist" id="pos-tabs">
+                        <button class="pos-tab" role="tab" data-pos="ALL" aria-selected="true">All</button>
+                        <button class="pos-tab" role="tab" data-pos="QB" aria-selected="false">QB</button>
+                        <button class="pos-tab" role="tab" data-pos="RB" aria-selected="false">RB</button>
+                        <button class="pos-tab" role="tab" data-pos="WR" aria-selected="false">WR</button>
+                        <button class="pos-tab" role="tab" data-pos="TE" aria-selected="false">TE</button>
+                    </div>
+                    <div class="board-scroll" id="board"></div>
+                </div>
+
+                <div class="side">
+                    <div class="panel">
+                        <h3>Your roster</h3>
+                        <div id="roster"></div>
+                    </div>
+                    <div class="panel">
+                        <h3>📉 Drop-off radar
+                            <span style="letter-spacing:0;text-transform:none;font-size:11px">next 11 picks</span></h3>
+                        <div id="radar"></div>
+                        <div class="radar-note">Projected points lost at each position if you wait until your next pick.
+                            Bigger bar = position is about to fall off a cliff.</div>
+                    </div>
+                    <div class="panel coach">
+                        <h3>🎧 Coach's corner</h3>
+                        <div class="coach-body" id="coach"></div>
+                        <div class="confirm-zone" id="confirm-zone">
+                            <div class="sel-name" id="sel-name"></div>
+                            <button class="btn full" id="btn-confirm">Confirm pick</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div aria-live="polite" class="sr-only" id="live"></div>
+        </section>
+
+        <!-- ============ RECAP ============ -->
+        <section class="screen" id="scr-recap">
+            <div class="recap-head">
+                <div class="kicker">Draft complete — coach's report card</div>
+                <div class="big-grade" id="final-grade">—</div>
+                <p id="final-blurb"></p>
+            </div>
+            <div class="panel" style="margin-bottom:12px">
+                <h3>Skill breakdown</h3>
+                <div class="meters" id="meters"></div>
+            </div>
+            <div class="panel picks-review">
+                <h3>Pick-by-pick review</h3>
+                <div id="review"></div>
+            </div>
+            <div class="takeaway" id="takeaway"></div>
+            <div class="start-row">
+                <button class="btn" id="btn-replay">🔁 Run it back (new draft flow)</button>
+            </div>
+        </section>
+
+        <!-- ============ PICK FEEDBACK MODAL ============ -->
+        <div class="modal-veil" id="modal-veil" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal">
+                <span class="grade-chip" id="m-grade">B+</span>
+                <h2 id="modal-title">Coach's read on that pick</h2>
+                <div class="picked-line" id="m-line"></div>
+                <ul class="fb-list" id="m-fb"></ul>
+                <button class="btn full" id="btn-modal-close">Back to the board</button>
+            </div>
+        </div>
+
+        <div class="footer-note">Built for the eLearning Designer's Academy July 2026 Design Challenge · Player values
+            are illustrative — update the player list in this block's settings to refresh ADP.</div>
+    </div>
+
+    <script>
+        /* =====================================================================
+   PLAYER POOL — EDIT ME with current ADP/projections before publishing.
+   adp = overall market draft position (PPR). proj = projected PPR points.
+   tier = positional tier (1 = elite). Data is illustrative for 2026.
+===================================================================== */
+const DEFAULT_PLAYERS = [
+  // ---- WR ----
+  {n:"Ja'Marr Chase",t:"CIN",p:"WR",tier:1,adp:1,proj:345},
+  {n:"Justin Jefferson",t:"MIN",p:"WR",tier:1,adp:4,proj:330},
+  {n:"CeeDee Lamb",t:"DAL",p:"WR",tier:1,adp:7,proj:322},
+  {n:"Puka Nacua",t:"LAR",p:"WR",tier:1,adp:8,proj:318},
+  {n:"Malik Nabers",t:"NYG",p:"WR",tier:1,adp:9,proj:315},
+  {n:"Jaxon Smith-Njigba",t:"SEA",p:"WR",tier:1,adp:11,proj:312},
+  {n:"Amon-Ra St. Brown",t:"DET",p:"WR",tier:1,adp:12,proj:310},
+  {n:"Nico Collins",t:"HOU",p:"WR",tier:2,adp:14,proj:295},
+  {n:"Brian Thomas Jr.",t:"JAX",p:"WR",tier:2,adp:16,proj:290},
+  {n:"Drake London",t:"ATL",p:"WR",tier:2,adp:17,proj:288},
+  {n:"A.J. Brown",t:"PHI",p:"WR",tier:2,adp:19,proj:284},
+  {n:"Ladd McConkey",t:"LAC",p:"WR",tier:2,adp:21,proj:280},
+  {n:"Tee Higgins",t:"CIN",p:"WR",tier:3,adp:27,proj:262},
+  {n:"Garrett Wilson",t:"NYJ",p:"WR",tier:3,adp:29,proj:258},
+  {n:"Marvin Harrison Jr.",t:"ARI",p:"WR",tier:3,adp:30,proj:256},
+  {n:"Rashee Rice",t:"KC",p:"WR",tier:3,adp:32,proj:253},
+  {n:"Tyreek Hill",t:"MIA",p:"WR",tier:3,adp:34,proj:250},
+  {n:"DK Metcalf",t:"PIT",p:"WR",tier:3,adp:38,proj:243},
+  {n:"Davante Adams",t:"LAR",p:"WR",tier:4,adp:44,proj:228},
+  {n:"Terry McLaurin",t:"WAS",p:"WR",tier:4,adp:46,proj:224},
+  {n:"Mike Evans",t:"TB",p:"WR",tier:4,adp:48,proj:222},
+  {n:"DeVonta Smith",t:"PHI",p:"WR",tier:4,adp:50,proj:219},
+  {n:"Zay Flowers",t:"BAL",p:"WR",tier:4,adp:53,proj:214},
+  {n:"Jaylen Waddle",t:"MIA",p:"WR",tier:4,adp:56,proj:210},
+  {n:"Courtland Sutton",t:"DEN",p:"WR",tier:5,adp:61,proj:198},
+  {n:"Calvin Ridley",t:"TEN",p:"WR",tier:5,adp:64,proj:194},
+  {n:"Jameson Williams",t:"DET",p:"WR",tier:5,adp:66,proj:191},
+  {n:"George Pickens",t:"DAL",p:"WR",tier:5,adp:68,proj:188},
+  {n:"Chris Olave",t:"NO",p:"WR",tier:5,adp:71,proj:184},
+  {n:"Jordan Addison",t:"MIN",p:"WR",tier:5,adp:74,proj:180},
+  {n:"Rome Odunze",t:"CHI",p:"WR",tier:5,adp:77,proj:176},
+  {n:"Jerry Jeudy",t:"CLE",p:"WR",tier:6,adp:82,proj:168},
+  {n:"Stefon Diggs",t:"NE",p:"WR",tier:6,adp:86,proj:163},
+  {n:"Khalil Shakir",t:"BUF",p:"WR",tier:6,adp:90,proj:158},
+  {n:"Ricky Pearsall",t:"SF",p:"WR",tier:6,adp:94,proj:153},
+  {n:"Matthew Golden",t:"GB",p:"WR",tier:6,adp:97,proj:149},
+  // ---- RB ----
+  {n:"Bijan Robinson",t:"ATL",p:"RB",tier:1,adp:2,proj:340},
+  {n:"Jahmyr Gibbs",t:"DET",p:"RB",tier:1,adp:3,proj:332},
+  {n:"Saquon Barkley",t:"PHI",p:"RB",tier:1,adp:5,proj:325},
+  {n:"Ashton Jeanty",t:"LV",p:"RB",tier:1,adp:10,proj:308},
+  {n:"De'Von Achane",t:"MIA",p:"RB",tier:2,adp:13,proj:292},
+  {n:"Christian McCaffrey",t:"SF",p:"RB",tier:2,adp:15,proj:288},
+  {n:"Derrick Henry",t:"BAL",p:"RB",tier:2,adp:18,proj:283},
+  {n:"Josh Jacobs",t:"GB",p:"RB",tier:2,adp:20,proj:278},
+  {n:"Jonathan Taylor",t:"IND",p:"RB",tier:2,adp:22,proj:274},
+  {n:"Bucky Irving",t:"TB",p:"RB",tier:2,adp:23,proj:271},
+  {n:"Omarion Hampton",t:"LAC",p:"RB",tier:2,adp:25,proj:266},
+  {n:"Kyren Williams",t:"LAR",p:"RB",tier:3,adp:31,proj:249},
+  {n:"Chase Brown",t:"CIN",p:"RB",tier:3,adp:33,proj:246},
+  {n:"James Cook",t:"BUF",p:"RB",tier:3,adp:35,proj:242},
+  {n:"Kenneth Walker III",t:"SEA",p:"RB",tier:3,adp:37,proj:238},
+  {n:"Breece Hall",t:"NYJ",p:"RB",tier:3,adp:39,proj:234},
+  {n:"TreVeyon Henderson",t:"NE",p:"RB",tier:3,adp:41,proj:230},
+  {n:"Quinshon Judkins",t:"CLE",p:"RB",tier:4,adp:47,proj:215},
+  {n:"D'Andre Swift",t:"CHI",p:"RB",tier:4,adp:52,proj:206},
+  {n:"Aaron Jones",t:"MIN",p:"RB",tier:4,adp:55,proj:201},
+  {n:"Joe Mixon",t:"HOU",p:"RB",tier:4,adp:58,proj:197},
+  {n:"Alvin Kamara",t:"NO",p:"RB",tier:4,adp:60,proj:193},
+  {n:"Tony Pollard",t:"TEN",p:"RB",tier:5,adp:65,proj:184},
+  {n:"David Montgomery",t:"DET",p:"RB",tier:5,adp:69,proj:178},
+  {n:"Isiah Pacheco",t:"KC",p:"RB",tier:5,adp:72,proj:174},
+  {n:"Kaleb Johnson",t:"PIT",p:"RB",tier:5,adp:75,proj:170},
+  {n:"Rhamondre Stevenson",t:"NE",p:"RB",tier:5,adp:79,proj:165},
+  {n:"Javonte Williams",t:"DAL",p:"RB",tier:6,adp:84,proj:157},
+  {n:"Zach Charbonnet",t:"SEA",p:"RB",tier:6,adp:88,proj:152},
+  {n:"Jaylen Warren",t:"PIT",p:"RB",tier:6,adp:92,proj:147},
+  {n:"Tyjae Spears",t:"TEN",p:"RB",tier:6,adp:96,proj:142},
+  {n:"Braelon Allen",t:"NYJ",p:"RB",tier:6,adp:99,proj:138},
+  // ---- QB ----
+  {n:"Josh Allen",t:"BUF",p:"QB",tier:1,adp:24,proj:405},
+  {n:"Lamar Jackson",t:"BAL",p:"QB",tier:1,adp:26,proj:400},
+  {n:"Jayden Daniels",t:"WAS",p:"QB",tier:1,adp:28,proj:392},
+  {n:"Jalen Hurts",t:"PHI",p:"QB",tier:2,adp:40,proj:375},
+  {n:"Joe Burrow",t:"CIN",p:"QB",tier:2,adp:43,proj:368},
+  {n:"Patrick Mahomes",t:"KC",p:"QB",tier:2,adp:54,proj:352},
+  {n:"Baker Mayfield",t:"TB",p:"QB",tier:3,adp:62,proj:340},
+  {n:"Bo Nix",t:"DEN",p:"QB",tier:3,adp:67,proj:334},
+  {n:"Caleb Williams",t:"CHI",p:"QB",tier:3,adp:73,proj:328},
+  {n:"Justin Herbert",t:"LAC",p:"QB",tier:3,adp:78,proj:322},
+  {n:"Drake Maye",t:"NE",p:"QB",tier:3,adp:83,proj:317},
+  {n:"Jordan Love",t:"GB",p:"QB",tier:4,adp:91,proj:305},
+  // ---- TE ----
+  {n:"Brock Bowers",t:"LV",p:"TE",tier:1,adp:6,proj:280},
+  {n:"Trey McBride",t:"ARI",p:"TE",tier:1,adp:36,proj:245},
+  {n:"George Kittle",t:"SF",p:"TE",tier:2,adp:42,proj:220},
+  {n:"Sam LaPorta",t:"DET",p:"TE",tier:2,adp:49,proj:210},
+  {n:"T.J. Hockenson",t:"MIN",p:"TE",tier:3,adp:59,proj:185},
+  {n:"Tyler Warren",t:"IND",p:"TE",tier:3,adp:63,proj:178},
+  {n:"Mark Andrews",t:"BAL",p:"TE",tier:3,adp:70,proj:170},
+  {n:"David Njoku",t:"CLE",p:"TE",tier:4,adp:76,proj:160},
+  {n:"Colston Loveland",t:"CHI",p:"TE",tier:4,adp:81,proj:154},
+  {n:"Evan Engram",t:"DEN",p:"TE",tier:4,adp:87,proj:148},
+  {n:"Dalton Kincaid",t:"BUF",p:"TE",tier:5,adp:93,proj:140},
+  {n:"Jake Ferguson",t:"DAL",p:"TE",tier:5,adp:98,proj:134},
+];
+
+/* ============================ CONFIG ============================ */
+const TEAMS = 10;
+let ROUNDS = 6, USER_SLOT = 5, CLOCK_SECS = 60;
+let USER_TEAM_IDX = USER_SLOT - 1; // 0-indexed draft slot of the learner
+const DEFAULT_AI_TEAMS = ["Gridiron Gurus","Waiver Wire Wolves","Cleveland Steamers","Touchdown Tycoons","Bench Warmers","The Auto-Drafters","Prime Time Players","Fourth & Long","Hail Mary HQ"];
+let TEAM_NAMES = DEFAULT_AI_TEAMS.slice(0,4).concat(["YOU — War Room"], DEFAULT_AI_TEAMS.slice(4));
+let PLAYERS = [];
+const POS = ["QB","RB","WR","TE"];
+let POS_CAPS = {QB:1,RB:4,WR:4,TE:1};   // AI roster caps, recomputed from rounds in applyConfig
+
+/* ============================ STATE ============================ */
+let S = null;
+function newState(){
+  return {
+    pool: PLAYERS.map((p,i)=>({...p,id:i})).sort((a,b)=>a.adp-b.adp),
+    taken: [],           // {player, teamIdx, overall}
+    overall: 1,
+    userPicks: [],       // {player, overall, grade, score, fb:[], flags:{}}
+    timerOn: true, clock: CLOCK_SECS, timerId: null,
+    selectedId: null, tab: "ALL",
+    runPos: null,        // active run position
+  };
+}
+const rnd = arr => arr[Math.floor(Math.random()*arr.length)];
+const el = id => document.getElementById(id);
+
+function slotForOverall(o){
+  const r = Math.ceil(o/TEAMS), i = (o-1)%TEAMS;
+  return r%2===1 ? i : TEAMS-1-i; // 0-indexed team slot
+}
+function userOveralls(){
+  const list=[];
+  for(let r=1;r<=ROUNDS;r++){
+    list.push(r%2===1 ? (r-1)*TEAMS+USER_SLOT : r*TEAMS-USER_SLOT+1);
+  }
+  return list;
+}
+function nextUserOverall(afterOverall){
+  return userOveralls().find(o=>o>afterOverall) || null;
+}
+function available(){ return S.pool.filter(p=>!S.taken.some(t=>t.player.id===p.id)); }
+function teamRoster(idx){ return S.taken.filter(t=>t.teamIdx===idx).map(t=>t.player); }
+
+/* ============================ RUN DETECTION ============================ */
+function detectRun(){
+  const last4 = S.taken.slice(-4).map(t=>t.player.p);
+  for(const pos of ["RB","WR","QB","TE"]){
+    if(last4.filter(p=>p===pos).length>=3) return pos;
+  }
+  return null;
+}
+
+/* ============================ AI PICK LOGIC ============================ */
+function aiPick(teamIdx){
+  const avail = available();
+  const roster = teamRoster(teamIdx);
+  const counts = Object.fromEntries(POS.map(p=>[p,roster.filter(x=>x.p===p).length]));
+  const run = detectRun();
+  // Candidates: top 6 by ADP that don't violate caps
+  let cands = avail.filter(p=>counts[p.p]<POS_CAPS[p.p]).slice(0,6);
+  if(!cands.length) cands = avail.slice(0,3);
+  const weights = cands.map((p,i)=>{
+    let w = Math.max(1, 12 - i*2);                      // ADP order preference
+    if(run && p.p===run) w *= 1.9;                      // herd behavior fuels runs
+    if(p.p==="QB" && S.overall < 20) w *= .25;          // AIs rarely reach for QB early
+    if(p.p==="TE" && p.tier>1 && S.overall < 30) w *= .4;
+    if(counts.RB===0 && p.p==="RB" && S.overall>25) w*=1.5; // fill gaping needs late
+    if(counts.WR===0 && p.p==="WR" && S.overall>25) w*=1.5;
+    return w;
+  });
+  const total = weights.reduce((a,b)=>a+b,0);
+  let roll = Math.random()*total;
+  for(let i=0;i<cands.length;i++){ roll-=weights[i]; if(roll<=0) return cands[i]; }
+  return cands[0];
+}
+
+/* ============================ SCARCITY MATH ============================ */
+// Best available at pos, and the likely best-available at the user's NEXT pick
+// (assume the next `gap` picks roughly follow ADP order).
+function scarcity(){
+  const avail = available();
+  const nextU = nextUserOverall(S.overall);
+  const gap = nextU ? (nextU - S.overall) : 10;
+  const likelyGone = avail.slice(0, Math.max(0,gap-1)).map(p=>p.id);
+  const out = {};
+  for(const pos of POS){
+    const atPos = avail.filter(p=>p.p===pos);
+    const best = atPos[0] || null;
+    const survivor = atPos.find(p=>!likelyGone.includes(p.id)) || atPos[atPos.length-1] || null;
+    out[pos] = {best, survivor, drop: best&&survivor ? Math.max(0,best.proj-survivor.proj) : 0};
+  }
+  return out;
+}
+
+/* ============================ GRADING ENGINE ============================ */
+function gradePick(player){
+  const fb = [];
+  let score = 70; // baseline "fine pick"
+  const sc = scarcity(); // computed BEFORE removing player (call order matters)
+  const o = S.overall;
+  const roster = S.userPicks.map(u=>u.player);
+  const counts = Object.fromEntries(POS.map(p=>[p,roster.filter(x=>x.p===p).length]));
+  const round = Math.ceil(o/TEAMS);
+  const avail = available();
+
+  // 1) Market value vs ADP: positive = player fell past his market price (value),
+  // negative = drafted ahead of market (reach)
+  const delta = o - player.adp;
+  if(delta >= 8){ score += 14; fb.push(["💰","<b>Steal.</b> The market prices "+player.n+" at pick "+player.adp+" — you got him at "+o+", a "+delta+"-pick discount."]); }
+  else if(delta >= 3){ score += 6; fb.push(["💰","<b>Good value.</b> "+player.n+" typically goes around pick "+player.adp+". Buying below market is how you bank an edge."]); }
+  else if(delta <= -12){ score -= 16; fb.push(["🚨","<b>Big reach.</b> "+player.n+"'s market price is pick "+player.adp+" — you paid "+Math.abs(delta)+" picks over sticker. He was very likely to still be there later."]); }
+  else if(delta <= -6){ score -= 8; fb.push(["⚠️","<b>Slight reach.</b> You took "+player.n+" about "+Math.abs(delta)+" picks ahead of his ADP. Ask: was anyone really taking him before your next turn?"]); }
+  else { fb.push(["💰","<b>Fair price.</b> "+player.n+" went right around his market value (ADP "+player.adp+")."]); }
+
+  // 2) Scarcity / drop-off (the VBD core)
+  const drops = POS.map(p=>({pos:p, drop:sc[p].drop})).sort((a,b)=>b.drop-a.drop);
+  const bestPos = drops[0];
+  const myDrop = sc[player.p].drop;
+  if(player.p === bestPos.pos && bestPos.drop >= 15){
+    score += 15;
+    fb.push(["📉","<b>You read the cliff.</b> "+player.p+" was the steepest drop-off on the board (−"+Math.round(bestPos.drop)+" projected pts by your next pick). That's value-based drafting."]);
+  } else if(bestPos.drop - myDrop >= 25 && sc[bestPos.pos].best){
+    score -= 12;
+    fb.push(["📉","<b>Scarcity says otherwise.</b> "+bestPos.pos+" was about to fall off a cliff (−"+Math.round(bestPos.drop)+" pts by your next turn) while "+player.p+" was only dropping −"+Math.round(myDrop)+". "+sc[bestPos.pos].best.n+" likely won't survive the wait."]);
+  } else if(bestPos.drop - myDrop >= 12 && sc[bestPos.pos].best){
+    score -= 5;
+    fb.push(["📉","<b>Check the radar.</b> "+bestPos.pos+" had the steeper drop-off (−"+Math.round(bestPos.drop)+" vs −"+Math.round(myDrop)+"). Sometimes right, but know the trade you're making."]);
+  }
+
+  // 3) Tier awareness
+  const sameTierLeft = avail.filter(x=>x.p===player.p && x.tier===player.tier && x.id!==player.id).length;
+  if(sameTierLeft === 0){
+    score += 10;
+    fb.push(["📊","<b>Caught the tier break.</b> "+player.n+" was the last Tier-"+player.tier+" "+player.p+" standing. Grabbing the final player before a tier cliff is textbook."]);
+  } else if(sameTierLeft >= 3 && delta <= -4){
+    score -= 5;
+    fb.push(["📊","<b>No rush.</b> "+sameTierLeft+" more Tier-"+player.tier+" "+player.p+"s were still on the board — the tier could have waited a round."]);
+  }
+  // Elite tier ignored elsewhere?
+  for(const pos of POS){
+    if(pos!==player.p && sc[pos].best && sc[pos].best.tier===1 && player.tier>=3 && pos!=="QB"){
+      score -= 6;
+      fb.push(["📊","<b>Tier-1 talent passed over.</b> "+sc[pos].best.n+" (Tier-1 "+pos+") was sitting there while you took a Tier-"+player.tier+" "+player.p+". Elite tiers win leagues."]);
+      break;
+    }
+  }
+
+  // 4) Run psychology
+  if(S.runPos && player.p===S.runPos && delta <= -4){
+    score -= 8;
+    fb.push(["🔥","<b>You chased the run.</b> A "+S.runPos+" run was underway and you panic-followed at a reach price. Runs create discounts <i>elsewhere</i> — that's when you zig."]);
+  } else if(S.runPos && player.p!==S.runPos && delta >= 3){
+    score += 6;
+    fb.push(["🧊","<b>Ice in your veins.</b> While the room panicked on "+S.runPos+"s, you calmly took the value they pushed down the board. That's composure."]);
+  }
+
+  // 5) Roster construction
+  if(player.p==="QB" && counts.QB>=1){ score -= 15; fb.push(["🏗️","<b>Second QB in six rounds?</b> You start one. Every backup-QB pick is a starter you didn't draft."]); }
+  if(player.p==="TE" && counts.TE>=1){ score -= 12; fb.push(["🏗️","<b>Doubling up at TE</b> this early costs you a starting RB/WR. One elite TE is a weapon; two is a hobby."]); }
+  if((player.p==="QB") && round<=2 && player.tier>1){ score -= 8; fb.push(["🏗️","<b>QB can wait.</b> Even good QBs come 30+ picks later for nearly the same points. Rounds 1–2 are for scarce RB/WR production."]); }
+  if(counts[player.p]>=3 && (counts.RB===0||counts.WR===0)){ score -= 8; fb.push(["🏗️","<b>Lopsided build.</b> That's "+(counts[player.p]+1)+" "+player.p+"s while another starting spot sits empty. Balance beats hoarding."]); }
+  if(round>=5 && counts.QB===0 && player.p!=="QB" && sc.QB.best && sc.QB.best.tier<=3){ fb.push(["💡","<b>Heads up:</b> still no QB. Fine for now — but don't leave the war room without one you like."]); }
+
+  score = Math.max(20, Math.min(100, score));
+  const letter = score>=90?"A":score>=83?"A-":score>=76?"B+":score>=70?"B":score>=62?"C+":score>=54?"C":"D";
+  return {score, letter, fb};
+}
+
+/* ============================ COACH'S CORNER (pre-pick scaffold) ============================ */
+function coachPrompts(){
+  const sc = scarcity();
+  const nextU = nextUserOverall(S.overall);
+  const gap = nextU ? nextU - S.overall - 1 : 0;
+  const drops = POS.map(p=>({pos:p,...sc[p]})).sort((a,b)=>b.drop-a.drop);
+  const items = [];
+  items.push("You won't pick again for <b>"+gap+" picks</b>. Think about who survives that long — not who's best right now.");
+  if(drops[0].drop>=15) items.push("<b>"+drops[0].pos+"</b> is the steepest cliff on the radar (−"+Math.round(drops[0].drop)+" pts if you wait). Does that change your plan?");
+  const tierEnders = [];
+  for(const pos of POS){
+    const atPos = available().filter(p=>p.p===pos);
+    if(atPos.length && atPos.filter(p=>p.tier===atPos[0].tier).length===1) tierEnders.push(atPos[0].n+" (last Tier-"+atPos[0].tier+" "+pos+")");
+  }
+  if(tierEnders.length) items.push("Tier breaks in play: <b>"+tierEnders.slice(0,2).join("</b> and <b>")+"</b>.");
+  if(S.runPos) items.push("A <b>"+S.runPos+" run</b> is underway. Is following the herd the math play — or the panic play?");
+  return "<p>Before you commit, coach wants you to check:</p><ul>"+items.map(i=>"<li>"+i+"</li>").join("")+"</ul>";
+}
+
+/* ============================ DRAFT LOOP ============================ */
+function startDraft(){
+  S = newState();
+  S.timerOn = el("opt-timer").checked;
+  showScreen("scr-draft");
+  el("ticker").innerHTML="";
+  advance();
+}
+function advance(){
+  const totalPicks = TEAMS*ROUNDS;
+  if(S.overall > totalPicks){ endDraft(); return; }
+  S.runPos = detectRun();
+  const slot = slotForOverall(S.overall);
+  renderHeader(slot);
+  if(slot === USER_TEAM_IDX){
+    userTurn();
+  } else {
+    setTimeout(()=>{
+      const p = aiPick(slot);
+      makePick(p, slot);
+      advance();
+    }, S.taken.length && slotForOverall(S.overall)!==USER_TEAM_IDX ? 650 : 900);
+  }
+}
+function userTurn(){
+  el("onclock").classList.add("show");
+  el("live").textContent = "You are on the clock, round "+Math.ceil(S.overall/TEAMS)+".";
+  S.selectedId = null;
+  renderBoard(); renderRadar(); renderRoster();
+  el("coach").innerHTML = coachPrompts();
+  el("confirm-zone").classList.remove("show");
+  if(S.timerOn){
+    S.clock = CLOCK_SECS;
+    renderClock();
+    S.timerId = setInterval(()=>{
+      S.clock--;
+      renderClock();
+      if(S.clock<=0){
+        clearInterval(S.timerId);
+        autoPickForUser();
+      }
+    },1000);
+  } else {
+    el("hd-clock").textContent = "∞";
+  }
+}
+function autoPickForUser(){
+  const p = available()[0];
+  const g = gradePick(p);
+  g.score = Math.max(20, g.score-20);
+  g.letter = "C";
+  g.fb.unshift(["⏱️","<b>Clock expired</b> — the system auto-drafted best available. In a real draft, hesitation is a decision too. Have your queue ready."]);
+  commitUserPick(p, g, true);
+}
+function selectPlayer(id){
+  S.selectedId = id;
+  renderBoard();
+  const p = available().find(x=>x.id===id);
+  el("sel-name").textContent = "Draft "+p.n+" ("+p.p+" · "+p.t+")?";
+  el("confirm-zone").classList.add("show");
+  el("btn-confirm").focus();
+}
+function confirmPick(){
+  const p = available().find(x=>x.id===S.selectedId);
+  if(!p) return;
+  if(S.timerId) clearInterval(S.timerId);
+  const g = gradePick(p);
+  commitUserPick(p, g, false);
+}
+function commitUserPick(p, g, autod){
+  makePick(p, USER_TEAM_IDX);
+  S.userPicks.push({player:p, overall:S.overall-1, grade:g.letter, score:g.score, fb:g.fb, auto:autod});
+  el("onclock").classList.remove("show");
+  el("confirm-zone").classList.remove("show");
+  showFeedbackModal(p, g);
+}
+function makePick(p, teamIdx){
+  S.taken.push({player:p, teamIdx, overall:S.overall});
+  addTick(p, teamIdx, S.overall);
+  S.overall++;
+  renderBoard(); renderRoster(); renderRadar();
+}
+
+/* ============================ RENDERING ============================ */
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  el(id).classList.add("active");
+  window.scrollTo({top:0});
+}
+function renderHeader(slot){
+  const r = Math.ceil(S.overall/TEAMS), pk = ((S.overall-1)%TEAMS)+1;
+  el("hd-pick").textContent = r+" · "+pk;
+  el("hd-team").textContent = TEAM_NAMES[slot];
+  const nu = nextUserOverall(S.overall - (slot===USER_TEAM_IDX?1:0));
+  el("hd-next").innerHTML = slot===USER_TEAM_IDX ? "<small>NOW</small>" : (nu? "<small>overall #"+nu+"</small>" : "<small>done</small>");
+  if(slot!==USER_TEAM_IDX) el("hd-clock").textContent = "—";
+}
+function renderClock(){
+  el("hd-clock").textContent = ":"+String(Math.max(0,S.clock)).padStart(2,"0");
+  el("hd-clock-wrap").classList.toggle("warn", S.clock<=15);
+}
+function addTick(p, teamIdx, overall){
+  const t = document.createElement("div");
+  t.className = "tick"+(teamIdx===USER_TEAM_IDX?" you":"");
+  const run = detectRun();
+  t.innerHTML = '<div class="who">#'+overall+' · '+TEAM_NAMES[teamIdx].split("—")[0].trim()+'</div><div class="p">'+p.n+' <span style="color:var(--ink-faint)">'+p.p+'</span></div>'+(run&&p.p===run?'<div class="runflag">🔥 '+run+' RUN</div>':'');
+  el("ticker").prepend(t);
+  el("live").textContent = TEAM_NAMES[teamIdx]+" selects "+p.n+", "+p.p+", pick "+overall+".";
+}
+function renderBoard(){
+  const myTurn = slotForOverall(Math.min(S.overall,TEAMS*ROUNDS)) === USER_TEAM_IDX && S.overall<=TEAMS*ROUNDS;
+  const avail = available().filter(p=>S.tab==="ALL"||p.p===S.tab);
+  el("pool-count").textContent = avail.length+" available";
+  const groups = [];
+  // Group contiguous by (pos-tier) when filtered by position; by overall tier bands when ALL
+  if(S.tab==="ALL"){
+    groups.push({label:null, players:avail.slice(0,40)});
+  } else {
+    const tiers = [...new Set(avail.map(p=>p.tier))].sort((a,b)=>a-b);
+    for(const t of tiers){
+      const ps = avail.filter(p=>p.tier===t);
+      groups.push({label:"Tier "+t, count:ps.length, players:ps});
+    }
+  }
+  el("board").innerHTML = groups.map(g=>{
+    const head = g.label? '<div class="tier-lbl">'+g.label+' <span class="count">'+g.count+' left</span></div>' : "";
+    return '<div class="tierband">'+head+g.players.map(p=>
+      '<button class="prow'+(S.selectedId===p.id?" selected":"")+'" data-id="'+p.id+'" '+(myTurn?"":"disabled")+'>'+
+      '<span class="posdot '+p.p+'">'+p.p+'</span>'+
+      '<span class="nm">'+p.n+'<small>'+p.t+' · Tier '+p.tier+'</small></span>'+
+      '<span class="meta">ADP <b>'+p.adp+'</b><br>Proj <b>'+p.proj+'</b></span></button>'
+    ).join("")+'</div>';
+  }).join("");
+  el("board").querySelectorAll(".prow:not([disabled])").forEach(b=>{
+    b.addEventListener("click",()=>selectPlayer(+b.dataset.id));
+  });
+}
+function renderRoster(){
+  const picks = S.userPicks;
+  let html = "";
+  for(let i=0;i<ROUNDS;i++){
+    if(picks[i]){
+      const p = picks[i].player;
+      html += '<div class="roster-slot"><span class="posdot '+p.p+'">'+p.p+'</span> <b>'+p.n+'</b><span class="rd">R'+(i+1)+'</span></div>';
+    } else {
+      html += '<div class="roster-slot empty">Round '+(i+1)+' — open</div>';
+    }
+  }
+  el("roster").innerHTML = html;
+}
+function lastName(n){
+  const parts = n.split(" ");
+  const last = parts[parts.length-1];
+  if(/^(Jr\.|Sr\.|II|III|IV)$/.test(last) && parts.length>=2) return parts[parts.length-2]+" "+last;
+  return last;
+}
+function renderRadar(){
+  const sc = scarcity();
+  const maxDrop = Math.max(1,...POS.map(p=>sc[p].drop));
+  el("radar").innerHTML = POS.map(pos=>{
+    const d = sc[pos];
+    const pct = Math.round(d.drop/maxDrop*100);
+    const color = d.drop>=25?"var(--red)":d.drop>=12?"var(--gold)":"var(--green)";
+    return '<div class="radar-row"><div class="top"><b>'+pos+'</b><span>'+(d.best? lastName(d.best.n)+" → "+(d.survivor? lastName(d.survivor.n):"—")+" · −"+Math.round(d.drop)+" pts":"—")+'</span></div><div class="bar"><i style="width:'+pct+'%;background:'+color+'"></i></div></div>';
+  }).join("");
+}
+
+/* ============================ FEEDBACK MODAL ============================ */
+function showFeedbackModal(p, g){
+  el("m-grade").textContent = g.letter;
+  el("m-grade").className = "grade-chip g-"+g.letter[0];
+  el("m-line").textContent = "Round "+Math.ceil((S.overall-1)/TEAMS)+", pick "+(S.overall-1)+" overall — "+p.n+", "+p.p+", "+p.t;
+  el("m-fb").innerHTML = g.fb.map(f=>'<li><span class="fb-ic">'+f[0]+'</span><span>'+f[1]+'</span></li>').join("");
+  el("modal-veil").classList.add("show");
+  el("btn-modal-close").focus();
+}
+el("btn-modal-close").addEventListener("click",()=>{
+  el("modal-veil").classList.remove("show");
+  advance();
+});
+
+/* ============================ RECAP ============================ */
+function endDraft(){
+  const avg = S.userPicks.reduce((a,u)=>a+u.score,0)/S.userPicks.length;
+  const letter = avg>=88?"A":avg>=80?"A-":avg>=74?"B+":avg>=68?"B":avg>=60?"C+":avg>=52?"C":"D";
+  el("final-grade").textContent = letter;
+  el("final-grade").style.color = avg>=80?"var(--green)":avg>=68?"var(--blue)":avg>=60?"var(--gold)":"var(--red)";
+  el("final-blurb").textContent =
+    avg>=88 ? "Elite work. You drafted tiers, read scarcity, and let the market come to you. That roster wins leagues." :
+    avg>=74 ? "Solid draft with real value-based instincts. Review the flagged picks below — one or two sharper reads and you're in A territory." :
+    avg>=60 ? "You built a roster, but the board built it more than you did. Study the coach's notes: the pattern in your misses is the lesson." :
+    "Rough day in the war room — but that's what practice reps are for. Read every note below, then run it back.";
+
+  // Skill meters from feedback flags
+  const skills = {
+    "💰 Market value": {hit:0,total:0}, "📊 Tiers & roster build": {hit:0,total:0},
+    "📉 Scarcity reads": {hit:0,total:0}, "🧊 Composure": {hit:0,total:0},
+  };
+  for(const u of S.userPicks){
+    for(const f of u.fb){
+      const ic=f[0], good=/Steal|Good value|Fair price|tier break|read the cliff|Ice in your veins/.test(f[1]);
+      if(ic==="💰"||ic==="🚨"||ic==="⚠️"){skills["💰 Market value"].total++; if(good)skills["💰 Market value"].hit++;}
+      if(ic==="📊"||ic==="🏗️"){skills["📊 Tiers & roster build"].total++; if(good)skills["📊 Tiers & roster build"].hit++;}
+      if(ic==="📉"){skills["📉 Scarcity reads"].total++; if(good)skills["📉 Scarcity reads"].hit++;}
+      if(ic==="🔥"||ic==="🧊"||ic==="⏱️"){skills["🧊 Composure"].total++; if(good)skills["🧊 Composure"].hit++;}
+    }
+  }
+  el("meters").innerHTML = Object.entries(skills).map(([k,v])=>{
+    const pct = v.total? Math.round(v.hit/v.total*100) : 100;
+    const color = pct>=70?"var(--green)":pct>=40?"var(--gold)":"var(--red)";
+    return '<div class="meter"><div class="top"><b>'+k+'</b><span>'+(v.total? pct+"%":"clean")+'</span></div><div class="bar"><i style="width:'+Math.max(6,pct)+'%;background:'+color+'"></i></div></div>';
+  }).join("");
+
+  el("review").innerHTML = S.userPicks.map((u,i)=>{
+    const worst = u.fb.find(f=>/🚨|⚠️/.test(f[0]) || /Scarcity says|chased|Second QB|Doubling|Lopsided|expired/.test(f[1]));
+    const best = u.fb.find(f=>/Steal|read the cliff|tier break|Ice/.test(f[1]));
+    const note = (worst||best||u.fb[0])[1].replace(/<[^>]+>/g,"");
+    return '<div class="pick-card"><div class="mini-grade g-'+u.grade[0]+'">'+u.grade+'</div><div class="pc-body"><div class="rd-lbl">Round '+(i+1)+' · overall #'+u.overall+'</div><b>'+u.player.n+'</b> — '+u.player.p+', '+u.player.t+'<p>'+note+'</p></div></div>';
+  }).join("");
+
+  // Biggest lesson = most-penalized category
+  const worstSkill = Object.entries(skills).filter(([,v])=>v.total>0 && v.hit<v.total).sort((a,b)=>(a[1].hit/a[1].total)-(b[1].hit/b[1].total))[0];
+  const lessons = {
+    "💰 Market value":"<b>Your biggest opportunity: respect the market.</b> ADP is what the room believes — every reach spends draft capital you can't get back. Before you commit, ask: \"Will he really be gone before my next pick?\"",
+    "📊 Tiers & roster build":"<b>Your biggest opportunity: draft the tier, and build a startable roster.</b> Rankings are a ladder; tiers are the cliffs between rungs. Obsess over where Tier 2 ends — and remember every pick has to fit a starting lineup.",
+    "📉 Scarcity reads":"<b>Your biggest opportunity: read the drop-off, not the board.</b> The right pick isn't the best player — it's the position that won't survive until your next turn. That's the whole secret of value-based drafting.",
+    "🧊 Composure":"<b>Your biggest opportunity: stay cold when the room runs hot.</b> Position runs and ticking clocks are pressure tests. The math doesn't change because five managers panicked — and their panic pushes value straight to you.",
+  };
+  el("takeaway").innerHTML = worstSkill ? lessons[worstSkill[0]] : "<b>Flawless process.</b> You respected the market, drafted tiers, and read scarcity all day. Try a run-back — the board will fall differently.";
+  showScreen("scr-recap");
+  try{ if(window.mightyInteractiveSdk && window.mightyInteractiveSdk.markAsComplete) window.mightyInteractiveSdk.markAsComplete(); }catch(e){}
+}
+
+/* ============================ WIRING ============================ */
+el("btn-start").addEventListener("click", startDraft);
+el("btn-replay").addEventListener("click", startDraft);
+el("btn-confirm").addEventListener("click", confirmPick);
+document.querySelectorAll(".pos-tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".pos-tab").forEach(x=>x.setAttribute("aria-selected","false"));
+  t.setAttribute("aria-selected","true");
+  S.tab = t.dataset.pos;
+  renderBoard();
+}));
+
+/* ============================ MIGHTY CONFIG ============================ */
+const DEFAULT_COPY = {
+  kicker:"Fantasy Football Academy · Performance Lab",
+  titleMain:"Draft Day", titleAccent:"War Room",
+  subtitle:"You're on the clock in a live 10-team draft. Nine AI general managers are drafting around you — and they will punish sloppy picks. Can you draft like a pro?",
+  learnerTeamName:"YOU — War Room",
+  principles:[
+    {icon:"📊",title:"Draft tiers, not rankings",blurb:"Players inside a tier are interchangeable. The costly mistakes happen at tier breaks."},
+    {icon:"📉",title:"Scarcity drives value",blurb:"Take the position that falls off a cliff first. The Drop-off Radar shows you where."},
+    {icon:"🔥",title:"Don't chase runs",blurb:"When a position run starts, panic is contagious. Check the math before you follow the herd."},
+    {icon:"💰",title:"Respect the market",blurb:"ADP is the market price. Reaching 10+ picks early burns value you can never get back."}
+  ]
+};
+function configDefaults(){
+  return {
+    rounds:6, learnerSlot:5, clockSeconds:60, timerOnDefault:true,
+    kicker:DEFAULT_COPY.kicker, titleMain:DEFAULT_COPY.titleMain, titleAccent:DEFAULT_COPY.titleAccent,
+    subtitle:DEFAULT_COPY.subtitle, learnerTeamName:DEFAULT_COPY.learnerTeamName,
+    principles:DEFAULT_COPY.principles.map(p=>({icon:p.icon,title:p.title,blurb:p.blurb})),
+    aiTeams:DEFAULT_AI_TEAMS.map(n=>({name:n})),
+    players:DEFAULT_PLAYERS.map(p=>({name:p.n,team:p.t,position:p.p,tier:p.tier,adp:p.adp,proj:p.proj}))
+  };
+}
+function esc(s){ const d=document.createElement("div"); d.textContent=String(s==null?"":s); return d.innerHTML; }
+function num(v,fb,min,max){ v=Number(v); if(!isFinite(v)) v=fb; return Math.max(min,Math.min(max,Math.round(v))); }
+function applyConfig(cfg){
+  cfg = cfg || configDefaults();
+  ROUNDS = num(cfg.rounds,6,3,8);
+  USER_SLOT = num(cfg.learnerSlot,5,1,TEAMS);
+  USER_TEAM_IDX = USER_SLOT-1;
+  CLOCK_SECS = num(cfg.clockSeconds,60,15,120);
+  POS_CAPS = {QB:1,TE:1,RB:Math.max(2,ROUNDS-2),WR:Math.max(2,ROUNDS-2)};
+  const ai = (Array.isArray(cfg.aiTeams)?cfg.aiTeams:[]).map(t=>String((t&&t.name)||"").trim()).filter(Boolean);
+  const names = DEFAULT_AI_TEAMS.map((d,i)=>ai[i]||d).slice(0,TEAMS-1);
+  TEAM_NAMES = names.slice(0,USER_TEAM_IDX).concat([String(cfg.learnerTeamName||DEFAULT_COPY.learnerTeamName)], names.slice(USER_TEAM_IDX));
+  const pool = (Array.isArray(cfg.players)?cfg.players:[]).map(p=>({
+    n:String((p&&p.name)||"").trim(), t:String((p&&p.team)||"").trim().toUpperCase(),
+    p:(p&&POS.includes(p.position))?p.position:null,
+    tier:num(p&&p.tier,3,1,6), adp:num(p&&p.adp,200,1,300), proj:num(p&&p.proj,100,0,600)
+  })).filter(p=>p.n&&p.p);
+  PLAYERS = pool.length >= TEAMS*ROUNDS ? pool : DEFAULT_PLAYERS;
+  el("opt-timer").checked = cfg.timerOnDefault !== false;
+  el("ui-kicker").textContent = cfg.kicker||DEFAULT_COPY.kicker;
+  el("ui-title").innerHTML = esc(cfg.titleMain||DEFAULT_COPY.titleMain)+" <em>"+esc(cfg.titleAccent||DEFAULT_COPY.titleAccent)+"</em>";
+  el("ui-sub").textContent = cfg.subtitle||DEFAULT_COPY.subtitle;
+  el("ui-mission").innerHTML = 'Make <b style="color:var(--ink)">'+ROUNDS+' picks</b> from the '+USER_SLOT+'-spot in a snake draft. After every pick, your draft coach grades the <b style="color:var(--ink)">reasoning</b> behind it — not just the name. To earn an A, you\'ll need to apply the four habits of value-based drafting:';
+  const pr = (Array.isArray(cfg.principles)&&cfg.principles.length?cfg.principles:DEFAULT_COPY.principles);
+  el("ui-principles").innerHTML = pr.map(p=>'<div class="principle"><b>'+esc((((p&&p.icon)||"")+" "+((p&&p.title)||"")).trim())+'</b><span>'+esc((p&&p.blurb)||"")+'</span></div>').join("");
+}
+(function boot(){
+  applyConfig(configDefaults());
+  const sdk = window.mightyInteractiveSdk;
+  if(sdk && typeof sdk.onSdkReady === "function"){
+    sdk.onSdkReady(async ()=>{
+      let cfg = configDefaults();
+      try { cfg = await sdk.state.getState(configDefaults()); } catch(e){}
+      applyConfig(cfg);
+    });
+  }
+})();
+    </script>
+
+
+
+
+
+</body></html>

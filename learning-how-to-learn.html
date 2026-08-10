@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning How to Learn — Instructional Design</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&family=Playfair+Display:wght@700;900&display=swap');
+
+  :root {
+    --bg: #07070f;
+    --card: #0f0f1a;
+    --border: rgba(255,255,255,.07);
+    --purple: #7c3aed;
+    --violet: #a855f7;
+    --cyan: #22d3ee;
+    --emerald: #10b981;
+    --rose: #f43f5e;
+    --amber: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* PROGRESS BAR */
+  #scroll-bar {
+    position: fixed; top: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--cyan));
+    width: 0%; z-index: 1000;
+    transition: width .2s ease;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; width: 100%;
+    background: rgba(7,7,15,.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 500;
+  }
+
+  .nav-logo {
+    font-size: .85rem; font-weight: 700; letter-spacing: .05em;
+    background: linear-gradient(135deg, var(--purple), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-transform: uppercase;
+  }
+
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    color: var(--muted); text-decoration: none; font-size: .8rem;
+    font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+    transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--violet); }
+
+  .nav-progress {
+    font-size: .75rem; color: var(--muted);
+    display: flex; align-items: center; gap: .5rem;
+  }
+
+  .nav-progress span { color: var(--emerald); font-weight: 700; }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% 20%, rgba(124,58,237,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(34,211,238,.1) 0%, transparent 60%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+  }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: .5rem;
+    background: rgba(124,58,237,.15);
+    border: 1px solid rgba(124,58,237,.3);
+    border-radius: 100px;
+    padding: .35rem 1rem;
+    font-size: .75rem; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--violet);
+    margin-bottom: 1.5rem;
+    position: relative; z-index: 1;
+    animation: fadeUp .6s ease both;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); animation: pulse 2s infinite; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 1.05;
+    font-weight: 900;
+    position: relative; z-index: 1;
+    animation: fadeUp .7s .1s ease both;
+  }
+
+  .hero h1 .gradient {
+    background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .hero-sub {
+    max-width: 620px; margin: 1.5rem auto 0;
+    font-size: 1.15rem; color: var(--muted); line-height: 1.7;
+    position: relative; z-index: 1;
+    animation: fadeUp .7s .2s ease both;
+  }
+
+  .hero-cta {
+    margin-top: 2.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    position: relative; z-index: 1;
+    animation: fadeUp .7s .3s ease both;
+  }
+
+  .btn {
+    padding: .8rem 1.8rem; border-radius: 10px; font-weight: 600;
+    font-size: .9rem; cursor: pointer; border: none; text-decoration: none;
+    transition: all .25s ease; display: inline-flex; align-items: center; gap: .5rem;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--purple), var(--violet));
+    color: #fff;
+    box-shadow: 0 0 30px rgba(124,58,237,.4);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 50px rgba(124,58,237,.6); }
+
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--violet); color: var(--violet); transform: translateY(-2px); }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex; justify-content: center; gap: 0; flex-wrap: wrap;
+    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    background: rgba(15,15,26,.8);
+  }
+
+  .stat {
+    flex: 1; min-width: 160px; max-width: 220px;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+
+  .stat-num {
+    font-size: 2.2rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--violet), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    display: block;
+  }
+  .stat-label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-top: .2rem; }
+
+  /* SECTION */
+  section { padding: 6rem 2rem; }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .section-label {
+    display: inline-block; font-size: .7rem; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--violet);
+    margin-bottom: .75rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700; line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .section-sub { color: var(--muted); max-width: 560px; font-size: 1rem; line-height: 1.7; }
+
+  /* PRINCIPLE CARDS */
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem; margin-top: 3rem;
+  }
+
+  .principle-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    cursor: pointer;
+    transition: all .3s ease;
+    position: relative; overflow: hidden;
+  }
+
+  .principle-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(124,58,237,.08), transparent);
+    opacity: 0; transition: opacity .3s;
+  }
+
+  .principle-card:hover { border-color: rgba(124,58,237,.4); transform: translateY(-4px); }
+  .principle-card:hover::before { opacity: 1; }
+
+  .card-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; margin-bottom: 1.25rem;
+    background: rgba(124,58,237,.15);
+  }
+
+  .principle-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: .6rem; }
+  .principle-card p { font-size: .88rem; color: var(--muted); line-height: 1.65; }
+
+  .card-expand {
+    margin-top: 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: .82rem; color: var(--cyan);
+    display: none;
+    line-height: 1.65;
+  }
+
+  .principle-card.open .card-expand { display: block; }
+
+  .card-tag {
+    display: inline-block; padding: .2rem .6rem; border-radius: 6px;
+    font-size: .68rem; font-weight: 700; letter-spacing: .05em;
+    text-transform: uppercase; margin-top: .75rem;
+  }
+
+  /* LEARNING MODELS */
+  .models-section { background: rgba(15,15,26,.5); }
+
+  .tabs {
+    display: flex; gap: .5rem; flex-wrap: wrap;
+    margin: 2.5rem 0 2rem;
+  }
+
+  .tab {
+    padding: .55rem 1.2rem; border-radius: 8px; cursor: pointer;
+    font-size: .82rem; font-weight: 600; border: 1px solid var(--border);
+    color: var(--muted); background: transparent; transition: all .2s;
+  }
+
+  .tab.active, .tab:hover {
+    background: var(--purple); color: #fff; border-color: var(--purple);
+  }
+
+  .tab-content { display: none; animation: fadeUp .4s ease; }
+  .tab-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+
+  .model-info h3 { font-size: 1.6rem; font-weight: 700; margin-bottom: 1rem; }
+  .model-info p { color: var(--muted); line-height: 1.75; margin-bottom: 1.25rem; }
+
+  .model-steps { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+
+  .model-steps li {
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: .9rem 1rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; font-size: .88rem;
+  }
+
+  .step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--violet));
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; font-weight: 800; flex-shrink: 0;
+  }
+
+  .model-visual {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 2rem;
+    display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  }
+
+  .model-visual h4 { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* CYCLE DIAGRAM */
+  .cycle { display: flex; flex-direction: column; align-items: center; gap: .5rem; width: 100%; }
+
+  .cycle-item {
+    width: 100%; padding: .8rem 1.2rem;
+    border-radius: 10px; text-align: center;
+    font-size: .85rem; font-weight: 600;
+    position: relative;
+  }
+
+  .cycle-arrow {
+    font-size: 1.2rem; color: var(--muted);
+  }
+
+  /* QUIZ SECTION */
+  .quiz-wrapper {
+    max-width: 720px; margin: 3rem auto 0;
+  }
+
+  .quiz-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2.5rem;
+  }
+
+  .quiz-progress-track {
+    background: rgba(255,255,255,.06); border-radius: 100px; height: 6px;
+    margin-bottom: 2rem;
+  }
+
+  .quiz-progress-fill {
+    height: 100%; border-radius: 100px;
+    background: linear-gradient(90deg, var(--purple), var(--cyan));
+    transition: width .5s ease;
+  }
+
+  .quiz-q-num { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .75rem; }
+  .quiz-question { font-size: 1.2rem; font-weight: 600; line-height: 1.5; margin-bottom: 1.75rem; }
+
+  .quiz-options { display: flex; flex-direction: column; gap: .75rem; }
+
+  .quiz-option {
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    font-size: .9rem; transition: all .2s;
+    background: transparent; color: var(--text);
+    text-align: left;
+  }
+
+  .quiz-option:hover:not(:disabled) { border-color: var(--violet); background: rgba(124,58,237,.1); }
+  .quiz-option.correct { border-color: var(--emerald); background: rgba(16,185,129,.1); color: var(--emerald); }
+  .quiz-option.wrong { border-color: var(--rose); background: rgba(244,63,94,.1); color: var(--rose); }
+
+  .quiz-feedback {
+    margin-top: 1.25rem; padding: 1rem 1.25rem;
+    border-radius: 10px; font-size: .88rem; line-height: 1.6;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.correct { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: #6ee7b7; }
+  .quiz-feedback.wrong { background: rgba(244,63,94,.1); border: 1px solid rgba(244,63,94,.3); color: #fda4af; }
+
+  .quiz-next {
+    margin-top: 1.25rem; width: 100%;
+    display: none;
+  }
+  .quiz-next.show { display: block; }
+
+  .quiz-result {
+    text-align: center; padding: 2rem;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .quiz-result .score { font-size: 3.5rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--violet), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .quiz-result p { color: var(--muted); margin: .5rem 0 1.5rem; }
+
+  /* TIMELINE */
+  .timeline { position: relative; margin-top: 3rem; }
+
+  .timeline::before {
+    content: ''; position: absolute; left: 28px; top: 0; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, var(--purple), var(--cyan), transparent);
+  }
+
+  .tl-item {
+    display: flex; gap: 2rem; margin-bottom: 2.5rem;
+    opacity: 0; transform: translateX(-20px);
+    transition: all .5s ease;
+  }
+
+  .tl-item.visible { opacity: 1; transform: translateX(0); }
+
+  .tl-dot {
+    width: 58px; height: 58px; border-radius: 50%; flex-shrink: 0;
+    background: var(--card); border: 2px solid var(--purple);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; z-index: 1;
+  }
+
+  .tl-body {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; flex: 1;
+  }
+
+  .tl-year { font-size: .72rem; color: var(--violet); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .4rem; }
+  .tl-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; }
+  .tl-body p { font-size: .85rem; color: var(--muted); line-height: 1.65; }
+
+  /* TOOLS GRID */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem; margin-top: 3rem;
+  }
+
+  .tool-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem;
+    transition: all .25s ease;
+  }
+
+  .tool-card:hover { border-color: rgba(34,211,238,.3); transform: translateY(-3px); }
+
+  .tool-cat {
+    font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; margin-bottom: .75rem;
+    display: inline-block; padding: .2rem .55rem; border-radius: 5px;
+  }
+
+  .tool-card h4 { font-size: .95rem; font-weight: 700; margin-bottom: .4rem; }
+  .tool-card p { font-size: .82rem; color: var(--muted); line-height: 1.6; }
+
+  .tool-rating { margin-top: 1rem; display: flex; gap: 3px; }
+  .star { color: var(--amber); font-size: .85rem; }
+  .star.empty { color: var(--border); }
+
+  /* CHECKLIST */
+  .checklist-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem; margin-top: 2.5rem;
+  }
+
+  .checklist-group {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem;
+  }
+
+  .checklist-group h3 {
+    font-size: .95rem; font-weight: 700; margin-bottom: 1rem;
+    padding-bottom: .75rem; border-bottom: 1px solid var(--border);
+  }
+
+  .check-item {
+    display: flex; align-items: center; gap: .75rem;
+    padding: .55rem 0; cursor: pointer;
+    font-size: .87rem; color: var(--muted);
+    transition: color .2s;
+  }
+
+  .check-item:hover { color: var(--text); }
+
+  .checkbox {
+    width: 20px; height: 20px; border-radius: 5px;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all .2s;
+    font-size: .7rem;
+  }
+
+  .check-item.checked .checkbox {
+    background: var(--emerald); border-color: var(--emerald); color: #fff;
+  }
+
+  .check-item.checked { color: var(--text); }
+  .check-item.checked span:last-child { text-decoration: line-through; opacity: .5; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--muted); font-size: .82rem;
+  }
+
+  footer a { color: var(--violet); text-decoration: none; }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0; transform: translateY(24px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* RESPONSIVE */
+  @media (max-width: 720px) {
+    .tab-content.active { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .stat { min-width: 120px; padding: 1.2rem 1rem; }
+    .stat-num { font-size: 1.6rem; }
+  }
+</style>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+<div id="scroll-bar"></div>
+
+<nav>
+  <div class="nav-logo">Learning How to Learn</div>
+  <div class="nav-links">
+    <a href="#principles">Principles</a>
+    <a href="#models">Models</a>
+    <a href="#quiz">Quiz</a>
+    <a href="#history">History</a>
+    <a href="#tools">Tools</a>
+  </div>
+  <div class="nav-progress">Completed: <span id="completed-count">0</span> / 12</div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-eyebrow"><div class="dot"></div> Instructional Design</div>
+  <h1>Learning How<br>to <span class="gradient">Learn</span></h1>
+  <p class="hero-sub">Master the science behind how humans acquire, retain, and apply knowledge — and design experiences that actually work.</p>
+  <div class="hero-cta">
+    <a href="#principles" class="btn btn-primary">⚡ Start Learning</a>
+    <a href="#quiz" class="btn btn-outline">📝 Take the Quiz</a>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="stat"><span class="stat-num" data-target="7">0</span><span class="stat-label">Core Principles</span></div>
+  <div class="stat"><span class="stat-num" data-target="5">0</span><span class="stat-label">Learning Models</span></div>
+  <div class="stat"><span class="stat-num" data-target="10">0</span><span class="stat-label">Quiz Questions</span></div>
+  <div class="stat"><span class="stat-num" data-target="100">0</span><span class="stat-label">Years of Research</span></div>
+  <div class="stat"><span class="stat-num" data-target="14">0</span><span class="stat-label">Tools Reviewed</span></div>
+</div>
+
+<!-- PRINCIPLES -->
+<section id="principles">
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">Core Science</span>
+      <h2 class="section-title">Principles of Effective Learning</h2>
+      <p class="section-sub">Research-backed principles that instructional designers use to create lasting knowledge transfer. Click any card to learn more.</p>
+    </div>
+
+    <div class="principles-grid">
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">🧠</div>
+        <h3>Cognitive Load Theory</h3>
+        <p>Our working memory is limited. Effective instruction minimizes extraneous load and channels effort into meaningful processing.</p>
+        <div class="card-expand">
+          Developed by John Sweller in 1988, CLT identifies three types of cognitive load: intrinsic (complexity of content), extraneous (poor design), and germane (schema formation). Great ID reduces extraneous load through chunking, clear visuals, and sequencing — freeing mental bandwidth for actual learning.
+        </div>
+        <span class="card-tag" style="background:rgba(124,58,237,.15);color:var(--violet)">Cognitive Science</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">🔁</div>
+        <h3>Spaced Repetition</h3>
+        <p>Distributing practice over time dramatically outperforms massed "cramming." The forgetting curve is real — spacing fights it.</p>
+        <div class="card-expand">
+          Hermann Ebbinghaus mapped the forgetting curve in 1885. Spaced repetition leverages the spacing effect: reviewing material just before you forget it strengthens the memory trace each time. Tools like Anki use algorithms to find optimal intervals. Interval: 1 day → 3 days → 1 week → 1 month.
+        </div>
+        <span class="card-tag" style="background:rgba(34,211,238,.1);color:var(--cyan)">Memory</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">🎯</div>
+        <h3>Retrieval Practice</h3>
+        <p>Testing yourself — not just rereading — is the single most powerful study technique. The act of retrieving strengthens memory.</p>
+        <div class="card-expand">
+          Known as the "testing effect," research by Roediger & Karpicke (2006) showed that a test-study group retained 61% of material vs. 40% for a study-only group a week later. Flashcards, practice problems, and low-stakes quizzes all work. The struggle to retrieve is the learning.
+        </div>
+        <span class="card-tag" style="background:rgba(16,185,129,.1);color:var(--emerald)">Evidence-Based</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">🔗</div>
+        <h3>Prior Knowledge Activation</h3>
+        <p>New learning hooks to existing schema. Explicitly activating what learners already know dramatically accelerates understanding.</p>
+        <div class="card-expand">
+          Ausubel's Assimilation Theory: "The most important single factor influencing learning is what the learner already knows." Advance organizers, analogies, and KWL charts (Know-Want-Learned) all prime the brain's existing networks before introducing new material.
+        </div>
+        <span class="card-tag" style="background:rgba(245,158,11,.1);color:var(--amber)">Schema Theory</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">🌊</div>
+        <h3>Interleaving</h3>
+        <p>Mixing different topics or problem types in a single session feels harder but produces far better long-term retention and transfer.</p>
+        <div class="card-expand">
+          Interleaving forces the brain to retrieve the right strategy for each problem, building discrimination skills. A study by Rohrer & Taylor (2007) showed interleaved math practice produced 43% accuracy on a final test vs. 20% for blocked practice. It feels inefficient — that difficulty is the point.
+        </div>
+        <span class="card-tag" style="background:rgba(244,63,94,.1);color:var(--rose)">Desirable Difficulty</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">📊</div>
+        <h3>Worked Examples → Fading</h3>
+        <p>Novices learn best from complete examples. As expertise grows, remove scaffolding — the fading effect prevents over-reliance.</p>
+        <div class="card-expand">
+          The expertise reversal effect: what helps novices (detailed guidance) can actually hurt experts. Instruction should start with fully worked examples, then completion problems (fill in steps), then problem-solving. This mirrors the Gradual Release of Responsibility model: "I do, we do, you do."
+        </div>
+        <span class="card-tag" style="background:rgba(124,58,237,.15);color:var(--violet)">Scaffolding</span>
+      </div>
+
+      <div class="principle-card reveal" onclick="toggleCard(this)">
+        <div class="card-icon">💬</div>
+        <h3>Elaborative Interrogation</h3>
+        <p>Asking "why?" and "how does this connect?" forces deeper processing and creates richer, more transferable memory traces.</p>
+        <div class="card-expand">
+          When learners generate explanations for facts ("Why would this be true?"), retention improves by 50–60% over simple rereading. The technique activates prior knowledge and forces integration. It's the cognitive mechanism behind the Feynman Technique: explain it simply to understand it deeply.
+        </div>
+        <span class="card-tag" style="background:rgba(34,211,238,.1);color:var(--cyan)">Deep Processing</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- LEARNING MODELS -->
+<section id="models" class="models-section">
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">Frameworks</span>
+      <h2 class="section-title">Instructional Design Models</h2>
+      <p class="section-sub">The structured frameworks professionals use to build learning experiences systematically.</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('addie')">ADDIE</button>
+      <button class="tab" onclick="switchTab('bloom')">Bloom's Taxonomy</button>
+      <button class="tab" onclick="switchTab('gagne')">Gagné's 9 Events</button>
+      <button class="tab" onclick="switchTab('kirkpatrick')">Kirkpatrick Model</button>
+      <button class="tab" onclick="switchTab('sam')">SAM</button>
+    </div>
+
+    <!-- ADDIE -->
+    <div class="tab-content active" id="tab-addie">
+      <div class="model-info">
+        <h3>ADDIE Model</h3>
+        <p>The most widely used instructional design framework. A systematic, five-phase process that guides designers from initial analysis through evaluation. Originally developed for the U.S. Army in the 1970s.</p>
+        <ul class="model-steps">
+          <li><div class="step-num">A</div><div><strong>Analysis</strong> — Identify the learning gap, audience, goals, and constraints</div></li>
+          <li><div class="step-num">D</div><div><strong>Design</strong> — Map objectives, assessments, content strategy, and media</div></li>
+          <li><div class="step-num">D</div><div><strong>Development</strong> — Build and assemble the actual learning materials</div></li>
+          <li><div class="step-num">I</div><div><strong>Implementation</strong> — Deliver the training to the target audience</div></li>
+          <li><div class="step-num">E</div><div><strong>Evaluation</strong> — Measure effectiveness and iterate</div></li>
+        </ul>
+      </div>
+      <div class="model-visual">
+        <h4>ADDIE Cycle</h4>
+        <div class="cycle">
+          <div class="cycle-item" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4)">🔍 Analyze</div>
+          <div class="cycle-arrow">↓</div>
+          <div class="cycle-item" style="background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4)">🎨 Design</div>
+          <div class="cycle-arrow">↓</div>
+          <div class="cycle-item" style="background:rgba(34,211,238,.2);border:1px solid rgba(34,211,238,.4)">🔨 Develop</div>
+          <div class="cycle-arrow">↓</div>
+          <div class="cycle-item" style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4)">🚀 Implement</div>
+          <div class="cycle-arrow">↓</div>
+          <div class="cycle-item" style="background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4)">📊 Evaluate</div>
+          <div class="cycle-arrow">↺ Iterate</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLOOM'S -->
+    <div class="tab-content" id="tab-bloom">
+      <div class="model-info">
+        <h3>Bloom's Taxonomy</h3>
+        <p>A hierarchical classification of cognitive skills, revised in 2001. Helps designers write precise learning objectives and match assessments to the right cognitive level. Move learners up the pyramid.</p>
+        <ul class="model-steps">
+          <li><div class="step-num">1</div><div><strong>Remember</strong> — Recall facts (define, list, name, identify)</div></li>
+          <li><div class="step-num">2</div><div><strong>Understand</strong> — Interpret meaning (explain, summarize, classify)</div></li>
+          <li><div class="step-num">3</div><div><strong>Apply</strong> — Use knowledge in new situations (solve, use, execute)</div></li>
+          <li><div class="step-num">4</div><div><strong>Analyze</strong> — Break apart and examine (compare, differentiate, organize)</div></li>
+          <li><div class="step-num">5</div><div><strong>Evaluate</strong> — Make judgments (critique, justify, assess, argue)</div></li>
+          <li><div class="step-num">6</div><div><strong>Create</strong> — Produce new work (design, construct, plan, produce)</div></li>
+        </ul>
+      </div>
+      <div class="model-visual">
+        <h4>The Pyramid</h4>
+        <div class="cycle">
+          <div class="cycle-item" style="background:rgba(244,63,94,.2);border:1px solid rgba(244,63,94,.4);font-size:.8rem">🏗️ Create</div>
+          <div class="cycle-item" style="background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.4);font-size:.8rem">⚖️ Evaluate</div>
+          <div class="cycle-item" style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4);font-size:.8rem">🔬 Analyze</div>
+          <div class="cycle-item" style="background:rgba(34,211,238,.2);border:1px solid rgba(34,211,238,.4);font-size:.8rem">🛠️ Apply</div>
+          <div class="cycle-item" style="background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4);font-size:.8rem">💡 Understand</div>
+          <div class="cycle-item" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);font-size:.8rem">📖 Remember</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAGNE -->
+    <div class="tab-content" id="tab-gagne">
+      <div class="model-info">
+        <h3>Gagné's 9 Events of Instruction</h3>
+        <p>Robert Gagné's framework maps directly to how the brain processes and stores information. Each event corresponds to a cognitive operation. Every effective lesson hits all 9.</p>
+        <ul class="model-steps">
+          <li><div class="step-num">1</div><div>Gain learner <strong>attention</strong></div></li>
+          <li><div class="step-num">2</div><div>Inform of <strong>objectives</strong></div></li>
+          <li><div class="step-num">3</div><div>Stimulate <strong>prior knowledge</strong></div></li>
+          <li><div class="step-num">4</div><div>Present the <strong>content</strong></div></li>
+          <li><div class="step-num">5</div><div>Provide <strong>learning guidance</strong></div></li>
+          <li><div class="step-num">6</div><div>Elicit <strong>performance</strong> (practice)</div></li>
+          <li><div class="step-num">7</div><div>Provide <strong>feedback</strong></div></li>
+          <li><div class="step-num">8</div><div>Assess <strong>performance</strong></div></li>
+          <li><div class="step-num">9</div><div>Enhance <strong>retention &amp; transfer</strong></div></li>
+        </ul>
+      </div>
+      <div class="model-visual">
+        <h4>Cognitive Mapping</h4>
+        <div style="text-align:left;font-size:.82rem;color:var(--muted);line-height:1.8">
+          <p><strong style="color:var(--violet)">Events 1–3</strong><br>Prepare the brain</p>
+          <p style="margin-top:.75rem"><strong style="color:var(--cyan)">Events 4–6</strong><br>Build the schema</p>
+          <p style="margin-top:.75rem"><strong style="color:var(--emerald)">Events 7–9</strong><br>Cement & transfer</p>
+          <p style="margin-top:1.25rem;font-size:.78rem">The model mirrors the <em>information processing theory</em> — sensory input → working memory → long-term storage.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- KIRKPATRICK -->
+    <div class="tab-content" id="tab-kirkpatrick">
+      <div class="model-info">
+        <h3>Kirkpatrick's Four Levels</h3>
+        <p>The gold standard for evaluating training effectiveness. Donald Kirkpatrick's 1959 model asks: did learners like it, learn it, use it, and did the business benefit? Most organizations only reach Level 1.</p>
+        <ul class="model-steps">
+          <li><div class="step-num">1</div><div><strong>Reaction</strong> — Did learners find it engaging and relevant? (Smile sheets)</div></li>
+          <li><div class="step-num">2</div><div><strong>Learning</strong> — Did knowledge, skills, or attitudes change? (Pre/post tests)</div></li>
+          <li><div class="step-num">3</div><div><strong>Behavior</strong> — Did they apply it on the job? (Observation, manager reports)</div></li>
+          <li><div class="step-num">4</div><div><strong>Results</strong> — Did the business improve? (KPIs, ROI, outcomes)</div></li>
+        </ul>
+      </div>
+      <div class="model-visual">
+        <h4>Evaluation Depth</h4>
+        <div class="cycle">
+          <div class="cycle-item" style="background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.4)">📈 Results (ROI)</div>
+          <div class="cycle-arrow">↑ Most valuable</div>
+          <div class="cycle-item" style="background:rgba(34,211,238,.2);border:1px solid rgba(34,211,238,.4)">🔄 Behavior Transfer</div>
+          <div class="cycle-arrow">↑</div>
+          <div class="cycle-item" style="background:rgba(168,85,247,.2);border:1px solid rgba(168,85,247,.4)">📚 Learning Gain</div>
+          <div class="cycle-arrow">↑</div>
+          <div class="cycle-item" style="background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4)">😊 Reaction / Satisfaction</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAM -->
+    <div class="tab-content" id="tab-sam">
+      <div class="model-info">
+        <h3>SAM (Successive Approximation Model)</h3>
+        <p>Michael Allen's agile alternative to ADDIE. Prioritizes rapid prototyping and iterative feedback over lengthy up-front planning. Ideal for modern, fast-moving organizations.</p>
+        <ul class="model-steps">
+          <li><div class="step-num">1</div><div><strong>Preparation Phase</strong> — Gather information, define goals</div></li>
+          <li><div class="step-num">2</div><div><strong>Iterative Design</strong> — Rapid prototype → review → refine (repeat)</div></li>
+          <li><div class="step-num">3</div><div><strong>Iterative Development</strong> — Alpha → Beta → Gold builds with stakeholder feedback at each stage</div></li>
+        </ul>
+      </div>
+      <div class="model-visual">
+        <h4>Agile ID Loop</h4>
+        <div style="text-align:left;font-size:.83rem;color:var(--muted);line-height:1.8">
+          <p><strong style="color:var(--amber)">vs. ADDIE:</strong></p>
+          <p>ADDIE is waterfall — each phase must finish before the next begins.</p>
+          <p style="margin-top:.5rem">SAM is agile — prototype early, fail fast, iterate constantly.</p>
+          <p style="margin-top:.75rem;font-size:.78rem">Best for: projects where stakeholder feedback is critical and requirements are likely to shift during development.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <div class="container">
+    <div class="reveal" style="text-align:center">
+      <span class="section-label">Knowledge Check</span>
+      <h2 class="section-title">Test Your Understanding</h2>
+      <p class="section-sub" style="margin:0 auto">10 questions across the core concepts. See how much you've absorbed.</p>
+    </div>
+
+    <div class="quiz-wrapper">
+      <div class="quiz-card">
+        <div class="quiz-progress-track"><div class="quiz-progress-fill" id="quiz-fill" style="width:0%"></div></div>
+        <div id="quiz-body">
+          <div class="quiz-q-num" id="q-num">Question 1 of 10</div>
+          <div class="quiz-question" id="q-text"></div>
+          <div class="quiz-options" id="q-options"></div>
+          <div class="quiz-feedback" id="q-feedback"></div>
+          <button class="btn btn-primary quiz-next" id="q-next" onclick="nextQuestion()">Next Question →</button>
+        </div>
+        <div class="quiz-result" id="quiz-result">
+          <div class="score" id="score-display"></div>
+          <p id="score-msg"></p>
+          <button class="btn btn-primary" onclick="restartQuiz()">Retake Quiz</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HISTORY TIMELINE -->
+<section id="history">
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">A Brief History</span>
+      <h2 class="section-title">The Evolution of Learning Science</h2>
+      <p class="section-sub">From Ebbinghaus's memory experiments to AI-powered adaptive learning.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot">🔬</div>
+        <div class="tl-body">
+          <div class="tl-year">1885</div>
+          <h3>Ebbinghaus & The Forgetting Curve</h3>
+          <p>Hermann Ebbinghaus memorized and tested himself on nonsense syllables, mapping the exponential decay of memory over time — the foundation of spaced repetition.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🐕</div>
+        <div class="tl-body">
+          <div class="tl-year">1900s</div>
+          <h3>Behaviorism Takes Over</h3>
+          <p>Pavlov, Watson, and Skinner define learning as conditioned behavior. Drill-and-practice, reinforcement schedules, and programmed instruction dominate classrooms.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🧠</div>
+        <div class="tl-body">
+          <div class="tl-year">1956</div>
+          <h3>Bloom's Taxonomy Published</h3>
+          <p>Benjamin Bloom and colleagues publish the Taxonomy of Educational Objectives, giving educators a shared language for learning goals across six cognitive levels.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">💻</div>
+        <div class="tl-body">
+          <div class="tl-year">1965</div>
+          <h3>Gagné's Conditions of Learning</h3>
+          <p>Robert Gagné publishes a systematic framework tying instruction to cognitive processes — the 9 Events of Instruction become a cornerstone of ID practice.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🏛️</div>
+        <div class="tl-body">
+          <div class="tl-year">1975</div>
+          <h3>ADDIE Formalized</h3>
+          <p>Florida State University develops ADDIE for the U.S. Army. Its systematic approach to training design spreads across military, corporate, and academic contexts.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">📱</div>
+        <div class="tl-body">
+          <div class="tl-year">2000s</div>
+          <h3>eLearning Explosion</h3>
+          <p>SCORM standards, Learning Management Systems, and Flash-based courseware bring instructional design into the digital age. Accessibility and scalability transform training.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🤖</div>
+        <div class="tl-body">
+          <div class="tl-year">Today</div>
+          <h3>Adaptive Learning & AI</h3>
+          <p>AI-powered systems personalize learning paths in real-time. Microlearning, xAPI, and data analytics enable designers to close skill gaps with unprecedented precision.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOOLS -->
+<section id="tools" style="background:rgba(15,15,26,.5)">
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">Toolkit</span>
+      <h2 class="section-title">Essential ID Tools</h2>
+      <p class="section-sub">The platforms and tools modern instructional designers rely on.</p>
+    </div>
+
+    <div class="tools-grid">
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(124,58,237,.15);color:var(--violet)">Authoring</span>
+        <h4>Articulate 360</h4>
+        <p>Industry-standard suite (Storyline + Rise) for building interactive eLearning. Powerful branching scenarios and SCORM export.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(124,58,237,.15);color:var(--violet)">Authoring</span>
+        <h4>Adobe Captivate</h4>
+        <p>Strong for software simulations, responsive design, and VR-ready 360° learning experiences.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(34,211,238,.1);color:var(--cyan)">LMS</span>
+        <h4>Canvas LMS</h4>
+        <p>Widely adopted in higher ed. Intuitive course builder with robust analytics, discussions, and third-party integrations.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(34,211,238,.1);color:var(--cyan)">LMS</span>
+        <h4>Moodle</h4>
+        <p>Open-source powerhouse. Highly customizable with plugins for gamification, competency-based learning, and more.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(16,185,129,.1);color:var(--emerald)">Design</span>
+        <h4>Figma</h4>
+        <p>Collaborative interface design for wireframing course layouts, storyboards, and UI prototypes before development.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(16,185,129,.1);color:var(--emerald)">Design</span>
+        <h4>Canva for Education</h4>
+        <p>Fast, beautiful visual assets. Ideal for infographics, job aids, and marketing learning programs to stakeholders.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(245,158,11,.1);color:var(--amber)">Assessment</span>
+        <h4>Kahoot / Mentimeter</h4>
+        <p>Real-time formative assessment and audience engagement. Great for live training and virtual synchronous sessions.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(244,63,94,.1);color:var(--rose)">Memory</span>
+        <h4>Anki</h4>
+        <p>The gold standard for spaced repetition. Algorithm-driven flashcard review for maximum long-term retention.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(124,58,237,.15);color:var(--violet)">Video</span>
+        <h4>Camtasia</h4>
+        <p>Screen recording + video editing built for instructional content. Callouts, quizzes, and interactive hotspots built in.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(34,211,238,.1);color:var(--cyan)">AI</span>
+        <h4>Claude / ChatGPT</h4>
+        <p>Generate course outlines, scenario scripts, quiz questions, and learning objectives in seconds. Transform ID workflows.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(16,185,129,.1);color:var(--emerald)">Collaboration</span>
+        <h4>Miro</h4>
+        <p>Virtual whiteboard for storyboarding, needs analysis workshops, and visual project planning with distributed teams.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+      <div class="tool-card reveal">
+        <span class="tool-cat" style="background:rgba(245,158,11,.1);color:var(--amber)">Analytics</span>
+        <h4>xAPI / LRS</h4>
+        <p>Next-gen tracking standard. Capture granular learner data across any device or context, not just LMS completions.</p>
+        <div class="tool-rating"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">Action Plan</span>
+      <h2 class="section-title">Your ID Starter Checklist</h2>
+      <p class="section-sub">Track your progress. Check off what you've done, are doing, or have learned.</p>
+    </div>
+
+    <div class="checklist-grid">
+      <div class="checklist-group reveal">
+        <h3>📋 Needs Analysis</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Define the performance gap</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Identify target learner profile</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Conduct SME interviews</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Determine delivery constraints</span></div>
+      </div>
+      <div class="checklist-group reveal">
+        <h3>🎯 Objectives</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Write terminal objectives (ABCD format)</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Map objectives to Bloom's levels</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Design assessments before content</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Validate objectives with stakeholders</span></div>
+      </div>
+      <div class="checklist-group reveal">
+        <h3>🏗️ Design & Build</h3>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Create a content storyboard</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Apply spaced repetition to structure</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Include retrieval practice activities</span></div>
+        <div class="check-item" onclick="toggleCheck(this)"><div class="checkbox"></div><span>Plan for knowledge transfer</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Built with the principles it teaches. <a href="#top">Back to top ↑</a></p>
+  <p style="margin-top:.5rem;font-size:.75rem">Learning How to Learn · Instructional Design Reference</p>
+</footer>
+
+<script>
+  // SCROLL PROGRESS BAR
+  window.addEventListener('scroll', () => {
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = (window.scrollY / total) * 100;
+    document.getElementById('scroll-bar').style.width = pct + '%';
+  });
+
+  // ANIMATED COUNTERS
+  function animateCounter(el) {
+    const target = +el.dataset.target;
+    const suffix = el.textContent.includes('+') ? '+' : '';
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current + suffix;
+      if (current >= target) clearInterval(timer);
+    }, 40);
+  }
+
+  const counters = document.querySelectorAll('[data-target]');
+  const counterObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { animateCounter(e.target); counterObs.unobserve(e.target); } });
+  }, { threshold: .5 });
+  counters.forEach(c => counterObs.observe(c));
+
+  // SCROLL REVEAL
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+  }, { threshold: .1, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(r => revealObs.observe(r));
+
+  // TIMELINE REVEAL
+  const tlItems = document.querySelectorAll('.tl-item');
+  const tlObs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        tlObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: .2 });
+  tlItems.forEach(t => tlObs.observe(t));
+
+  // TOGGLE PRINCIPLE CARDS
+  function toggleCard(card) {
+    const wasOpen = card.classList.contains('open');
+    document.querySelectorAll('.principle-card').forEach(c => c.classList.remove('open'));
+    if (!wasOpen) card.classList.add('open');
+  }
+
+  // TABS
+  function switchTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+  }
+
+  // QUIZ
+  const questions = [
+    { q: "What does Cognitive Load Theory primarily argue?", opts: ["Learning is purely behavioral", "Working memory is limited and instruction must manage its load", "Motivation is the #1 factor in learning", "Visual design determines retention"], correct: 1, explain: "John Sweller's CLT shows that our working memory can only hold ~7 items at once. Effective ID reduces extraneous load (caused by poor design) and channels effort toward germane load (schema building)." },
+    { q: "Spaced repetition works because it exploits:", opts: ["The primacy effect", "Classical conditioning", "The forgetting curve — reviewing just before forgetting strengthens memory", "Intrinsic motivation loops"], correct: 2, explain: "Ebbinghaus's forgetting curve shows memory decays exponentially. Reviewing material just before it's forgotten strengthens the memory trace more than immediate review." },
+    { q: "Which study technique is supported by the most research as being most effective?", opts: ["Re-reading notes", "Highlighting text", "Retrieval practice (self-testing)", "Summarizing"], correct: 2, explain: "Retrieval practice — the testing effect — consistently outperforms passive review. Roediger & Karpicke (2006) showed test groups retained 61% vs 40% for study-only groups." },
+    { q: "In ADDIE, which phase should you design your assessments?", opts: ["Analysis", "Design", "Development", "Evaluation"], correct: 1, explain: "Assessment design happens in the Design phase — before content is built. This is called 'backward design': start with what success looks like, then build content to get learners there." },
+    { q: "Bloom's Taxonomy lists 'Create' as the highest cognitive level. Which verb belongs there?", opts: ["Compare", "Explain", "Justify", "Design"], correct: 3, explain: "'Design' is a Create-level verb. Create involves producing new work that applies knowledge in original ways. Compare = Analyze, Explain = Understand, Justify = Evaluate." },
+    { q: "What is the main advantage of SAM over ADDIE?", opts: ["It has more phases", "It requires less stakeholder input", "It uses rapid prototyping and iterative cycles rather than linear phases", "It skips the evaluation phase"], correct: 2, explain: "SAM (Successive Approximation Model) is agile instructional design. It builds quick prototypes for stakeholder feedback early, rather than doing months of analysis before anything is built." },
+    { q: "Kirkpatrick Level 3 measures:", opts: ["Learner satisfaction with the course", "Knowledge gained on a post-test", "Behavior transfer to the job", "ROI and business outcomes"], correct: 2, explain: "Level 3 (Behavior) asks: did learners actually apply what they learned back on the job? This requires observation, surveys, or manager feedback weeks after the training." },
+    { q: "Interleaving feels harder than blocked practice because:", opts: ["The content is more complex", "The brain must retrieve the appropriate strategy for each problem type", "It takes more time to complete", "Instructors present it less clearly"], correct: 1, explain: "With interleaving, learners can't rely on a single repeated strategy — they must figure out which approach applies to each new problem. This 'desirable difficulty' builds stronger, more transferable skills." },
+    { q: "Gagné's Event 3 is 'Stimulate Recall of Prior Learning.' This is based on:", opts: ["Behaviorism", "Schema Theory — new learning hooks to existing knowledge structures", "The forgetting curve", "Kirkpatrick's evaluation model"], correct: 1, explain: "Schema Theory (Ausubel, Piaget) holds that new knowledge is assimilated into existing mental frameworks. Activating prior knowledge opens those schemas, making new information easier to connect and retain." },
+    { q: "The 'Expertise Reversal Effect' means:", opts: ["Experts learn better from worked examples", "Guidance that helps novices can hurt experts — scaffolding should fade as expertise grows", "Prior knowledge always speeds up learning", "Expert learners prefer visual content"], correct: 1, explain: "Novices need worked examples and detailed guidance. As learners gain expertise, that same guidance becomes redundant and can actually impair performance. Instruction must adapt — this is why fading scaffolding matters." },
+  ];
+
+  let current = 0;
+  let score = 0;
+  let answered = false;
+
+  function renderQuestion() {
+    const q = questions[current];
+    document.getElementById('q-num').textContent = `Question ${current + 1} of ${questions.length}`;
+    document.getElementById('q-text').textContent = q.q;
+    document.getElementById('quiz-fill').style.width = (current / questions.length * 100) + '%';
+    document.getElementById('q-feedback').className = 'quiz-feedback';
+    document.getElementById('q-feedback').textContent = '';
+    document.getElementById('q-next').className = 'btn btn-primary quiz-next';
+    answered = false;
+
+    const opts = document.getElementById('q-options');
+    opts.innerHTML = '';
+    q.opts.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = opt;
+      btn.onclick = () => answer(i);
+      opts.appendChild(btn);
+    });
+  }
+
+  function answer(i) {
+    if (answered) return;
+    answered = true;
+    const q = questions[current];
+    const btns = document.querySelectorAll('.quiz-option');
+    btns.forEach(b => b.disabled = true);
+
+    const fb = document.getElementById('q-feedback');
+    if (i === q.correct) {
+      score++;
+      btns[i].classList.add('correct');
+      fb.className = 'quiz-feedback correct show';
+      fb.textContent = '✓ Correct! ' + q.explain;
+    } else {
+      btns[i].classList.add('wrong');
+      btns[q.correct].classList.add('correct');
+      fb.className = 'quiz-feedback wrong show';
+      fb.textContent = '✗ Not quite. ' + q.explain;
+    }
+    document.getElementById('q-next').className = 'btn btn-primary quiz-next show';
+  }
+
+  function nextQuestion() {
+    current++;
+    if (current >= questions.length) {
+      showResult();
+    } else {
+      renderQuestion();
+    }
+  }
+
+  function showResult() {
+    document.getElementById('quiz-body').style.display = 'none';
+    const result = document.getElementById('quiz-result');
+    result.className = 'quiz-result show';
+    document.getElementById('score-display').textContent = score + '/' + questions.length;
+    const pct = Math.round(score / questions.length * 100);
+    let msg = pct >= 80 ? '🎉 Outstanding! You have a strong grasp of ID principles.' :
+              pct >= 60 ? '👍 Solid work. Review the principles section to sharpen the gaps.' :
+                          '📚 Keep studying! Revisit the models and principles above.';
+    document.getElementById('score-msg').textContent = msg;
+    document.getElementById('quiz-fill').style.width = '100%';
+  }
+
+  function restartQuiz() {
+    current = 0; score = 0; answered = false;
+    document.getElementById('quiz-body').style.display = 'block';
+    document.getElementById('quiz-result').className = 'quiz-result';
+    renderQuestion();
+  }
+
+  renderQuestion();
+
+  // CHECKLIST TRACKER
+  let completed = 0;
+  function toggleCheck(item) {
+    const wasChecked = item.classList.contains('checked');
+    item.classList.toggle('checked');
+    item.querySelector('.checkbox').textContent = wasChecked ? '' : '✓';
+    completed += wasChecked ? -1 : 1;
+    document.getElementById('completed-count').textContent = completed;
+  }
+</script>
+
+</body>
+</html>
